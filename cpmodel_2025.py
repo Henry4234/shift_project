@@ -28,6 +28,19 @@ employee_shift_requirements = {
     # 請依此方式設定其他員工
 }
 
+employee_preferences = {
+    '員工0': {'max_continuous_days': False, 'continuous_C': False, 'double_off_after_C': False},
+    '員工1': {'max_continuous_days': False, 'continuous_C': False, 'double_off_after_C': False},
+    '員工2': {'max_continuous_days': False, 'continuous_C': False, 'double_off_after_C': False},
+    '員工3': {'max_continuous_days': False, 'continuous_C': False, 'double_off_after_C': False},
+    '員工4': {'max_continuous_days': True,  'continuous_C': False, 'double_off_after_C': False}, # 員工4 偏好不連續上班超過6天
+    '員工5': {'max_continuous_days': False, 'continuous_C': False, 'double_off_after_C': False},
+    '員工6': {'max_continuous_days': False, 'continuous_C': False, 'double_off_after_C': False},
+    '員工7': {'max_continuous_days': False, 'continuous_C': True, 'double_off_after_C': True},  # 員工7 大夜後偏好連續休兩天
+    '員工8': {'max_continuous_days': True, 'continuous_C': False, 'double_off_after_C': False},
+}
+
+
 # 每日所需班次
 daily_requirements = {}
 for day in range(1, days+1):
@@ -73,6 +86,11 @@ for e in employees:
         model.Add(shifts_var[(e,d,'C')] + shifts_var[(e,d+1,'B')] <= 1)
         model.Add(shifts_var[(e,d,'B')] + shifts_var[(e,d+1,'A')] <= 1)
 
+# 限制：7天內休息至少1天
+for e in employees:
+    for start in range(1, days-6):
+        model.Add(sum(shifts_var[(e,d,'O')] for d in range(start, start+7)) >= 1)
+
 # 限制：14天內休息至少兩天
 for e in employees:
     for start in range(1, days-13):
@@ -81,54 +99,57 @@ for e in employees:
 # # 偏好設定 (軟性限制)
 penalties = []
 
-# 1️⃣ 偏好不連續上班超過6天
+# 1️⃣ 偏好不連續上班超過5天
 for e in employees:
-    for start in range(1, days - 6):
-        work_7days = model.NewBoolVar(f'{e}_work7_{start}')
-        # 若連續7天都工作 (違反限制), 則work_7days=1
-        model.Add(sum(shifts_var[e, d, 'O'] for d in range(start, start + 7)) == 0).OnlyEnforceIf(work_7days)
-        model.Add(sum(shifts_var[e, d, 'O'] for d in range(start, start + 7)) > 0).OnlyEnforceIf(work_7days.Not())
-        penalties.append((work_7days, 10))
+    if employee_preferences[e]['max_continuous_days']:
+        for start in range(1, days - 5):
+            work_7days = model.NewBoolVar(f'{e}_work7_{start}')
+            # 若連續7天都工作 (違反限制), 則work_7days=1
+            model.Add(sum(shifts_var[e, d, 'O'] for d in range(start, start + 6)) == 0).OnlyEnforceIf(work_7days)
+            model.Add(sum(shifts_var[e, d, 'O'] for d in range(start, start + 6)) > 0).OnlyEnforceIf(work_7days.Not())
+            penalties.append((work_7days, 10))
 
 # 2️⃣ 偏好C班盡量連續排 (降低C後接非C/O)
 for e in employees:
-    for d in range(1, days - 1):
-        # 建立違反變數：C → O → C (中斷連續C班)
-        interrupted_C = model.NewBoolVar(f'{e}_interrupted_C_{d}')
+    if employee_preferences[e]['continuous_C']:
+        for d in range(1, days - 1):
+            # 建立違反變數：C → O → C (中斷連續C班)
+            interrupted_C = model.NewBoolVar(f'{e}_interrupted_C_{d}')
 
-        # 設定違反條件 (C->O->C)
-        model.AddBoolAnd([
-            shifts_var[e, d, 'C'],
-            shifts_var[e, d + 1, 'O'],
-            shifts_var[e, d + 2, 'C']
-        ]).OnlyEnforceIf(interrupted_C)
+            # 設定違反條件 (C->O->C)
+            model.AddBoolAnd([
+                shifts_var[e, d, 'C'],
+                shifts_var[e, d + 1, 'O'],
+                shifts_var[e, d + 2, 'C']
+            ]).OnlyEnforceIf(interrupted_C)
 
-        # 設定不違反的情況（只要不是上述情況皆不違反）
-        model.AddBoolOr([
-            shifts_var[e, d, 'C'].Not(),
-            shifts_var[e, d + 1, 'O'].Not(),
-            shifts_var[e, d + 2, 'C'].Not()
-        ]).OnlyEnforceIf(interrupted_C.Not())
+            # 設定不違反的情況（只要不是上述情況皆不違反）
+            model.AddBoolOr([
+                shifts_var[e, d, 'C'].Not(),
+                shifts_var[e, d + 1, 'O'].Not(),
+                shifts_var[e, d + 2, 'C'].Not()
+            ]).OnlyEnforceIf(interrupted_C.Not())
 
-        # 懲罰
-        penalties.append((interrupted_C, 5))
+            # 懲罰
+            penalties.append((interrupted_C, 10))
 
 # 3️⃣ 大夜後偏好連續休兩天 (C→O→非O 給予懲罰)
 for e in employees:
-    for d in range(1, days - 2):
-        prefer_double_off = model.NewBoolVar(f'{e}_double_off_after_C_{d}')
-        # 違反條件：(C->O->非O)，這種情況為違反雙休
-        model.AddBoolAnd([
-            shifts_var[e, d, 'C'],
-            shifts_var[e, d + 1, 'O'],
-            shifts_var[e, d + 2, 'O'].Not()
-        ]).OnlyEnforceIf(prefer_double_off)
-        model.AddBoolOr([
-            shifts_var[e, d, 'C'].Not(),
-            shifts_var[e, d + 1, 'O'].Not(),
-            shifts_var[e, d + 2, 'O']
-        ]).OnlyEnforceIf(prefer_double_off.Not())
-        penalties.append((prefer_double_off, 2))
+    if employee_preferences[e]['double_off_after_C']:
+        for d in range(1, days - 2):
+            prefer_double_off = model.NewBoolVar(f'{e}_double_off_after_C_{d}')
+            # 違反條件：(C->O->非O)，這種情況為違反雙休
+            model.AddBoolAnd([
+                shifts_var[e, d, 'C'],
+                shifts_var[e, d + 1, 'O'],
+                shifts_var[e, d + 2, 'O'].Not()
+            ]).OnlyEnforceIf(prefer_double_off)
+            model.AddBoolOr([
+                shifts_var[e, d, 'C'].Not(),
+                shifts_var[e, d + 1, 'O'].Not(),
+                shifts_var[e, d + 2, 'O']
+            ]).OnlyEnforceIf(prefer_double_off.Not())
+            penalties.append((prefer_double_off, 10))
 
 # 目標函數：最小化總懲罰
 model.Minimize(sum(var * weight for var, weight in penalties))
