@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>班表設計系統</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+  <style>
+    .calendar-cell.holiday { background: #ffe6e6; }
+    .calendar-cell.workday { background: #e6ffe6; }
+    .calendar-cell.today { border: 2px solid #007bff; }
+  </style>
+</head>
+<body>
+  <div class="container-fluid mt-4">
+    <div class="row">
+      <!-- 左側控制面板 -->
+      <div class="col-md-3 mb-3 d-flex flex-column" style="min-height: 70vh;">
+        <div class="d-flex justify-content-between mb-3">
+          <h5>人員列表</h5>
+          <button class="btn btn-primary btn-sm" id="add-member-btn">新增人員</button>
+        </div>
+        <!-- 人員清單（可多選/單選，依模式切換） -->
+        <div id="member-list" class="mb-3">
+          <!-- 動態產生 -->
+        </div>
+        <div class="mt-auto p-2 bg-light border-top">
+          <div class="mb-2">
+            <label for="view-mode" class="form-label mb-1">觀看模式</label>
+            <select class="form-select" id="view-mode">
+              <option value="calendar">月曆模式</option>
+              <option value="personnel">人員模式</option>
+              <option value="daily">每日上班人員模式</option>
+            </select>
+          </div>
+          <button class="btn btn-success w-100" id="generate-schedule-btn">生成班表</button>
+        </div>
+      </div>
+
+      <!-- 右側月曆 -->
+      <div class="col-md-9">
+        <div id="calendar-container">
+          <!-- 動態產生月曆 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新增人員 Modal -->
+  <div class="modal fade" id="addMemberModal" tabindex="-1" aria-labelledby="addMemberLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addMemberLabel">新增人員</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="member-name" class="form-label">姓名</label>
+            <input type="text" class="form-control" id="member-name" required>
+          </div>
+          <!-- 可增加其他欄位，如職稱、班別等 -->
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">新增</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+  <script type="module" src="./main.js"></script>
+  
+  <script>
+    // 這裡預留API串接與前端互動
+    // 範例: 取得月曆、取得人員、切換模式、觸發排班
+  </script>
+<!-- <script type="module" src="./main.js"></script> -->
+</body>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar-container');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+      locale: 'zh-tw',
+      initialView: 'dayGridMonth',
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth'
+      },
+      titleFormat: { year: 'numeric', month: 'numeric' },
+      events: [
+        {
+          title: '示例事件',
+          start: '2025-06-15'
+        }
+        // 可以在此添加更多事件
+      ]
+    });
+    calendar.render();
+  });
+</script>
+</html>

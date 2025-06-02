@@ -1,0 +1,82 @@
+/* 全域動畫效果 */
+.transition {
+    transition: all 0.3s ease-in-out;
+}
+
+/* 平滑滾動 */
+html {
+    scroll-behavior: smooth;
+}
+
+/* 商品卡片懸停效果 */
+.product-card {
+    transition: transform 0.3s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+}
+
+/* 按鈕點擊效果 */
+button {
+    transition: transform 0.1s ease;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+/* 導覽列陰影效果 */
+.nav-shadow {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 輪播圖片背景 */
+.carousel-bg {
+    background-image: url('https://source.unsplash.com/random/1920x1080/?fashion');
+    background-size: cover;
+    background-position: center;
+}
+
+/* 表單輸入框聚焦效果 */
+input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* 響應式選單 */
+@media (max-width: 768px) {
+    .mobile-menu {
+        display: block;
+    }
+    
+    .desktop-menu {
+        display: none;
+    }
+}
+
+/* 加載動畫 */
+.loading {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* 頁面切換動畫 */
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+} 
