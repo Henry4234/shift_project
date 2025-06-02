@@ -16,11 +16,17 @@ RUN npm install
 # 複製專案檔案
 COPY . .
 
+# 確保文件權限正確
+RUN chown -R node:node /app
+
 # 設定環境變數
 ENV NODE_ENV=production
 
 # 暴露容器端口
 EXPOSE 3000
+
+# 使用非 root 用戶運行應用
+USER node
 
 # 啟動應用程式
 CMD ["npm", "start"] 
