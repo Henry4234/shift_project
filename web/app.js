@@ -35,9 +35,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     ]);
 
     console.log('成功從supabase中取得所有資料');
-    console.log('員工資料：', employees);
-    console.log('員工偏好設定：', preferences);
-    console.log('班表需求：', requirements);
+    // console.log('員工資料：', employees);
+    // console.log('員工偏好設定：', preferences);
+    // console.log('班表需求：', requirements);
 
     // 清空載入中提示
     memberListEl.innerHTML = '';
@@ -71,21 +71,27 @@ document.addEventListener('DOMContentLoaded', async () => {
       preferencesContainer.className = 'preferences-container mt-2 d-none';
       preferencesContainer.innerHTML = `
         <div class="form-check">
-          <input class="form-check-input" type="checkbox" id="pref-max-days-${employee.id}" 
+          <input class="form-check-input preference-checkbox" type="checkbox" 
+            id="pref-max-days-${employee.id}" 
+            data-type="max_continuous_days"
             ${employeePreferences?.max_continuous_days ? 'checked' : ''}>
           <label class="form-check-label" for="pref-max-days-${employee.id}">
             最大連續工作天數限制
           </label>
         </div>
         <div class="form-check">
-          <input class="form-check-input" type="checkbox" id="pref-continuous-c-${employee.id}"
+          <input class="form-check-input preference-checkbox" type="checkbox" 
+            id="pref-continuous-c-${employee.id}"
+            data-type="continuous_c"
             ${employeePreferences?.continuous_c ? 'checked' : ''}>
           <label class="form-check-label" for="pref-continuous-c-${employee.id}">
             連續 C 班限制
           </label>
         </div>
         <div class="form-check">
-          <input class="form-check-input" type="checkbox" id="pref-double-off-${employee.id}"
+          <input class="form-check-input preference-checkbox" type="checkbox" 
+            id="pref-double-off-${employee.id}"
+            data-type="double_off_after_c"
             ${employeePreferences?.double_off_after_c ? 'checked' : ''}>
           <label class="form-check-label" for="pref-double-off-${employee.id}">
             C 班後需雙休
@@ -111,6 +117,104 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (container) {
           container.classList.toggle('d-none');
         }
+      });
+
+      // 添加偏好設定變更事件
+      const checkboxes = preferencesContainer.querySelectorAll('.preference-checkbox');
+      checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', async (e) => {
+          const preferenceType = e.target.dataset.type;
+          const isChecked = e.target.checked;
+          
+          try {
+            // 收集所有偏好設定
+            const preferences = {
+              max_continuous_days: false,
+              continuous_c: false,
+              double_off_after_c: false
+            };
+            
+            // 更新當前變更的偏好
+            preferences[preferenceType] = isChecked;
+            
+            // 從其他 checkbox 獲取現有值
+            checkboxes.forEach(cb => {
+              if (cb !== e.target) {
+                preferences[cb.dataset.type] = cb.checked;
+              }
+            });
+
+            // 發送更新請求
+            const response = await fetch(`/api/employee-preferences/${employee.id}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(preferences)
+            });
+
+            if (!response.ok) {
+              throw new Error('更新失敗');
+            }
+
+            // 更新成功後更新計數
+            const result = await response.json();
+            const newCount = Object.values(result[0]).filter(v => v === true).length;
+            const countEl = button.querySelector('small');
+            countEl.textContent = `${newCount} 個偏好設定`;
+
+            // 顯示成功提示
+            const toast = document.createElement('div');
+            toast.className = 'toast align-items-center text-white bg-success border-0 position-fixed bottom-0 end-0 m-3';
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            toast.innerHTML = `
+              <div class="d-flex">
+                <div class="toast-body">
+                  偏好設定已更新
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+              </div>
+            `;
+            document.body.appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            
+            // 3秒後移除提示
+            setTimeout(() => {
+              toast.remove();
+            }, 3000);
+
+          } catch (err) {
+            console.error('更新偏好設定時發生錯誤：', err);
+            // 恢復 checkbox 狀態
+            e.target.checked = !isChecked;
+            
+            // 顯示錯誤提示
+            const toast = document.createElement('div');
+            toast.className = 'toast align-items-center text-white bg-danger border-0 position-fixed bottom-0 end-0 m-3';
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            toast.innerHTML = `
+              <div class="d-flex">
+                <div class="toast-body">
+                  更新失敗，請稍後再試
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+              </div>
+            `;
+            document.body.appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            
+            // 3秒後移除提示
+            setTimeout(() => {
+              toast.remove();
+            }, 3000);
+          }
+        });
       });
 
       div.appendChild(preferencesContainer);
