@@ -70,16 +70,6 @@ input:focus {
     }
 }
 
-/* 頁面切換動畫 */
-.fade-enter-active,
-.fade-leave-active {
-    transition: opacity 0.5s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-    opacity: 0;
-} 
 
 /* 偏好設定外框 */
 .preference-box {
