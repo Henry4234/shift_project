@@ -151,6 +151,69 @@ app.post('/api/employee-preferences/:employeeId', async (req, res) => {
   }
 });
 
+// API 端點來更新員工班別數量
+app.post('/api/employee-amount/:employeeId', async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+    const shiftRequirements = req.body;  // 預期格式: { A: 數量, B: 數量, C: 數量 }
+
+    console.log(`更新員工 ${employeeId} 的班別需求...`);
+    console.log('更新資料：', shiftRequirements);
+
+    const updates = [];
+
+    // 處理每個班別的更新
+    for (const [shift_type, required_days] of Object.entries(shiftRequirements)) {
+      // 檢查是否已存在該班別的記錄
+      const { data: existing, error: checkError } = await supabase
+        .from('shift_requirements')
+        .select('id')
+        .eq('employee_id', employeeId)
+        .eq('shift_type', shift_type)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError;
+      }
+
+      let result;
+      if (existing) {
+        // 更新現有記錄
+        const { data, error: updateError } = await supabase
+          .from('shift_requirements')
+          .update({ required_days })
+          .eq('employee_id', employeeId)
+          .eq('shift_type', shift_type)
+          .select();
+
+        if (updateError) throw updateError;
+        result = data;
+      } else {
+        // 創建新記錄
+        const { data, error: insertError } = await supabase
+          .from('shift_requirements')
+          .insert({
+            employee_id: employeeId,
+            shift_type,
+            required_days
+          })
+          .select();
+
+        if (insertError) throw insertError;
+        result = data;
+      }
+
+      updates.push(...result);
+    }
+
+    console.log('更新成功：', updates);
+    res.json(updates);
+  } catch (err) {
+    console.error('更新班別需求時發生錯誤：', err.message);
+    res.status(500).json({ error: '無法更新班別需求' });
+  }
+});
+
 app.listen(port, () => {
   console.log(`服務器運行在 http://localhost:${port}`);
 });
