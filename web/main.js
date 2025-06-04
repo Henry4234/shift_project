@@ -10,6 +10,9 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const port = process.env.PORT || 3000;
 
+// 添加 JSON 解析中間件
+app.use(express.json());
+
 // 提供靜態文件
 app.use(express.static(__dirname));
 
@@ -86,6 +89,65 @@ app.get('/api/shift-requirements', async (req, res) => {
   } catch (err) {
     console.error('取得班表需求時發生錯誤：', err.message);
     res.status(500).json({ error: '無法載入班表需求' });
+  }
+});
+
+// API 端點來更新員工偏好設定
+app.post('/api/employee-preferences/:employeeId', async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+    const { max_continuous_days, continuous_c, double_off_after_c } = req.body;
+
+    console.log(`更新員工 ${employeeId} 的偏好設定...`);
+    console.log('更新資料：', req.body);
+
+    // 先檢查是否已存在偏好設定
+    const { data: existingPref, error: checkError } = await supabase
+      .from('employee_preferences')
+      .select('id')
+      .eq('employee_id', employeeId)
+      .single();
+
+    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 是找不到記錄的錯誤碼
+      throw checkError;
+    }
+
+    let result;
+    if (existingPref) {
+      // 更新現有記錄
+      const { data, error } = await supabase
+        .from('employee_preferences')
+        .update({
+          max_continuous_days,
+          continuous_c,
+          double_off_after_c
+        })
+        .eq('employee_id', employeeId)
+        .select();
+
+      if (error) throw error;
+      result = data;
+    } else {
+      // 創建新記錄
+      const { data, error } = await supabase
+        .from('employee_preferences')
+        .insert({
+          employee_id: employeeId,
+          max_continuous_days,
+          continuous_c,
+          double_off_after_c
+        })
+        .select();
+
+      if (error) throw error;
+      result = data;
+    }
+
+    console.log('更新成功：', result);
+    res.json(result);
+  } catch (err) {
+    console.error('更新員工偏好設定時發生錯誤：', err.message);
+    res.status(500).json({ error: '無法更新員工偏好設定' });
   }
 });
 
