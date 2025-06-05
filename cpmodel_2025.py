@@ -1,12 +1,18 @@
 from ortools.sat.python import cp_model
 import calendar
 from datetime import datetime
+from supabase_client import fetch_employees, fetch_shift_requirements, fetch_employee_preferences
 
 # 建立模型
 model = cp_model.CpModel()
 
+# 從 Supabase 獲取資料
+employees_data = fetch_employees()
+shift_requirements_data = fetch_shift_requirements()
+employee_preferences_data = fetch_employee_preferences()
+
 # 定義基本資料
-employees = ['員工{}'.format(i) for i in range(9)]
+employees = [emp['name'] for emp in employees_data]
 shifts = ['A', 'B', 'C', 'O']  # A: 白班, B: 小夜班, C: 大夜班, O:休息
 shift_hours = {'A': (8,16), 'B': (16,24), 'C': (0,8), 'O': (0,0)}
 
@@ -14,32 +20,11 @@ shift_hours = {'A': (8,16), 'B': (16,24), 'C': (0,8), 'O': (0,0)}
 year, month = 2024, 3
 days = calendar.monthrange(year, month)[1]
 
-# 員工的指定班數限制範例 (自行調整)
-employee_shift_requirements = {
-    '員工0': {'A':4, 'B':0, 'C':0},
-    '員工1': {'A':11, 'B':6, 'C':3},
-    '員工2': {'A':12, 'B':7, 'C':0},
-    '員工3': {'A':13, 'B':7, 'C':0},
-    '員工4': {'A':11, 'B':6, 'C':3},
-    '員工5': {'A':9, 'B':8, 'C':4},
-    '員工6': {'A':10, 'B':11, 'C':0},
-    '員工7': {'A':4, 'B':0, 'C':15},
-    '員工8': {'A':4, 'B':7, 'C':6},
-    # 請依此方式設定其他員工
-}
+# 從 Supabase 獲取員工的指定班數限制
+employee_shift_requirements = shift_requirements_data
 
-employee_preferences = {
-    '員工0': {'max_continuous_days': False, 'continuous_C': False, 'double_off_after_C': False},
-    '員工1': {'max_continuous_days': False, 'continuous_C': False, 'double_off_after_C': False},
-    '員工2': {'max_continuous_days': False, 'continuous_C': False, 'double_off_after_C': False},
-    '員工3': {'max_continuous_days': False, 'continuous_C': False, 'double_off_after_C': False},
-    '員工4': {'max_continuous_days': True,  'continuous_C': False, 'double_off_after_C': False}, # 員工4 偏好不連續上班超過6天
-    '員工5': {'max_continuous_days': False, 'continuous_C': False, 'double_off_after_C': False},
-    '員工6': {'max_continuous_days': False, 'continuous_C': False, 'double_off_after_C': False},
-    '員工7': {'max_continuous_days': False, 'continuous_C': True, 'double_off_after_C': True},  # 員工7 大夜後偏好連續休兩天
-    '員工8': {'max_continuous_days': True, 'continuous_C': False, 'double_off_after_C': False},
-}
-
+# 從 Supabase 獲取員工偏好設定
+employee_preferences = employee_preferences_data
 
 # 每日所需班次
 daily_requirements = {}

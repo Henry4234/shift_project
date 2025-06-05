@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./web:/app
+      - /app/node_modules
+    depends_on:
+      - scheduler
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+      - /app/__pycache__
