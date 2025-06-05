@@ -51,13 +51,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 顯示每位人員
     employees.forEach(employee => {
       const div = document.createElement('div');
-      div.className = 'form-check form- mb-2';
+      div.className = 'form-check mb-2';
       
       // 獲取該員工的偏好設定
       const employeePreferences = preferences.find(p => p.employee_id === employee.id);
       // 獲取該員工的班表需求
       const employeeRequirements = requirements.filter(r => r.employee_id === employee.id);
-      console.log(employeeRequirements)
+      
       // 計算已設定的偏好數量
       let setPreferencesCount = 0;
       if (employeePreferences) {
@@ -70,9 +70,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       const preferencesContainer = document.createElement('div');
       preferencesContainer.className = 'preferences-container mt-2 d-none';
       preferencesContainer.innerHTML = `
-        <div class="preference-box">
-          <div class="preference-title">偏好設定</div>
-          <div class="form-check">
+      <div class="preference-box">
+        <div class="form-check">
+            <div class="preference-title">偏好設置</div>
             <input class="form-check-input preference-checkbox" type="checkbox" 
               id="pref-max-days-${employee.id}" 
               data-type="max_continuous_days"
@@ -102,37 +102,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
         <div class="preference-box mt-3">
           <div class="preference-title">班別/數量</div>
-          <div class="d-flex flex-column gap-2">
-            <div class="d-flex align-items-center">
+          <div class="shift-requirements-container">
+            <div class="shift-requirement-item">
               <input type="number" class="form-control form-control-sm shift-requirement" 
                 id="shift-a-${employee.id}" 
                 min="0" max="30"
-                style="width: 80px;"
                 value="${employeeRequirements?.find(r => r.shift_type === 'A')?.required_days || 0}">
-              <label class="ms-2 mb-0" for="shift-a-${employee.id}">白班</label>
+              <span>天白班</span>
             </div>
-            <div class="d-flex align-items-center">
+            <div class="shift-requirement-item">
               <input type="number" class="form-control form-control-sm shift-requirement" 
                 id="shift-b-${employee.id}" 
                 min="0" max="30"
-                style="width: 80px;"
                 value="${employeeRequirements?.find(r => r.shift_type === 'B')?.required_days || 0}">
-              <label class="ms-2 mb-0" for="shift-b-${employee.id}">小夜</label>
+              <span>天小夜</span>
             </div>
-            <div class="d-flex align-items-center">
+            <div class="shift-requirement-item">
               <input type="number" class="form-control form-control-sm shift-requirement" 
                 id="shift-c-${employee.id}" 
                 min="0" max="30"
-                style="width: 80px;"
                 value="${employeeRequirements?.find(r => r.shift_type === 'C')?.required_days || 0}">
-              <label class="ms-2 mb-0" for="shift-c-${employee.id}">大夜</label>
-            </div>
-            <div class="d-flex justify-content-end mt-2">
-              <button class="btn btn-sm btn-primary update-shifts-btn" data-employee-id="${employee.id}">
-                更新班別需求
-              </button>
+              <span>天大夜</span>
             </div>
           </div>
+          <button class="btn btn-sm btn-primary update-shifts-btn" data-employee-id="${employee.id}">
+            更新班別需求
+          </button>
         </div>
       `;
       

@@ -1,2 +1,3 @@
 weiran_aitech/
 .env
+.DS_store
