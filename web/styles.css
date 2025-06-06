@@ -77,6 +77,34 @@ input:focus {
     border-radius: 6px;          /* radius=6 */
     padding: 12px 16px;          /* 內距讓內容不貼邊 */
     background-color: #f8f9fa;   /* 低調底色，可自行調整或拿掉 */
+    position: relative;          /* 用於動畫定位 */
+    animation: animate-top 0.4s; /* 動畫持續時間 */
+}
+
+/* 從上方滑入的動畫 */
+@keyframes animate-top {
+    0% {
+        top: -100px;
+        opacity: 0;
+    }
+    100% {
+        top: 0;
+        opacity: 1;
+    }
+}
+
+/* 確保內容與外框一起動畫 */
+.preference-box * {
+    animation: fade-in 0.4s;
+}
+
+@keyframes fade-in {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
 }
 
 /* 外框內的標題列 */
