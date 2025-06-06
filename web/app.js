@@ -1,6 +1,7 @@
 // app.js
 document.addEventListener('DOMContentLoaded', async () => {
   const memberListEl = document.getElementById('member-list');
+  memberListEl.className = 'employee-list';  // 添加新的類別
   const loadingEl = document.createElement('div');
   loadingEl.className = 'text-center p-3';
   loadingEl.innerHTML = `
@@ -37,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('成功從supabase中取得所有資料');
     // console.log('員工資料：', employees);
     // console.log('員工偏好設定：', preferences);
-    console.log('班表需求：', requirements);
+    //console.log('班表需求：', requirements);
 
     // 清空載入中提示
     memberListEl.innerHTML = '';
@@ -48,10 +49,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    // 追蹤當前展開的員工
+    let currentlyExpanded = null;
+
     // 顯示每位人員
     employees.forEach(employee => {
       const div = document.createElement('div');
-      div.className = 'form-check mb-2';
+      div.className = 'form-check';
       
       // 獲取該員工的偏好設定
       const employeePreferences = preferences.find(p => p.employee_id === employee.id);
@@ -66,13 +70,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (employeePreferences.double_off_after_c) setPreferencesCount++;
       }
 
+      div.innerHTML = `
+        <button class="employee-btn btn btn-outline-primary" type="button" value="${employee.id}" id="member-${employee.id}">
+          <div class="d-flex justify-content-between align-items-center">
+            <span>${employee.name}</span>
+            <small class="text-muted">
+              ${setPreferencesCount} 個偏好設定
+            </small>
+          </div>
+        </button>
+      `;
+
       // 創建偏好設定容器
       const preferencesContainer = document.createElement('div');
-      preferencesContainer.className = 'preferences-container mt-2 d-none';
+      preferencesContainer.className = 'preferences-container';
       preferencesContainer.innerHTML = `
-      <div class="preference-box">
-        <div class="form-check">
-            <div class="preference-title">偏好設置</div>
+        <div class="preference-box">
+          <div class="preference-title">偏好設置</div>
+          <div class="form-check">
             <input class="form-check-input preference-checkbox" type="checkbox" 
               id="pref-max-days-${employee.id}" 
               data-type="max_continuous_days"
@@ -125,30 +140,35 @@ document.addEventListener('DOMContentLoaded', async () => {
               <span>天大夜</span>
             </div>
           </div>
-          <button class="btn btn-sm btn-primary update-shifts-btn" data-employee-id="${employee.id}">
+          <button class="btn btn-sm btn-primary update-shifts-btn mt-3" data-employee-id="${employee.id}">
             更新班別需求
           </button>
         </div>
       `;
       
-      div.innerHTML = `
-        <button class="btn btn-outline-primary w-100 text-start" type="button" value="${employee.id}" id="member-${employee.id}">
-          <div class="d-flex justify-content-between align-items-center">
-            <span>${employee.name}</span>
-            <small class="text-muted">
-              ${setPreferencesCount} 個偏好設定
-            </small>
-          </div>
-        </button>
-      `;
-      
+      div.appendChild(preferencesContainer);
+      memberListEl.appendChild(div);
+
       // 添加點擊事件
       const button = div.querySelector('button');
-      button.addEventListener('click', () => {
+      button.addEventListener('click', (e) => {
         const container = div.querySelector('.preferences-container');
-        if (container) {
-          container.classList.toggle('d-none');
+        const currentButton = e.currentTarget;
+        
+        // 如果有其他展開的容器，先收起它
+        if (currentlyExpanded && currentlyExpanded !== container) {
+          const expandedButton = currentlyExpanded.previousElementSibling;
+          expandedButton.classList.remove('active');
+          currentlyExpanded.classList.remove('show');
         }
+
+        // 切換當前容器
+        const isExpanding = !container.classList.contains('show');
+        currentButton.classList.toggle('active');
+        container.classList.toggle('show');
+        
+        // 更新當前展開的容器
+        currentlyExpanded = isExpanding ? container : null;
       });
 
       // 添加偏好設定變更事件
@@ -345,9 +365,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           }, 3000);
         }
       });
-
-      div.appendChild(preferencesContainer);
-      memberListEl.appendChild(div);
     });
   } catch (err) {
     console.error('取得資料時發生錯誤：', err.message);
