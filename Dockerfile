@@ -26,7 +26,4 @@ ENV PYTHONUNBUFFERED=1
 
 # 建立非 root 用戶
 RUN useradd -m appuser && chown -R appuser:appuser /app
-USER appuser
-
-# 設定容器啟動命令
-CMD ["python", "cpmodel_2025.py"] 
+USER appuser 
