@@ -150,11 +150,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         </button>
       `;
       
-      // 添加點擊事件
+      // 添加點擊事件，僅允許一次展開一位員工
       const button = div.querySelector('button');
       button.addEventListener('click', () => {
         const container = div.querySelector('.preferences-container');
         if (container) {
+          // 關閉其他已展開的偏好設定區塊
+          document.querySelectorAll('.preferences-container.open').forEach(el => {
+            if (el !== container) {
+              el.classList.remove('open');
+            }
+          });
+
           container.classList.toggle('open');
         }
       });

@@ -143,11 +143,17 @@ input:focus {
 
 /* Sidebar styles */
 #sidebar {
-    transition: transform 0.3s ease;
+    transition: width 0.3s ease;
 }
 
 #sidebar.collapsed {
-    transform: translateX(-100%);
+    width: 80px !important;
+    max-width: 80px;
+    flex: 0 0 80px;
+}
+
+#sidebar.collapsed .sidebar-content {
+    display: none;
 }
 
 #sidebar-toggle {
@@ -158,11 +164,13 @@ input:focus {
 .preferences-container {
     overflow: hidden;
     max-height: 0;
-    transition: max-height 0.3s ease;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
 }
 
 .preferences-container.open {
     max-height: 1000px; /* big enough for content */
+    opacity: 1;
 }
 
 /* RWD 設計 */
