@@ -141,6 +141,30 @@ input:focus {
     margin-top: 12px;
 }
 
+/* Sidebar styles */
+#sidebar {
+    transition: transform 0.3s ease;
+}
+
+#sidebar.collapsed {
+    transform: translateX(-100%);
+}
+
+#sidebar-toggle {
+    z-index: 1050;
+}
+
+/* Smooth dropdown for preference container */
+.preferences-container {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.3s ease;
+}
+
+.preferences-container.open {
+    max-height: 1000px; /* big enough for content */
+}
+
 /* RWD 設計 */
 @media (max-width: 576px) {
     .shift-requirements-container {

@@ -1,6 +1,14 @@
 // app.js
 document.addEventListener('DOMContentLoaded', async () => {
   const memberListEl = document.getElementById('member-list');
+  const sidebarToggleBtn = document.getElementById('sidebar-toggle');
+  const sidebar = document.getElementById('sidebar');
+
+  if (sidebarToggleBtn && sidebar) {
+    sidebarToggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+    });
+  }
   const loadingEl = document.createElement('div');
   loadingEl.className = 'text-center p-3';
   loadingEl.innerHTML = `
@@ -68,7 +76,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // 創建偏好設定容器
       const preferencesContainer = document.createElement('div');
-      preferencesContainer.className = 'preferences-container mt-2 d-none';
+      preferencesContainer.className = 'preferences-container mt-2';
       preferencesContainer.innerHTML = `
       <div class="preference-box">
         <div class="form-check">
@@ -147,7 +155,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       button.addEventListener('click', () => {
         const container = div.querySelector('.preferences-container');
         if (container) {
-          container.classList.toggle('d-none');
+          container.classList.toggle('open');
         }
       });
 
