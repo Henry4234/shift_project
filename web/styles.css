@@ -1,59 +1,29 @@
-/* 全域動畫效果 */
-.transition {
-    transition: all 0.3s ease-in-out;
+/* Import Google font - Poppins */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap");
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
 }
-
-/* 平滑滾動 */
-html {
-    scroll-behavior: smooth;
+:root {
+  --white-color: #fff;
+  --blue-color: #4070f4;
+  --grey-color: #707070;
+  --grey-color-light: #aaa;
 }
-
-/* 商品卡片懸停效果 */
-.product-card {
-    transition: transform 0.3s ease;
+body {
+  background-color: #e7f2fd;
+  transition: all 0.5s ease;
 }
-
-.product-card:hover {
-    transform: translateY(-5px);
+body.dark {
+  background-color: #333;
 }
-
-/* 按鈕點擊效果 */
-button {
-    transition: transform 0.1s ease;
-}
-
-button:active {
-    transform: scale(0.98);
-}
-
-/* 導覽列陰影效果 */
-.nav-shadow {
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-/* 輪播圖片背景 */
-.carousel-bg {
-    background-image: url('https://source.unsplash.com/random/1920x1080/?fashion');
-    background-size: cover;
-    background-position: center;
-}
-
-/* 表單輸入框聚焦效果 */
-input:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-}
-
-/* 響應式選單 */
-@media (max-width: 768px) {
-    .mobile-menu {
-        display: block;
-    }
-    
-    .desktop-menu {
-        display: none;
-    }
+body.dark {
+  --white-color: #333;
+  --blue-color: #fff;
+  --grey-color: #f2f2f2;
+  --grey-color-light: #aaa;
 }
 
 /* 加載動畫 */
@@ -69,8 +39,81 @@ input:focus {
         transform: rotate(360deg);
     }
 }
+/* navbar */
+.navbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  left: 0;
+  background-color: var(--white-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 30px;
+  z-index: 1000;
+  box-shadow: 0 0 2px var(--grey-color-light);
+}
+.logo_icon {
+    display: flex;
+    align-items: center;
+    column-gap: 10px;
+    font-size: 36px;
+    font-weight: 500;
+    color: var(--red-color);
+  }
+.logo_item {
+  display: flex;
+  align-items: center;
+  column-gap: 10px;
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--blue-color);
+}
 
+.navbar img {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+}
+.navbar_content {
+  display: flex;
+  align-items: center;
+  column-gap: 25px;
+}
+.navbar_content i {
+  cursor: pointer;
+  font-size: 20px;
+  color: var(--grey-color);
+}
+/* sidebar */
+.sidebar {
+  background-color: var(--white-color);
+  width: 260px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  padding: 80px 20px;
+  z-index: 100;
+  overflow-y: scroll;
+  box-shadow: 0 0 1px var(--grey-color-light);
+  transition: all 0.5s ease;
+}
+.sidebar.close {
+  padding: 60px 0;
+  width: 80px;
+}
+.sidebar::-webkit-scrollbar {
+  display: none;
+}
 
+/* 員工按鈕展開動畫 */
+.form-check {
+  transition: all 0.3s ease-out;
+  overflow: visible;
+  position: relative;
+  margin: 0;
+}
 /* 偏好設定外框 */
 .preference-box {
     border: 1px solid #d0d5db;   /* 淺灰邊框 */
@@ -80,79 +123,246 @@ input:focus {
     position: relative;          /* 用於動畫定位 */
     animation: animate-top 0.4s; /* 動畫持續時間 */
 }
+.preferences-container {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: all 0.3s ease-out;
+  margin: 0;
+  visibility: hidden;
+  position: relative;
+  z-index: 1;
+}
+/* 外框內的標題列 */
+.preference-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+.preferences-container.show {
+  max-height: 375px;
+  opacity: 1;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  visibility: visible;
+}
+
+/* 確保動畫平滑 */
+.form-check + .form-check {
+  transition: transform 0.3s ease-out;
+  margin-top: 0.25rem;
+}
+
+/* 展開時下方元素的位移動畫 */
+.form-check.shifted {
+  transform: translateY(var(--shift-distance, 5px));
+  position: relative;
+  z-index: 0;
+}
+.menu_content {
+  position: relative;
+}
+.menu_title {
+  margin: 15px 0;
+  padding: 0 20px;
+  font-size: 18px;
+}
+.sidebar.close .menu_title {
+  padding: 6px 30px;
+}
+.menu_title::before {
+  color: var(--grey-color);
+  white-space: nowrap;
+}
+.menu_dahsboard::before {
+  content: "人員列表";
+}
+.menu_editor::before {
+  content: "模式選擇";
+}
+.text-muted{
+    position: relative;
+    right: -20px;
+    align-items: right;
+    font-size: 10px;
+}
+.sidebar.close .menu_title::before {
+  content: "";
+  position: absolute;
+  height: 2px;
+  width: 18px;
+  border-radius: 12px;
+  background: var(--grey-color-light);
+}
+.menu_items {
+  padding: 0;
+  list-style: none;
+}
+.navlink_icon {
+  position: relative;
+  font-size: 22px;
+  min-width: 50px;
+  line-height: 40px;
+  display: inline-block;
+  text-align: center;
+  border-radius: 6px;
+}
+.navlink_icon::before {
+  content: "";
+  position: absolute;
+  height: 100%;
+  width: calc(100% + 100px);
+  left: -20px;
+}
+.navlink_icon:hover {
+  background: var(--blue-color);
+
+}
+.sidebar .nav_link {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 4px 15px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--grey-color);
+  white-space: nowrap;
+}
+.sidebar.close .navlink {
+  display: none;
+}
+.nav_link:hover {
+  color: var(--white-color);
+  background: var(--blue-color);
+}
+.sidebar.close .nav_link:hover {
+  background: var(--white-color);
+}
+.submenu_item {
+  cursor: pointer;
+}
+.submenu {
+  display: none;
+}
+.submenu_item .arrow-left {
+  position: absolute;
+  right: 10px;
+  display: inline-block;
+  margin-right: auto;
+}
+.sidebar.close .preference-box {
+  display: none;
+}
+.show_submenu ~ .submenu {
+  display: block;
+}
+.show_submenu .arrow-left {
+  transform: rotate(90deg);
+}
+
+.bottom_content {
+  position: fixed;
+  bottom: 60px;
+  left: 0;
+  width: 260px;
+  cursor: pointer;
+  transition: all 0.5s ease;
+}
+.content {
+    /* width: 530px; */
+    position: relative; 
+    top: 90px;
+    right: 0;
+    height: calc(100% - 90px);
+    margin-left: 260px;              /* 260px = sidebar 展開寬度 */
+    width: calc(100% - 260px);       /* 自動佔滿剩下的空間 */
+    padding: 50px;
+    overflow-y: auto;
+    transition: margin-left .3s ease, width .3s ease;  /* 動畫效果 */
+}
+.bottom {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  left: 0;
+  justify-content: space-around;
+  padding: 18px 0;
+  text-align: center;
+  width: 100%;
+  color: var(--grey-color);
+  border-top: 1px solid var(--grey-color-light);
+  background-color: var(--white-color);
+}
+.bottom i {
+  font-size: 20px;
+}
+.bottom span {
+  font-size: 18px;
+}
+.sidebar.close .bottom_content {
+  width: 50px;
+  left: 15px;
+}
+.sidebar.close .bottom span {
+  display: none;
+}
+
+/* 當 sidebar 有 .close 時，調整內容區 */
+.sidebar.close ~ .content{
+    margin-left: 80px;   /* 80px = sidebar 收合寬度 */
+    width: 90%;          /* 你希望的 90% */
+  }
+.sidebar.hoverable .collapse_sidebar {
+  display: none;
+}
+#sidebarOpen {
+  display: none;
+}
+/* 讓月曆容器永遠佔滿 .content */
+#calendar-container{
+    width: 100%;
+    height: calc(100vh - 180px); /* 90px navbar + 90px 你在 .content 的 top/padding */
+    overflow: hidden;            /* 避免雙捲軸 */
+  }
 
 /* 從上方滑入的動畫 */
 @keyframes animate-top {
-    0% {
-        top: -100px;
-        opacity: 0;
-    }
-    100% {
-        top: 0;
-        opacity: 1;
-    }
+  0% {
+      top: -100px;
+      opacity: 0;
+  }
+  100% {
+      top: 0;
+      opacity: 1;
+  }
 }
 
 /* 確保內容與外框一起動畫 */
 .preference-box * {
-    animation: fade-in 0.4s;
+  animation: fade-in 0.4s;
 }
 
 @keyframes fade-in {
-    0% {
-        opacity: 0;
-    }
-    100% {
-        opacity: 1;
-    }
+  0% {
+      opacity: 0;
+  }
+  100% {
+      opacity: 1;
+  }
 }
 
-/* 外框內的標題列 */
-.preference-title {
-    font-weight: 600;
-    font-size: 0.9rem;
-    margin-bottom: 8px;
-}
-
-/* 班別需求容器 */
-.shift-requirements-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-}
-
-/* 班別需求項目 */
-.shift-requirement-item {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-/* 班別需求輸入框 */
-.shift-requirement {
-    width: 60px !important;
-    text-align: center;
-}
-
-/* 更新按鈕 */
-.update-shifts-btn {
-    width: 100%;
-    margin-top: 12px;
-}
-
-/* RWD 設計 */
-@media (max-width: 576px) {
-    .shift-requirements-container {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .shift-requirement-item {
-        width: 100%;
-    }
-    
-    .shift-requirement {
-        width: 80px !important;
-    }
+@media screen and (max-width: 768px) {
+  #sidebarOpen {
+    font-size: 25px;
+    display: block;
+    margin-right: 10px;
+    cursor: pointer;
+    color: var(--grey-color);
+  }
+  .sidebar.close {
+    left: -100%;
+  }
+  .sidebar.close .bottom_content {
+    left: -100%;
+  }
 }

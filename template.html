@@ -9,7 +9,7 @@
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
     <title>班表設計系統</title>
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="styles.css" />
     <style>
         .calendar-cell.holiday { background: #ffe6e6; }
         .calendar-cell.workday { background: #e6ffe6; }
@@ -43,129 +43,8 @@
       <div class="menu_content">
         <ul class="menu_items">
           <li  id ="member-list" class="item"></li>
-          <!-- duplicate or remove this li tag if you want to add or remove navlink with submenu -->
-          <!-- start -->
-          <li class="item">
-            <div href="#" class="nav_link submenu_item">
-              <span class="navlink_icon">
-                <i class="bx bx-user"></i>
-              </span>
-              <span class="navlink">員工0</span>
-              <i class="bx bx-chevron-right arrow-left"></i>
-            </div>
-            <ul class="menu_items submenu">
-              <a href="#" class="nav_link sublink">Nav Sub Link</a>
-              <a href="#" class="nav_link sublink">Nav Sub Link</a>
-              <a href="#" class="nav_link sublink">Nav Sub Link</a>
-              <a href="#" class="nav_link sublink">Nav Sub Link</a>
-            </ul>
-            <div href="#" class="nav_link submenu_item">
-                <span class="navlink_icon">
-                  <i class="bx bx-user"></i>
-                </span>
-                <span class="navlink">員工1</span>
-                <i class="bx bx-chevron-right arrow-left"></i>
-              </div>
-              <ul class="menu_items submenu">
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-              </ul>
-              <div href="#" class="nav_link submenu_item">
-                <span class="navlink_icon">
-                  <i class="bx bx-user"></i>
-                </span>
-                <span class="navlink">員工2</span>
-                <i class="bx bx-chevron-right arrow-left"></i>
-              </div>
-              <ul class="menu_items submenu">
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-              </ul>
-              <div href="#" class="nav_link submenu_item">
-                <span class="navlink_icon">
-                  <i class="bx bx-user"></i>
-                </span>
-                <span class="navlink">員工3</span>
-                <i class="bx bx-chevron-right arrow-left"></i>
-              </div>
-              <ul class="menu_items submenu">
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-              </ul>
-              <div href="#" class="nav_link submenu_item">
-                <span class="navlink_icon">
-                  <i class="bx bx-user"></i>
-                </span>
-                <span class="navlink">員工4</span>
-                <i class="bx bx-chevron-right arrow-left"></i>
-              </div>
-              <ul class="menu_items submenu">
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-              </ul>
-              <div href="#" class="nav_link submenu_item">
-                <span class="navlink_icon">
-                  <i class="bx bx-user"></i>
-                </span>
-                <span class="navlink">員工5</span>
-                <i class="bx bx-chevron-right arrow-left"></i>
-              </div>
-              <ul class="menu_items submenu">
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-              </ul>
-              <div href="#" class="nav_link submenu_item">
-                <span class="navlink_icon">
-                  <i class="bx bx-user"></i>
-                </span>
-                <span class="navlink">員工6</span>
-                <i class="bx bx-chevron-right arrow-left"></i>
-              </div>
-              <ul class="menu_items submenu">
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-              </ul>
-              <div href="#" class="nav_link submenu_item">
-                <span class="navlink_icon">
-                  <i class="bx bx-user"></i>
-                </span>
-                <span class="navlink">員工7</span>
-                <i class="bx bx-chevron-right arrow-left"></i>
-              </div>
-              <ul class="menu_items submenu">
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-              </ul>
-              <div href="#" class="nav_link submenu_item">
-                <span class="navlink_icon">
-                  <i class="bx bx-user"></i>
-                </span>
-                <span class="navlink">員工8</span>
-                <i class="bx bx-chevron-right arrow-left"></i>
-              </div>
-              <ul class="menu_items submenu">
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-                <a href="#" class="nav_link sublink">Nav Sub Link</a>
-              </ul>
-
+          <!-- 放置member-list -->
           </li>
-          <!-- end -->
           
         </ul>
         <ul class="menu_items">
@@ -224,5 +103,6 @@
     <!-- JavaScript -->
     <script src="sidebar.js".js"></script>
     <script src="script.js".js"></script>
+    <!-- <script type="module" src="./app.js"></script> -->
   </body>
 </html>
