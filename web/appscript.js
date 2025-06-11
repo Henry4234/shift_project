@@ -135,22 +135,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 id="shift-a-${employee.id}" 
                                 min="0" max="30"
                                 value="${employeeRequirements?.find(r => r.shift_type === 'A')?.required_days || 0}">
-                            <span>天白班</span>
+                            <span class="shift-label">天白班</span>
                         </div>
                         <div class="shift-requirement-item">
                             <input type="number" class="form-control form-control-sm shift-requirement" 
                                 id="shift-b-${employee.id}" 
                                 min="0" max="30"
                                 value="${employeeRequirements?.find(r => r.shift_type === 'B')?.required_days || 0}">
-                            <span>天小夜</span>
+                            <span class="shift-label">天小夜</span>
                         </div>
                         <div class="shift-requirement-item">
                             <input type="number" class="form-control form-control-sm shift-requirement" 
                                 id="shift-c-${employee.id}" 
                                 min="0" max="30"
                                 value="${employeeRequirements?.find(r => r.shift_type === 'C')?.required_days || 0}">
-                            <span>天大夜</span>
+                            <span class="shift-label">天大夜</span>
                         </div>
+                        <button class="update-shifts-btn" data-employee-id="${employee.id}">
+                            更新班別需求
+                        </button>
                     </div>
                 </div>
             `;
