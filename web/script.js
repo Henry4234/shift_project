@@ -43,17 +43,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     
         console.log('開始請求所有資料...');
         // 並行請求所有資料
-        // const [employeesResponse, preferencesResponse, requirementsResponse] = await Promise.all([
-        //   fetch('/api/employees'),
-        //   fetch('/api/employee-preferences'),
-        //   fetch('/api/shift-requirements')
-        // ]);
-        // 從本地 JSON 檔案讀取資料
         const [employeesResponse, preferencesResponse, requirementsResponse] = await Promise.all([
-            fetch('./simulate_employees.json'),
-            fetch('./simulate_employeepreferences.json'),
-            fetch('./simulate_shiftrequirements.json')
+          fetch('/api/employees'),
+          fetch('/api/employee-preferences'),
+          fetch('/api/shift-requirements')
         ]);
+        // 從本地 JSON 檔案讀取資料
+        // const [employeesResponse, preferencesResponse, requirementsResponse] = await Promise.all([
+        //     fetch('./simulate_employees.json'),
+        //     fetch('./simulate_employeepreferences.json'),
+        //     fetch('./simulate_shiftrequirements.json')
+        // ]);
 
         const [employees, preferences, requirements] = await Promise.all([
             employeesResponse.json(),
@@ -215,20 +215,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const result = await response.json();
                         console.log('更新成功：', result);
                         
-                        // 更新本地資料
-                        const updatedPreferences = preferences.find(p => p.employee_id === employee.id);
-                        if (updatedPreferences) {
-                            updatedPreferences[preferenceType] = isChecked;
-                        }
+                        // // 更新本地資料
+                        // const updatedPreferences = preferences.find(p => p.employee_id === employee.id);
+                        // if (updatedPreferences) {
+                        //     updatedPreferences[preferenceType] = isChecked;
+                        // }
 
                         // 更新 UI 顯示
                         const newCount = Object.values(preferences).filter(v => v === true).length;
                         const countEl = navLink.querySelector('small');
                         countEl.textContent = `${newCount} 個偏好設定`;
 
+                        // 更新 checkbox 狀態
+                        const checkbox = preferencesContainer.querySelector(`#pref-${preferenceType}-${employee.id}`);
+                        if (checkbox) {
+                            checkbox.checked = isChecked;
+                        }
+
                         // 顯示成功提示
+                        const toastContainer = document.querySelector('.toast-container');
                         const toast = document.createElement('div');
-                        toast.className = 'toast align-items-center text-white bg-success border-0 position-fixed bottom-0 end-0 m-3';
+                        toast.className = 'toast align-items-center text-white bg-success border-0';
                         toast.setAttribute('role', 'alert');
                         toast.setAttribute('aria-live', 'assertive');
                         toast.setAttribute('aria-atomic', 'true');
@@ -240,8 +247,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                             </div>
                         `;
-                        document.body.appendChild(toast);
-                        const bsToast = new bootstrap.Toast(toast);
+                        toastContainer.appendChild(toast);
+                        const bsToast = new bootstrap.Toast(toast, {
+                            autohide: true,
+                            delay: 3000
+                        });
                         bsToast.show();
                         
                         // 3秒後移除提示
