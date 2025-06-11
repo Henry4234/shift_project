@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<!-- Coding by CodingNepal || www.codingnepalweb.com -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Boxicons CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+    <title>班表設計系統</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        .calendar-cell.holiday { background: #ffe6e6; }
+        .calendar-cell.workday { background: #e6ffe6; }
+        .calendar-cell.today { border: 2px solid #007bff; }
+      </style>
+  </head>
+  <body>
+    <!-- navbar -->
+    <nav class="navbar">
+      <div class="logo_item">
+        <i class="bx bx-menu" id="sidebarOpen"></i>
+        <span class="logo_icon">
+            <i class='bx bx-brain' ></i>
+        </span>
+        <span class="logo_item">
+            <div>排班系統</div>
+        </span>
+      </div>
+      <!-- <div class="search_bar">
+        <input type="text" placeholder="Search" />
+      </div> -->
+      <div class="navbar_content">
+        <i class="bi bi-grid"></i>
+        <i class='bx bx-sun' id="darkLight"></i>
+        <i class='bx bx-bell' ></i>
+        <img src="images/profile.jpg" alt="" class="profile" />
+      </div>
+    </nav>
+    <!-- sidebar -->
+    <nav class="sidebar">
+      <div class="menu_content">
+        <ul class="menu_items">
+          <li  id ="member-list" class="item"></li>
+          <!-- duplicate or remove this li tag if you want to add or remove navlink with submenu -->
+          <!-- start -->
+          <li class="item">
+            <div href="#" class="nav_link submenu_item">
+              <span class="navlink_icon">
+                <i class="bx bx-user"></i>
+              </span>
+              <span class="navlink">員工0</span>
+              <i class="bx bx-chevron-right arrow-left"></i>
+            </div>
+            <ul class="menu_items submenu">
+              <a href="#" class="nav_link sublink">Nav Sub Link</a>
+              <a href="#" class="nav_link sublink">Nav Sub Link</a>
+              <a href="#" class="nav_link sublink">Nav Sub Link</a>
+              <a href="#" class="nav_link sublink">Nav Sub Link</a>
+            </ul>
+            <div href="#" class="nav_link submenu_item">
+                <span class="navlink_icon">
+                  <i class="bx bx-user"></i>
+                </span>
+                <span class="navlink">員工1</span>
+                <i class="bx bx-chevron-right arrow-left"></i>
+              </div>
+              <ul class="menu_items submenu">
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+              </ul>
+              <div href="#" class="nav_link submenu_item">
+                <span class="navlink_icon">
+                  <i class="bx bx-user"></i>
+                </span>
+                <span class="navlink">員工2</span>
+                <i class="bx bx-chevron-right arrow-left"></i>
+              </div>
+              <ul class="menu_items submenu">
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+              </ul>
+              <div href="#" class="nav_link submenu_item">
+                <span class="navlink_icon">
+                  <i class="bx bx-user"></i>
+                </span>
+                <span class="navlink">員工3</span>
+                <i class="bx bx-chevron-right arrow-left"></i>
+              </div>
+              <ul class="menu_items submenu">
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+              </ul>
+              <div href="#" class="nav_link submenu_item">
+                <span class="navlink_icon">
+                  <i class="bx bx-user"></i>
+                </span>
+                <span class="navlink">員工4</span>
+                <i class="bx bx-chevron-right arrow-left"></i>
+              </div>
+              <ul class="menu_items submenu">
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+              </ul>
+              <div href="#" class="nav_link submenu_item">
+                <span class="navlink_icon">
+                  <i class="bx bx-user"></i>
+                </span>
+                <span class="navlink">員工5</span>
+                <i class="bx bx-chevron-right arrow-left"></i>
+              </div>
+              <ul class="menu_items submenu">
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+              </ul>
+              <div href="#" class="nav_link submenu_item">
+                <span class="navlink_icon">
+                  <i class="bx bx-user"></i>
+                </span>
+                <span class="navlink">員工6</span>
+                <i class="bx bx-chevron-right arrow-left"></i>
+              </div>
+              <ul class="menu_items submenu">
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+              </ul>
+              <div href="#" class="nav_link submenu_item">
+                <span class="navlink_icon">
+                  <i class="bx bx-user"></i>
+                </span>
+                <span class="navlink">員工7</span>
+                <i class="bx bx-chevron-right arrow-left"></i>
+              </div>
+              <ul class="menu_items submenu">
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+              </ul>
+              <div href="#" class="nav_link submenu_item">
+                <span class="navlink_icon">
+                  <i class="bx bx-user"></i>
+                </span>
+                <span class="navlink">員工8</span>
+                <i class="bx bx-chevron-right arrow-left"></i>
+              </div>
+              <ul class="menu_items submenu">
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+                <a href="#" class="nav_link sublink">Nav Sub Link</a>
+              </ul>
+
+          </li>
+          <!-- end -->
+          
+        </ul>
+        <ul class="menu_items">
+          <div class="menu_title menu_editor"></div>
+          
+          <li class="item">
+            <a href="#" class="nav_link">
+              <span class="navlink_icon">
+                <i class='bx  bx-calendar'  ></i> 
+              </span>
+              <span class="navlink">月曆模式</span>
+            </a>
+          </li>
+          <li class="item">
+            <a href="#" class="nav_link">
+              <span class="navlink_icon">
+                <i class="bx bx-user-circle"></i>
+              </span>
+              <span class="navlink">人員模式</span>
+            </a>
+          </li>
+          <li class="item">
+            <a href="#" class="nav_link">
+              <span class="navlink_icon">
+                <i class="bx bx-bookmark-alt"></i>
+              </span>
+              <span class="navlink">每日上班人員模式</span>
+            </a>
+          </li>
+          <li class="item">
+            <a href="#" class="nav_link">
+              <span class="navlink_icon">
+                <i class="bx bx-cog"></i>
+              </span>
+              <span class="navlink">設定</span>
+            </a>
+          </li>
+        </ul>
+        <!-- Sidebar Open / Close -->
+        <div class="bottom_content">
+          <div class="bottom expand_sidebar">
+            <span> 展開</span>
+            <i class='bx bx-log-in' ></i>
+          </div>
+          <div class="bottom collapse_sidebar">
+            <span> 收起</span>
+            <i class='bx bx-log-out'></i>
+          </div>
+        </div>
+      </div>
+    </nav>
+    <nav class="content">
+        <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+        <div id="calendar-container"></div>
+    </nav>
+    <!-- JavaScript -->
+    <script src="sidebar.js".js"></script>
+    <script src="script.js".js"></script>
+  </body>
+</html>

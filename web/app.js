@@ -35,8 +35,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     ]);
 
     console.log('成功從supabase中取得所有資料');
-    // console.log('員工資料：', employees);
-    // console.log('員工偏好設定：', preferences);
+    console.log('員工資料：', employees);
+    console.log('員工偏好設定：', preferences);
     console.log('班表需求：', requirements);
 
     // 清空載入中提示
