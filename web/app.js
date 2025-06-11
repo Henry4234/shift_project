@@ -1,6 +1,14 @@
 // app.js
 document.addEventListener('DOMContentLoaded', async () => {
   const memberListEl = document.getElementById('member-list');
+  const sidebarToggleBtn = document.getElementById('sidebar-toggle');
+  const sidebar = document.getElementById('sidebar');
+
+  if (sidebarToggleBtn && sidebar) {
+    sidebarToggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+    });
+  }
   const loadingEl = document.createElement('div');
   loadingEl.className = 'text-center p-3';
   loadingEl.innerHTML = `
@@ -68,7 +76,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // 創建偏好設定容器
       const preferencesContainer = document.createElement('div');
-      preferencesContainer.className = 'preferences-container mt-2 d-none';
+      preferencesContainer.className = 'preferences-container mt-2';
       preferencesContainer.innerHTML = `
       <div class="preference-box">
         <div class="form-check">
@@ -142,12 +150,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         </button>
       `;
       
-      // 添加點擊事件
+      // 添加點擊事件，僅允許一次展開一位員工
       const button = div.querySelector('button');
       button.addEventListener('click', () => {
         const container = div.querySelector('.preferences-container');
         if (container) {
-          container.classList.toggle('d-none');
+          // 關閉其他已展開的偏好設定區塊
+          document.querySelectorAll('.preferences-container.open').forEach(el => {
+            if (el !== container) {
+              el.classList.remove('open');
+            }
+          });
+
+          container.classList.toggle('open');
         }
       });
 

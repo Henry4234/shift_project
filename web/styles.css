@@ -141,6 +141,38 @@ input:focus {
     margin-top: 12px;
 }
 
+/* Sidebar styles */
+#sidebar {
+    transition: width 0.3s ease;
+}
+
+#sidebar.collapsed {
+    width: 80px !important;
+    max-width: 80px;
+    flex: 0 0 80px;
+}
+
+#sidebar.collapsed .sidebar-content {
+    display: none;
+}
+
+#sidebar-toggle {
+    z-index: 1050;
+}
+
+/* Smooth dropdown for preference container */
+.preferences-container {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.preferences-container.open {
+    max-height: 1000px; /* big enough for content */
+    opacity: 1;
+}
+
 /* RWD 設計 */
 @media (max-width: 576px) {
     .shift-requirements-container {
