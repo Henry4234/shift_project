@@ -25,12 +25,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     console.log('開始請求所有資料...');
     
-    // 並行請求所有資料
+    // // 並行請求所有資料
     const [employeesResponse, preferencesResponse, requirementsResponse] = await Promise.all([
       fetch('/api/employees'),
       fetch('/api/employee-preferences'),
       fetch('/api/shift-requirements')
     ]);
+    // 從本地 JSON 檔案讀取資料
+    // const [employeesResponse, preferencesResponse, requirementsResponse] = await Promise.all([
+    //   fetch('./simulate_employees.json'),
+    //   fetch('./simulate_employeepreferences.json'),
+    //   fetch('./simulate_shiftrequirements.json')
+    // ]);
 
     if (!employeesResponse.ok || !preferencesResponse.ok || !requirementsResponse.ok) {
       throw new Error('資料請求失敗');
@@ -43,8 +49,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     ]);
 
     console.log('成功從supabase中取得所有資料');
-    // console.log('員工資料：', employees);
-    // console.log('員工偏好設定：', preferences);
+    console.log('員工資料：', employees);
+    console.log('員工偏好設定：', preferences);
     console.log('班表需求：', requirements);
 
     // 清空載入中提示
