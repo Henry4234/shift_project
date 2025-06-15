@@ -43,17 +43,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     
         console.log('開始請求所有資料...');
         // 並行請求所有資料
-        // const [employeesResponse, preferencesResponse, requirementsResponse] = await Promise.all([
-        //   fetch('/api/employees'),
-        //   fetch('/api/employee-preferences'),
-        //   fetch('/api/shift-requirements')
-        // ]);
-        // 從本地 JSON 檔案讀取資料
         const [employeesResponse, preferencesResponse, requirementsResponse] = await Promise.all([
-            fetch('./simulate_employees.json'),
-            fetch('./simulate_employeepreferences.json'),
-            fetch('./simulate_shiftrequirements.json')
+          fetch('/api/employees'),
+          fetch('/api/employee-preferences'),
+          fetch('/api/shift-requirements')
         ]);
+        // 從本地 JSON 檔案讀取資料
+        // const [employeesResponse, preferencesResponse, requirementsResponse] = await Promise.all([
+        //     fetch('./simulate_employees.json'),
+        //     fetch('./simulate_employeepreferences.json'),
+        //     fetch('./simulate_shiftrequirements.json')
+        // ]);
 
         const [employees, preferences, requirements] = await Promise.all([
             employeesResponse.json(),
@@ -291,6 +291,103 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }, 3000);
                     }
                 });
+            });
+
+            // 添加班別需求更新事件
+            const updateShiftsBtn = preferencesContainer.querySelector('.update-shifts-btn');
+            const shiftInputs = preferencesContainer.querySelectorAll('.shift-requirement');
+
+            // 為每個輸入框添加驗證
+            shiftInputs.forEach(input => {
+                input.addEventListener('input', (e) => {
+                    let value = e.target.value;
+                    
+                    // 移除非數字字符
+                    value = value.replace(/[^0-9]/g, '');
+                    
+                    // 確保數值在0-30之間
+                    if (value !== '') {
+                        const numValue = parseInt(value);
+                        if (numValue > 30) value = '30';
+                        if (numValue < 0) value = '0';
+                    }
+                    
+                    e.target.value = value;
+                });
+            });
+
+            // 添加更新按鈕點擊事件
+            updateShiftsBtn.addEventListener('click', async () => {
+                try {
+                    // 收集所有班別需求
+                    const shiftRequirements = {
+                        A: parseInt(preferencesContainer.querySelector('#shift-a-' + employee.id).value) || 0,
+                        B: parseInt(preferencesContainer.querySelector('#shift-b-' + employee.id).value) || 0,
+                        C: parseInt(preferencesContainer.querySelector('#shift-c-' + employee.id).value) || 0
+                    };
+
+                    // 發送更新請求
+                    const response = await fetch(`/api/employee-amount/${employee.id}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(shiftRequirements)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('更新失敗');
+                    }
+
+                    // 顯示成功提示
+                    const toast = document.createElement('div');
+                    toast.className = 'toast align-items-center text-white bg-success border-0 position-fixed bottom-0 end-0 m-3';
+                    toast.setAttribute('role', 'alert');
+                    toast.setAttribute('aria-live', 'assertive');
+                    toast.setAttribute('aria-atomic', 'true');
+                    toast.innerHTML = `
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                班別需求已更新
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    `;
+                    document.body.appendChild(toast);
+                    const bsToast = new bootstrap.Toast(toast);
+                    bsToast.show();
+                    
+                    // 3秒後移除提示
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 3000);
+
+                } catch (err) {
+                    console.error('更新班別需求時發生錯誤：', err);
+                    
+                    // 顯示錯誤提示
+                    const toast = document.createElement('div');
+                    toast.className = 'toast align-items-center text-white bg-danger border-0 position-fixed bottom-0 end-0 m-3';
+                    toast.setAttribute('role', 'alert');
+                    toast.setAttribute('aria-live', 'assertive');
+                    toast.setAttribute('aria-atomic', 'true');
+                    toast.innerHTML = `
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                更新失敗，請稍後再試
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    `;
+                    document.body.appendChild(toast);
+                    const bsToast = new bootstrap.Toast(toast);
+                    bsToast.show();
+                    
+                    // 3秒後移除提示
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 3000);
+                }
             });
         });
 
