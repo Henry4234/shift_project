@@ -41,8 +41,20 @@ darkLight.addEventListener("click", () => {
   if (body.classList.contains("dark")) {
     document.setI
     darkLight.classList.replace("bx-sun", "bx-moon");
+    // 切換 FullCalendar 到暗色主題
+    const calendarEl = document.getElementById('calendar-container');
+    if (calendarEl) {
+      calendarEl.classList.add('fc-theme-bootstrap5-dark');
+      calendarEl.classList.remove('fc-theme-bootstrap5');
+    }
   } else {
     darkLight.classList.replace("bx-moon", "bx-sun");
+    // 切換 FullCalendar 到亮色主題
+    const calendarEl = document.getElementById('calendar-container');
+    if (calendarEl) {
+      calendarEl.classList.add('fc-theme-bootstrap5');
+      calendarEl.classList.remove('fc-theme-bootstrap5-dark');
+    }
   }
 });
 

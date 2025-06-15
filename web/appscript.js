@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     calendar = new FullCalendar.Calendar(el, {
         locale: 'zh-tw',
         initialView: 'dayGridMonth',
+        themeSystem: 'Bootstrap5',
         headerToolbar: {
           left: 'prev,next today',
           center: 'title',
