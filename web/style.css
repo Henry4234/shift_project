@@ -11,6 +11,7 @@
   --blue-color: #4070f4;
   --grey-color: #707070;
   --grey-color-light: #aaa;
+  --green-color: #5C786E;
 }
 body {
   background-color: #e7f2fd;
@@ -243,6 +244,49 @@ body.dark {
   padding: 0;
   list-style: none;
 }
+
+.start-cal-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 4px 15px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--grey-color);
+  white-space: nowrap;
+}
+
+.start-cal-btn:hover {
+  color: var(--white-color);
+  background: var(--green-color);
+}
+
+.sidebar.close .start_cal_icon {
+  padding: 4px 8px;
+  justify-content: center;
+}
+.start_cal_icon {
+  position: relative;
+  font-size: 22px;
+  min-width: 50px;
+  line-height: 0px;
+  display: inline-block;
+  text-align: center;
+  border-radius: 6px;
+  padding: 12px 6px;
+}
+.start_cal_icon::before {
+  content: "";
+  position: absolute;
+  height: 100%;
+  width: calc(100% + 100px);
+  left: -20px;
+}
+.start_cal_icon:hover {
+  background: var(--green-color);
+
+}
+
 .navlink_icon {
   position: relative;
   font-size: 22px;
