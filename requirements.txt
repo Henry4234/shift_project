@@ -1,4 +1,6 @@
 ortools>=9.4.1874
 python-dotenv>=1.0.0
 supabase>=2.0.0
-python-dateutil>=2.8.2 
+python-dateutil>=2.8.2
+flask==3.0.0
+flask-cors==4.0.0 

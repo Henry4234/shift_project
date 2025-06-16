@@ -1,7 +1,8 @@
 version: '3.8'
 
 services:
-  web:
+  # 前端服務
+  frontend:
     build:
       context: ./web
       dockerfile: Dockerfile
@@ -9,16 +10,32 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      - REACT_APP_API_URL=http://backend:5000
     volumes:
       - ./web:/app
       - /app/node_modules
     depends_on:
-      - scheduler
+      - backend
+    networks:
+      - app-network
 
-  scheduler:
+  # 後端服務
+  backend:
     build:
       context: .
       dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_APP=api.py
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
     volumes:
       - .:/app
       - /app/__pycache__
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
