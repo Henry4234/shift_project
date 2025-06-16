@@ -113,6 +113,12 @@ body.dark {
   margin: 0;
   color: var(--grey-color);
 }
+.preferencetitle{
+  position: relative;
+  right: -20px;
+  align-items: right;
+  font-size: 11px;
+}
 /* 偏好設定外框 */
 .preference-box {
     border: 1px solid #d0d5db;   /* 淺灰邊框 */
@@ -224,13 +230,7 @@ body.dark {
 .menu_editor::before {
   content: "模式選擇";
 }
-.text-muted{
-    position: relative;
-    right: -20px;
-    align-items: right;
-    font-size: 11px;
-    color: var(--grey-color) !important;
-  }
+
 .sidebar.close .menu_title::before {
   content: "";
   position: absolute;
@@ -411,4 +411,3 @@ body.dark {
     left: -100%;
   }
 }
-

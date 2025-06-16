@@ -164,9 +164,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <i class="bx bx-user"></i>
                     </span>
                     <span class="navlink">${employee.name}</span>
-                    <small class="text-muted navlink">
+                    <span class="preferencetitle">
                         ${setPreferencesCount} 個偏好設定
-                    </small>
+                    </span>
                     <i class="bx bx-chevron-right arrow-left"></i>
                 </div>
             `;
@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                         // 更新 UI 顯示
                         const newCount = Object.values(preferences).filter(v => v === true).length;
-                        const countEl = navLink.querySelector('small');
+                        const countEl = navLink.querySelector('.preferencetitle');
                         countEl.textContent = `${newCount} 個偏好設定`;
 
                         // 更新 checkbox 狀態
