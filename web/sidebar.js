@@ -12,7 +12,11 @@ let currentlyExpanded = null;
 
 function refreshCalendar() {
     // 動畫 300 ms，保險多 50 ms
-    setTimeout(() => calendar.updateSize(), 350);
+    setTimeout(() => {
+        if (window.calendar) {
+            window.calendar.updateSize();
+        }
+    }, 350);
 }
 
 sidebarOpen.addEventListener("click", () => sidebar.classList.toggle("close"));
@@ -39,7 +43,6 @@ sidebar.addEventListener("mouseleave", () => {
 darkLight.addEventListener("click", () => {
   body.classList.toggle("dark");
   if (body.classList.contains("dark")) {
-    document.setI
     darkLight.classList.replace("bx-sun", "bx-moon");
   } else {
     darkLight.classList.replace("bx-moon", "bx-sun");

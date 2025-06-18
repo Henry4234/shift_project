@@ -23,7 +23,15 @@ RUN touch .env
 
 # 設定環境變數
 ENV PYTHONUNBUFFERED=1
+ENV FLASK_APP=api.py
+ENV FLASK_ENV=production
 
 # 建立非 root 用戶
 RUN useradd -m appuser && chown -R appuser:appuser /app
-USER appuser 
+USER appuser
+
+# 暴露容器端口
+EXPOSE 5000
+
+# 啟動應用程式
+CMD ["python", "api.py"] 

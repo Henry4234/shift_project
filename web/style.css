@@ -12,6 +12,7 @@
   --grey-color: #707070;
   --grey-color-light: #aaa;
   --green-color: #5C786E;
+  --fc-dark-btn-color: #455A64;
 }
 body {
   background-color: #e7f2fd;
@@ -23,6 +24,8 @@ body.dark {
   --blue-color: #fff;
   --grey-color: #f2f2f2;
   --grey-color-light: #aaa;
+  --fc-dark-btn-color: #dae9f4;
+
 }
 
 /* 加載動畫 */
@@ -412,7 +415,13 @@ body.dark {
     width: 100%;
     height: calc(100vh - 180px); /* 90px navbar + 90px 你在 .content 的 top/padding */
     overflow: hidden;            /* 避免雙捲軸 */
+    color: var(--grey-color);
   }
+.fc .fc-button-primary{
+  background-color: var(--fc-dark-btn-color);
+  color: var(--white-color);
+  border: none;
+}
 
 /* 從上方滑入的動畫 */
 @keyframes animate-top {

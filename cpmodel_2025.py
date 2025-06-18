@@ -2,6 +2,7 @@ from ortools.sat.python import cp_model
 import calendar
 from datetime import datetime
 from supabase_client import fetch_employees, fetch_shift_requirements, fetch_employee_preferences
+import json
 
 class CPMODEL:
     def __init__(self):
@@ -18,8 +19,8 @@ class CPMODEL:
         self.shifts = ['A', 'B', 'C', 'O']  # A: 白班, B: 小夜班, C: 大夜班, O:休息
         self.shift_hours = {'A': (8,16), 'B': (16,24), 'C': (0,8), 'O': (0,0)}
 
-        # 2023年3月
-        self.year, self.month = 2023, 3
+        # 2024年3月
+        self.year, self.month = 2024, 3
         self.days = calendar.monthrange(self.year, self.month)[1]
 
         # 從 Supabase 獲取員工的指定班數限制
@@ -142,26 +143,33 @@ class CPMODEL:
         return solver, status
 
     def print_results(self, solver, status):
+        result = {
+            'status': 'success' if status in [cp_model.FEASIBLE, cp_model.OPTIMAL] else 'error',
+            'schedules': {},
+            'penalty': 0,
+            'message': ''
+        }
+
         if status in [cp_model.FEASIBLE, cp_model.OPTIMAL]:
-            print("🗓️ 排班結果:")
+            # 收集每個員工的排班結果
             for e in self.employees:
                 schedule = []
                 for d in range(1, self.days+1):
                     for s in self.shifts:
                         if solver.Value(self.shifts_var[e,d,s]):
                             schedule.append(s)
-                print(f"{e}: {schedule}")
+                result['schedules'][e] = schedule
 
-            print("\n💡 偏好滿足情況:")
+            # 計算總懲罰分數
             total_penalty = 0
             for var, weight in self.penalties:
                 if solver.Value(var):
                     total_penalty += weight
-            print(f"總懲罰分數(越低越好): {total_penalty}")
+            result['penalty'] = total_penalty
+            result['message'] = f"排班成功完成，總懲罰分數(越低越好): {total_penalty}"
 
         elif status not in [cp_model.FEASIBLE, cp_model.OPTIMAL]:
-            print("❗ 找不到可行解，開始診斷軟限制問題...\n")
-
+            result['message'] = "找不到可行解，開始診斷軟限制問題..."
             violation_summary = {'連續7天工作':0, 'C班非連續':0, '大夜後非雙休':0}
 
             for var, weight in self.penalties:
@@ -172,16 +180,15 @@ class CPMODEL:
                 elif 'double_off_after_C' in var.Name():
                     violation_summary['大夜後非雙休'] += 1
 
-            print("📌 軟限制數量統計：")
-            for k,v in violation_summary.items():
-                print(f"{k} 限制數量: {v}")
-
-            print("\n建議降低限制數量多的限制的權重或移除部分限制條件。")
+            result['violations'] = violation_summary
+            result['message'] += "\n建議降低限制數量多的限制的權重或移除部分限制條件。"
         else:
-            print("找不到可行解")
-            self.print_diagnostic_info()
+            result['message'] = "找不到可行解"
+            result['diagnostic_info'] = self.get_diagnostic_info()
 
-    def print_diagnostic_info(self):
+        return result
+
+    def get_diagnostic_info(self):
         # 員工總班次統計
         employee_totals = {e: {'A': 0, 'B': 0, 'C': 0} for e in self.employees}
         for e in self.employees:
@@ -194,15 +201,6 @@ class CPMODEL:
         for e in self.employees:
             for s in ['A', 'B', 'C']:
                 total_supplied[s] += employee_totals[e][s]
-
-        print("🔹 員工總班次統計:")
-        for e in self.employees:
-            totals = employee_totals[e]
-            print(f"{e}: A班={totals['A']}天, B班={totals['B']}天, C班={totals['C']}天, 總計={totals['A']+totals['B']+totals['C']}天")
-
-        print("\n🔸 員工班次供給總計:")
-        for s in ['A', 'B', 'C']:
-            print(f"  {s}班總計: {total_supplied[s]} 班")
 
         # 計算每日班次需求
         daily_requirements_summary = {'A': 0, 'B': 0, 'C': 0}
@@ -221,16 +219,21 @@ class CPMODEL:
                 daily_requirements_summary['B'] += 2
                 daily_requirements_summary['C'] += 1
 
-        print("\n🔸 每日班次需求總計:")
-        for s in ['A', 'B', 'C']:
-            print(f"  {s}班需求: {daily_requirements_summary[s]} 班")
-
         # 比較供給與需求差異
-        print("\n🔺 供需差異分析:")
+        supply_demand_diff = {}
         for s in ['A', 'B', 'C']:
             diff = total_supplied[s] - daily_requirements_summary[s]
-            status = "足夠" if diff == 0 else ("多出" if diff > 0 else "不足")
-            print(f"  {s}班：{status} {abs(diff)} 班")
+            supply_demand_diff[s] = {
+                'diff': diff,
+                'status': "足夠" if diff == 0 else ("多出" if diff > 0 else "不足")
+            }
+
+        return {
+            'employee_totals': employee_totals,
+            'total_supplied': total_supplied,
+            'daily_requirements': daily_requirements_summary,
+            'supply_demand_diff': supply_demand_diff
+        }
 
 def main():
     # 建立模型實例
@@ -245,8 +248,16 @@ def main():
     # 求解
     solver, status = cp_model_instance.solve()
     
-    # 輸出結果
-    cp_model_instance.print_results(solver, status)
+    # 獲取結果
+    result = cp_model_instance.print_results(solver, status)
+    
+    # 如果是成功的情況，將結果寫入檔案
+    if result['status'] == 'success':
+        with open('schedule_result.json', 'w', encoding='utf-8') as f:
+            json.dump(result, f, ensure_ascii=False, indent=2)
+    else:
+        cp_model_instance.get_diagnostic_info()
+    return result
 
 if __name__ == '__main__':
     main()

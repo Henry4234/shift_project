@@ -1,4 +1,5 @@
-let calendar;
+// 將 calendar 設為全局變數
+window.calendar;
 
 // Create a single supabase client for interacting with your database
 // 
@@ -9,9 +10,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const el = document.getElementById('calendar-container');
     
     // 初始化月曆
-    calendar = new FullCalendar.Calendar(el, {
+    window.calendar = new FullCalendar.Calendar(el, {
         locale: 'zh-tw',
         initialView: 'dayGridMonth',
+        themeSystem: 'bootstrap5',
         headerToolbar: {
           left: 'prev,next today',
           center: 'title',
@@ -25,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         ]
     });
-    calendar.render();
+    window.calendar.render();
 
     // 顯示載入中提示
     loadingEl.className = 'text-center p-3';
@@ -54,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             fetch('./simulate_employeepreferences.json'),
             fetch('./simulate_shiftrequirements.json')
         ]);
-
+        // 從本地 JSON 檔案讀取資料
         const [employees, preferences, requirements] = await Promise.all([
             employeesResponse.json(),
             preferencesResponse.json(),
@@ -396,3 +398,128 @@ document.addEventListener('DOMContentLoaded', async () => {
         memberListEl.innerHTML = '<div class="text-danger">無法載入資料</div>';
     }
 });
+
+// 處理開始生成按鈕點擊事件
+document.querySelector('.start-cal-btn').addEventListener('click', async function(e) {
+    e.preventDefault();
+    
+    // 顯示載入中的提示
+    const toastContainer = document.querySelector('.toast-container');
+    const loadingToast = document.createElement('div');
+    loadingToast.className = 'toast';
+    loadingToast.innerHTML = `
+        <div class="toast-header">
+            <strong class="me-auto">系統訊息</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            正在生成排班表，請稍候...
+        </div>
+    `;
+    toastContainer.appendChild(loadingToast);
+    const bsLoadingToast = new bootstrap.Toast(loadingToast);
+    bsLoadingToast.show();
+
+    try {
+        const response = await fetch('http://localhost:5000/api/run-schedule', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+        
+        // 移除載入中的提示
+        bsLoadingToast.hide();
+        loadingToast.remove();
+
+        // 顯示結果提示
+        const resultToast = document.createElement('div');
+        resultToast.className = 'toast';
+        resultToast.innerHTML = `
+            <div class="toast-header">
+                <strong class="me-auto">系統訊息</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ${data.message}
+            </div>
+        `;
+        toastContainer.appendChild(resultToast);
+        const bsResultToast = new bootstrap.Toast(resultToast);
+        bsResultToast.show();
+
+        // 如果成功，更新日曆顯示
+        if (data.status === 'success') {
+            // 清除現有事件
+            window.calendar.removeAllEvents();
+            
+            // 添加新的排班事件
+            const events = [];
+            Object.entries(data.data.schedules).forEach(([employee, schedule]) => {
+                schedule.forEach((shift, index) => {
+                    if (shift !== 'O') {  // 只顯示非休息的班次
+                        const date = new Date(2025, 2, index + 1);  // 2025年3月
+                        events.push({
+                            title: `${employee} - ${shift}班`,
+                            start: date,
+                            backgroundColor: getShiftColor(shift),
+                            borderColor: getShiftColor(shift)
+                        });
+                    }
+                });
+            });
+            
+            // 添加事件到日曆
+            window.calendar.addEventSource(events);
+            
+            // 顯示懲罰分數
+            const penaltyToast = document.createElement('div');
+            penaltyToast.className = 'toast';
+            penaltyToast.innerHTML = `
+                <div class="toast-header">
+                    <strong class="me-auto">排班品質</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    總懲罰分數：${data.data.penalty}（越低越好）
+                </div>
+            `;
+            toastContainer.appendChild(penaltyToast);
+            const bsPenaltyToast = new bootstrap.Toast(penaltyToast);
+            bsPenaltyToast.show();
+        }
+
+    } catch (error) {
+        // 移除載入中的提示
+        bsLoadingToast.hide();
+        loadingToast.remove();
+
+        // 顯示錯誤提示
+        const errorToast = document.createElement('div');
+        errorToast.className = 'toast';
+        errorToast.innerHTML = `
+            <div class="toast-header">
+                <strong class="me-auto">錯誤訊息</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                發生錯誤：${error.message}
+            </div>
+        `;
+        toastContainer.appendChild(errorToast);
+        const bsErrorToast = new bootstrap.Toast(errorToast);
+        bsErrorToast.show();
+    }
+});
+
+// 根據班次類型返回顏色
+function getShiftColor(shift) {
+    switch(shift) {
+        case 'A': return '#4CAF50';  // 綠色
+        case 'B': return '#2196F3';  // 藍色
+        case 'C': return '#9C27B0';  // 紫色
+        default: return '#757575';   // 灰色
+    }
+}
