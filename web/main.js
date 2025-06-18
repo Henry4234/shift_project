@@ -214,6 +214,73 @@ app.post('/api/employee-amount/:employeeId', async (req, res) => {
   }
 });
 
+// API 端點來新增員工
+app.post('/api/employees', async (req, res) => {
+  try {
+    const { name, shift_requirements, preferences } = req.body;
+
+    // 驗證姓名
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return res.status(400).json({ error: '請輸入有效的員工姓名' });
+    }
+
+    // 驗證班別天數
+    const validateShiftDays = (days) => {
+      const num = parseInt(days);
+      return !isNaN(num) && num >= 0 && num <= 30 && Number.isInteger(num);
+    };
+
+    if (!validateShiftDays(shift_requirements.A) || 
+        !validateShiftDays(shift_requirements.B) || 
+        !validateShiftDays(shift_requirements.C)) {
+      return res.status(400).json({ error: '班別天數必須是 0-30 之間的整數' });
+    }
+
+    console.log('開始新增員工...');
+    console.log('新增資料：', req.body);
+
+    // 1. 新增員工基本資料
+    const { data: employee, error: employeeError } = await supabase
+      .from('employees')
+      .insert({ name: name.trim() })
+      .select('id')
+      .single();
+
+    if (employeeError) throw employeeError;
+
+    // 使用 Promise.all 並行處理偏好設定和班別需求
+    const [prefResult, shiftResult] = await Promise.all([
+      // 新增員工偏好設定
+      supabase
+        .from('employee_preferences')
+        .insert({
+          employee_id: employee.id,
+          max_continuous_days: preferences.max_continuous_days,
+          continuous_c: preferences.continuous_c,
+          double_off_after_c: preferences.double_off_after_c
+        }),
+
+      // 新增班別需求
+      supabase
+        .from('shift_requirements')
+        .insert([
+          { employee_id: employee.id, shift_type: 'A', required_days: shift_requirements.A },
+          { employee_id: employee.id, shift_type: 'B', required_days: shift_requirements.B },
+          { employee_id: employee.id, shift_type: 'C', required_days: shift_requirements.C }
+        ])
+    ]);
+
+    if (prefResult.error) throw prefResult.error;
+    if (shiftResult.error) throw shiftResult.error;
+
+    console.log('新增員工成功：', employee);
+    res.json(employee);
+  } catch (err) {
+    console.error('新增員工時發生錯誤：', err.message);
+    res.status(500).json({ error: '無法新增員工' });
+  }
+});
+
 app.listen(port, () => {
   console.log(`服務器運行在 http://localhost:${port}`);
 });
