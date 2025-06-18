@@ -19,8 +19,8 @@ class CPMODEL:
         self.shifts = ['A', 'B', 'C', 'O']  # A: 白班, B: 小夜班, C: 大夜班, O:休息
         self.shift_hours = {'A': (8,16), 'B': (16,24), 'C': (0,8), 'O': (0,0)}
 
-        # 2023年3月
-        self.year, self.month = 2023, 3
+        # 2024年3月
+        self.year, self.month = 2024, 3
         self.days = calendar.monthrange(self.year, self.month)[1]
 
         # 從 Supabase 獲取員工的指定班數限制

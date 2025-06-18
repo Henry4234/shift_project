@@ -1,4 +1,5 @@
-let calendar;
+// 將 calendar 設為全局變數
+window.calendar;
 
 // Create a single supabase client for interacting with your database
 // 
@@ -9,9 +10,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const el = document.getElementById('calendar-container');
     
     // 初始化月曆
-    calendar = new FullCalendar.Calendar(el, {
+    window.calendar = new FullCalendar.Calendar(el, {
         locale: 'zh-tw',
         initialView: 'dayGridMonth',
+        themeSystem: 'bootstrap5',
         headerToolbar: {
           left: 'prev,next today',
           center: 'title',
@@ -25,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         ]
     });
-    calendar.render();
+    window.calendar.render();
 
     // 顯示載入中提示
     loadingEl.className = 'text-center p-3';
@@ -43,18 +45,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     
         console.log('開始請求所有資料...');
         // 並行請求所有資料
+        // const [employeesResponse, preferencesResponse, requirementsResponse] = await Promise.all([
+        //   fetch('/api/employees'),
+        //   fetch('/api/employee-preferences'),
+        //   fetch('/api/shift-requirements')
+        // ]);
+        // 從本地 JSON 檔案讀取資料
         const [employeesResponse, preferencesResponse, requirementsResponse] = await Promise.all([
-          fetch('/api/employees'),
-          fetch('/api/employee-preferences'),
-          fetch('/api/shift-requirements')
+            fetch('./simulate_employees.json'),
+            fetch('./simulate_employeepreferences.json'),
+            fetch('./simulate_shiftrequirements.json')
         ]);
         // 從本地 JSON 檔案讀取資料
-        // const [employeesResponse, preferencesResponse, requirementsResponse] = await Promise.all([
-        //     fetch('./simulate_employees.json'),
-        //     fetch('./simulate_employeepreferences.json'),
-        //     fetch('./simulate_shiftrequirements.json')
-        // ]);
-
         const [employees, preferences, requirements] = await Promise.all([
             employeesResponse.json(),
             preferencesResponse.json(),
@@ -451,7 +453,7 @@ document.querySelector('.start-cal-btn').addEventListener('click', async functio
         // 如果成功，更新日曆顯示
         if (data.status === 'success') {
             // 清除現有事件
-            calendar.removeAllEvents();
+            window.calendar.removeAllEvents();
             
             // 添加新的排班事件
             const events = [];
@@ -470,7 +472,7 @@ document.querySelector('.start-cal-btn').addEventListener('click', async functio
             });
             
             // 添加事件到日曆
-            calendar.addEventSource(events);
+            window.calendar.addEventSource(events);
             
             // 顯示懲罰分數
             const penaltyToast = document.createElement('div');
