@@ -7,25 +7,29 @@
   font-family: "Poppins", sans-serif;
 }
 :root {
+  --black-color: #000;
   --white-color: #fff;
   --blue-color: #4070f4;
   --grey-color: #707070;
   --grey-color-light: #aaa;
   --green-color: #5C786E;
   --fc-dark-btn-color: #455A64;
+  --fc-weekend-color: #7f9eb2;
 }
 body {
   background-color: #e7f2fd;
   transition: all 0.5s ease;
 }
 body.dark {
+  
   background-color: #333;
+  --black-color: #fff;
   --white-color: #333;
   --blue-color: #fff;
   --grey-color: #f2f2f2;
   --grey-color-light: #aaa;
   --fc-dark-btn-color: #dae9f4;
-
+  --fc-weekend-color: #5f6060;
 }
 
 /* 加載動畫 */
@@ -330,6 +334,13 @@ body.dark {
 .sidebar.close .nav_link:hover {
   background: var(--white-color);
 }
+.sidebar .add_member {
+  font-size: 20px;
+}
+.sidebar .add_member:hover{
+  color: var(--white-color);
+  background: var(--green-color);
+}
 .submenu_item {
   cursor: pointer;
 }
@@ -417,10 +428,23 @@ body.dark {
     overflow: hidden;            /* 避免雙捲軸 */
     color: var(--grey-color);
   }
+.fc .fc-col-header-cell-cushion{
+  color: var(--black-color);
+}
+.fc .fc-daygrid-day-number{
+  color: var(--grey-color);
+}
 .fc .fc-button-primary{
   background-color: var(--fc-dark-btn-color);
   color: var(--white-color);
   border: none;
+}
+
+.fc .fc-day-sat{
+  background-color: var(--fc-weekend-color);
+}
+.fc .fc-day-sun{
+  background-color: var(--fc-weekend-color);
 }
 
 /* 從上方滑入的動畫 */
@@ -463,4 +487,34 @@ body.dark {
   .sidebar.close .bottom_content {
     left: -100%;
   }
+}
+
+/* 彈出新增員工視窗css圖示樣式 */
+#addMemberModal .modal-content{
+  background-color:var(--white-color)
+}
+.modal-header i.bx-user-plus {
+    font-size: 26px;  /* 設定圖示大小 */
+    margin-right: 5px;  /* 與標題文字的間距 */
+    color: var(--blue-color);  /* 使用主題色 */
+    vertical-align: middle;  /* 垂直置中對齊 */
+}
+
+/* 確保標題文字與圖示在同一行 */
+.modal-header .modal-title {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    color: var(--grey-color);
+}
+#addMemberModal .modal-body{
+  color: var(--grey-color);
+}
+.modal-body .input-day{
+  width: 90%;
+}
+.modal-body .row{
+  display: flex;
+  align-items: center;
+
 }
