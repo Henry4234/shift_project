@@ -1,3 +1,4 @@
 weiran_aitech/
 .env
 .DS_store
+schedule_result.json
