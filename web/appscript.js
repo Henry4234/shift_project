@@ -90,6 +90,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 初始化月曆
     window.initCalendar();
 
+    // 初始化模式切換器，並傳入日曆初始化函數
+    new ModeSwitcher(window.initCalendar);
+
     // 顯示載入中提示
     loadingEl.className = 'text-center p-3';
     loadingEl.innerHTML = `
