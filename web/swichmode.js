@@ -1,13 +1,10 @@
-// 模式切換功能 JavaScript
-// 作者：全端工程師
 // 功能：處理月曆模式、人員模式、每日上班人員模式之間的切換
 
 class ModeSwitcher {
-    constructor() {
+    constructor(reinitializeCalendar) {
         // 初始化變數
         this.currentMode = 'calendar'; // 預設為月曆模式
         this.contentNav = document.querySelector('nav.content');
-        this.calendarContainer = document.getElementById('calendar-container');
         
         // 模式按鈕元素
         this.modeButtons = {
@@ -15,6 +12,8 @@ class ModeSwitcher {
             employees: document.querySelector('.mode-employees'),
             dailyEmployees: document.querySelector('.mode-daily-employees')
         };
+        
+        this.reinitializeCalendar = reinitializeCalendar;
         
         // 初始化
         this.init();
@@ -245,15 +244,6 @@ class ModeSwitcher {
     }
     
     // 重新初始化月曆（如果需要）
-    reinitializeCalendar() {
-        // 檢查是否有月曆初始化函數
-        if (typeof window.initCalendar === 'function') {
-            window.initCalendar();
-        } else {
-            // 如果沒有初始化函數，輸出錯誤
-            console.error('未找到日曆初始化函數 (initCalendar)');
-        }
-    }
     
     // 更新活動按鈕狀態
     updateActiveButton(activeMode) {
@@ -270,6 +260,6 @@ class ModeSwitcher {
 }
 
 // 當 DOM 載入完成後初始化模式切換器
-document.addEventListener('DOMContentLoaded', () => {
-    new ModeSwitcher();
-}); 
+// document.addEventListener('DOMContentLoaded', () => {
+//     new ModeSwitcher();
+// }); 
