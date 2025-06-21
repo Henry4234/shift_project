@@ -546,11 +546,112 @@ body.dark {
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 2px 12px #0001;
-  margin-top: 30px;
+  margin-top: 15px;
   padding: 24px 12px 24px 12px;
   overflow-x: auto;
   transition: opacity 0.4s;
 }
+
+/* 年月選擇和搜尋按鈕的容器 */
+.employee-controls {
+  /* display: flex; */
+  /* justify-content: space-between; */
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  background-color: var(--white-color);
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  animation: fadeInTable 0.4s;
+  gap: 15px; /* 增加整體間距 */
+  color: var(--grey-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.date-selector-title {
+    text-align: center;
+    color: var(--grey-color);
+}
+
+.date-selector {
+  display: flex;
+  justify-content: center;
+  align-items: center; /* 垂直居中對齊 */
+  gap: 30px; /* 調整內部元件間距 */
+  padding: 0px 20px;
+}
+
+.select-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.select-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.select-wrapper .form-control {
+    width: 160px;
+    padding: 8px 32px 8px 12px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: var(--white-color);
+    font-size: 15px;
+    cursor: pointer;
+    color: var(--black-color);
+}
+
+.select-wrapper i {
+    position: absolute;
+    right: 12px;
+    font-size: 22px;
+    color: var(--grey-color);
+    pointer-events: none;
+}
+
+.employee-controls span {
+     font-size: 18px;
+     font-weight: 500;
+}
+
+.employee-controls select {
+  padding: 6px 28px 6px 10px; /* 調整內距以容納箭頭 */
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  font-size: 14px;
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  background-size: 1em;
+  min-width: 100px; /* 設定最小寬度 */
+}
+
+.employee-controls button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background-color: var(--fc-dark-btn-color);
+  color: var(--white-color);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.employee-controls button:hover {
+  background-color: #5173a9;
+}
+
+.employee-controls button i {
+  margin-right: 5px;
+}
+
 .employeesmode.fadein {
   opacity: 1;
   animation: fadeInTable 0.4s;

@@ -281,6 +281,50 @@ app.post('/api/employees', async (req, res) => {
   }
 });
 
+// API 端點來獲取員工班表
+app.get('/api/employee-schedules', async (req, res) => {
+  try {
+    const { year, month } = req.query;
+
+    // 驗證查詢參數
+    if (!year || !month) {
+      return res.status(400).json({ error: '缺少年份或月份參數' });
+    }
+
+    const yearNum = parseInt(year);
+    const monthNum = parseInt(month); // 前端已處理 month+1，此處直接使用
+    
+    if (isNaN(yearNum) || isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
+      return res.status(400).json({ error: '無效的年份或月份格式' });
+    }
+
+    // 計算月份的第一天和最後一天
+    const startDate = `${yearNum}-${String(monthNum).padStart(2, '0')}-01`;
+    const lastDay = new Date(yearNum, monthNum, 0).getDate();
+    const endDate = `${yearNum}-${String(monthNum).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+    console.log(`開始從 Supabase 獲取 ${yearNum}年${monthNum}月 的班表資料...`);
+    console.log(`查詢區間: ${startDate} 到 ${endDate}`);
+
+    const { data: schedules, error } = await supabase
+      .from('employee_schedules')
+      .select('*')
+      .gte('work_date', startDate)
+      .lte('work_date', endDate);
+
+    if (error) {
+      console.error('Supabase 查詢錯誤：', error);
+      throw error;
+    }
+
+    console.log('從 Supabase 獲取到的班表資料：', schedules);
+    res.json(schedules);
+  } catch (err) {
+    console.error('取得員工班表時發生錯誤：', err.message);
+    res.status(500).json({ error: '無法載入員工班表資料' });
+  }
+});
+
 app.listen(port, () => {
   console.log(`服務器運行在 http://localhost:${port}`);
 });

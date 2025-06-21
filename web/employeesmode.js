@@ -5,6 +5,12 @@ class EmployeesMode {
         // 初始化變數
         this.container = null;
         this.employees = []; // 員工資料陣列
+        this.shiftTypeMap = {
+            'A': { text: '早班', class: 'morning-shift' },
+            'B': { text: '中班', class: 'afternoon-shift' },
+            'C': { text: '晚班', 'class': 'night-shift' },
+            'O': { text: '休假', class: 'day-off' }
+        };
         
         // 初始化
         this.init();
@@ -39,6 +45,28 @@ class EmployeesMode {
         // 創建人員班表容器
         const contentNav = document.querySelector('nav.content');
         contentNav.innerHTML = `
+            <div class="employee-controls">
+                    <div class="date-selector-title">
+                        <h3>請選擇觀看的年份/月份:</h3>
+                    </div>       
+                 <div class="date-selector">
+                    <div class="select-container">
+                      <span>年份選擇:</span>
+                      <div class="select-wrapper">
+                        <select id="year-select" class="form-control"></select>
+                        <i class='bx bx-expand-vertical' ></i>
+                      </div>
+                    </div>
+                    <div class="select-container">
+                      <span>月份選擇:</span>
+                      <div class="select-wrapper">
+                        <select id="month-select" class="form-control"></select>
+                        <i class='bx bx-expand-vertical' ></i>
+                      </div>
+                    </div>
+                </div>
+                <button id="search-schedule-btn" class="btn btn-primary"><i class='bx bx-search'></i> 搜尋</button>
+            </div>
             <div class="employeesmode">
                 <div class="employees-table-outer">
                     <table class="employees-table">
@@ -56,17 +84,23 @@ class EmployeesMode {
             </div>
         `;
         
-        // 生成人員班表內容
-        this.generateEmployeesTable();
+        // 填充日期選擇器
+        this.populateDateSelectors();
+
+        // 首次載入時獲取當前月份的班表
+        this.fetchAndRenderSchedules();
         
         // 添加淡入動畫
         setTimeout(() => {
             contentNav.classList.add('fadein');
         }, 50);
+
+        // 啟用滑鼠滾輪水平滾動
+        this.addHorizontalScroll();
     }
     
     // 生成人員班表
-    generateEmployeesTable() {
+    generateEmployeesTable(schedules = []) {
         const table = document.querySelector('.employees-table');
         if (!table) {
             console.error('找不到員工班表元素');
@@ -76,15 +110,29 @@ class EmployeesMode {
         const thead = table.querySelector('thead tr');
         const tbody = table.querySelector('tbody');
         
+        // 將班表資料轉換為 Map 以便快速查找
+        const scheduleMap = new Map();
+        schedules.forEach(s => {
+            const workDate = s.work_date.split('T')[0]; // 確保只取 yyyy-mm-dd
+            scheduleMap.set(`${s.employee_id}-${workDate}`, s.shift_type);
+        });
+
         // 清空現有內容
         thead.innerHTML = '<th>員工姓名</th>';
         tbody.innerHTML = '';
         
         // 獲取當前月份的天數
-        const currentDate = new Date();
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const yearSelect = document.getElementById('year-select');
+        const monthSelect = document.getElementById('month-select');
+
+        // 如果選擇器不存在，則不執行
+        if (!yearSelect || !monthSelect) {
+            return;
+        }
+
+        const year = yearSelect.value;
+        const month = monthSelect.value; // 0-11
+        const daysInMonth = new Date(year, parseInt(month) + 1, 0).getDate();
         
         // 生成日期標題
         for (let day = 1; day <= daysInMonth; day++) {
@@ -110,18 +158,19 @@ class EmployeesMode {
                 const cell = document.createElement('td');
                 cell.className = 'shift-cell';
                 cell.setAttribute('data-employee', employee.id);
-                cell.setAttribute('data-date', `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
+                const dateStr = `${year}-${String(parseInt(month) + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                cell.setAttribute('data-date', dateStr);
                 
-                // 隨機生成班表（實際應用中應該從資料庫獲取）
-                const shifts = ['早班', '中班', '晚班', '休假', ''];
-                const randomShift = shifts[Math.floor(Math.random() * shifts.length)];
-                cell.textContent = randomShift;
-                
-                // 根據班別設定樣式
-                if (randomShift === '早班') cell.classList.add('morning-shift');
-                else if (randomShift === '中班') cell.classList.add('afternoon-shift');
-                else if (randomShift === '晚班') cell.classList.add('night-shift');
-                else if (randomShift === '休假') cell.classList.add('day-off');
+                // 從 map 獲取班表，而不是隨機生成
+                const shiftType = scheduleMap.get(`${employee.id}-${dateStr}`);
+                const shiftInfo = this.shiftTypeMap[shiftType];
+
+                if (shiftInfo) {
+                    cell.textContent = shiftInfo.text;
+                    cell.classList.add(shiftInfo.class);
+                } else {
+                    cell.textContent = '';
+                }
                 
                 // 添加點擊事件（可編輯班表）
                 cell.addEventListener('click', () => this.editShift(cell));
@@ -133,23 +182,102 @@ class EmployeesMode {
         });
     }
     
+    // 新增：獲取並渲染班表資料
+    async fetchAndRenderSchedules() {
+        const yearSelect = document.getElementById('year-select');
+        const monthSelect = document.getElementById('month-select');
+        if (!yearSelect || !monthSelect) return;
+
+        const year = yearSelect.value;
+        const month = parseInt(monthSelect.value) + 1; // API 預期 1-12
+
+        console.log(`正在獲取 ${year} 年 ${month} 月的班表...`);
+        try {
+            const response = await fetch(`/api/employee-schedules?year=${year}&month=${month}`);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP 錯誤! 狀態: ${response.status}`);
+            }
+            const schedules = await response.json();
+            console.log('成功獲取班表資料:', schedules);
+            this.generateEmployeesTable(schedules);
+        } catch (error) {
+            console.error('獲取班表資料時發生錯誤:', error);
+            const tbody = document.querySelector('.employees-table tbody');
+            if(tbody) {
+                const year = yearSelect.value;
+                const month = monthSelect.value;
+                const daysInMonth = new Date(year, parseInt(month) + 1, 0).getDate();
+                tbody.innerHTML = `<tr><td colspan="${daysInMonth + 1}" style="text-align:center; color: red; padding: 20px;">無法載入班表資料。</td></tr>`;
+            }
+        }
+    }
+    
+    // 新增：啟用滑鼠滾輪水平滾動
+    addHorizontalScroll() {
+        const scrollContainer = document.querySelector('.employees-table-outer');
+        if (scrollContainer) {
+            scrollContainer.addEventListener('wheel', (evt) => {
+                // 如果是垂直滾動，則阻止預設行為並轉換為水平滾動
+                if (Math.abs(evt.deltaY) > Math.abs(evt.deltaX)) {
+                    evt.preventDefault();
+                    scrollContainer.scrollLeft += evt.deltaY;
+                }
+            }, { passive: false });
+        }
+    }
+
+    // 填充年月選擇器
+    populateDateSelectors() {
+        const yearSelect = document.getElementById('year-select');
+        const monthSelect = document.getElementById('month-select');
+        const searchBtn = document.getElementById('search-schedule-btn');
+
+        if (!yearSelect || !monthSelect || !searchBtn) return;
+
+        const currentDate = new Date();
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth(); // 0-11
+
+        // 填充年份
+        for (let i = currentYear - 2; i <= currentYear + 2; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = `${i}年`;
+            if (i === currentYear) option.selected = true;
+            yearSelect.appendChild(option);
+        }
+
+        // 填充月份
+        for (let i = 0; i < 12; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = `${i + 1}月`;
+            if (i === currentMonth) option.selected = true;
+            monthSelect.appendChild(option);
+        }
+        
+        // 搜尋按鈕事件
+        searchBtn.addEventListener('click', () => this.fetchAndRenderSchedules());
+    }
+    
     // 編輯班表
     editShift(cell) {
-        const shifts = ['早班', '中班', '晚班', '休假', ''];
+        const shifts = ['', ...Object.values(this.shiftTypeMap).map(s => s.text)];
         const currentShift = cell.textContent;
         const currentIndex = shifts.indexOf(currentShift);
         const nextIndex = (currentIndex + 1) % shifts.length;
         const nextShift = shifts[nextIndex];
         
         // 移除舊的樣式類別
-        cell.classList.remove('morning-shift', 'afternoon-shift', 'night-shift', 'day-off');
+        Object.values(this.shiftTypeMap).forEach(s => cell.classList.remove(s.class));
         
         // 設定新的班別和樣式
         cell.textContent = nextShift;
-        if (nextShift === '早班') cell.classList.add('morning-shift');
-        else if (nextShift === '中班') cell.classList.add('afternoon-shift');
-        else if (nextShift === '晚班') cell.classList.add('night-shift');
-        else if (nextShift === '休假') cell.classList.add('day-off');
+        const newShiftInfo = Object.values(this.shiftTypeMap).find(s => s.text === nextShift);
+        if (newShiftInfo) {
+            cell.classList.add(newShiftInfo.class);
+        }
         
         // 這裡可以添加保存到資料庫的邏輯
         console.log(`員工 ${cell.getAttribute('data-employee')} 在 ${cell.getAttribute('data-date')} 的班別改為: ${nextShift}`);
