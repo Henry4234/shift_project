@@ -324,25 +324,30 @@ body.dark {
   color: var(--grey-color);
   white-space: nowrap;
 }
-.calendarmode{
+.sidebar .calendarmode {
   display: flex;
+  
   align-items: center;
   width: 100%;
-  padding: 4px 15px;
+  padding: 4px;
   border-radius: 8px;
   text-decoration: none;
   color: var(--grey-color);
   white-space: nowrap;
 }
-.calendarmode:hover {
+.sidebar .calendarmode :hover {
   color: var(--white-color);
   background: var(--blue-color);
 }
+
 .sidebar.close .calendarmode:hover {
   background: var(--white-color);
 }
 .sidebar.close .navlink {
   display: none;
+}
+.sidebar.close .calendarmode {
+  justify-content: center;
 }
 .nav_link:hover {
   color: var(--white-color);
