@@ -1,6 +1,9 @@
 // 將 calendar 設為全局變數
 window.calendar;
 
+// 將員工資料設為全域變數
+window.employeesResponse = null;
+
 // 全局初始化日曆函數
 window.initCalendar = function() {
     const el = document.getElementById('calendar-container');
@@ -127,10 +130,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             requirementsResponse.json()
         ]);
     
+        // 將員工資料設為全域變數
+        window.employeesResponse = employees;
+        
         console.log('成功從本地檔案中取得所有資料');
         console.log('員工資料：', employees);
         console.log('員工偏好設定：', preferences);
         console.log('班表需求：', requirements);
+        
+        // 更新 employeesMode 的員工資料
+        if (window.employeesMode) {
+            window.employeesMode.updateEmployeesData();
+        }
     
         // 清空載入中提示
         memberListEl.innerHTML = '';
