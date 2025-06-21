@@ -105,32 +105,20 @@ class ModeSwitcher {
     
     // 顯示人員模式
     showEmployeesMode() {
-        // 創建人員班表容器
-        this.contentNav.innerHTML = `
-            <div class="employeesmode">
-                <div class="employees-table-outer">
-                    <table class="employees-table">
-                        <thead>
-                            <tr>
-                                <th>員工姓名</th>
-                                <!-- 動態生成日期標題 -->
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- 動態生成員工行 -->
-                        </tbody>
-                    </table>
+        // 使用 employeesmode.js 的實例來顯示人員班表
+        if (window.employeesMode) {
+            window.employeesMode.show();
+        } else {
+            console.error('employeesMode 實例不存在');
+            // 備用方案：顯示錯誤訊息
+            this.contentNav.innerHTML = `
+                <div class="employeesmode">
+                    <div class="alert alert-danger">
+                        無法載入人員班表模式，請重新整理頁面
+                    </div>
                 </div>
-            </div>
-        `;
-        
-        // 生成人員班表內容
-        this.generateEmployeesTable();
-        
-        // 添加淡入動畫
-        setTimeout(() => {
-            this.contentNav.classList.add('fadein');
-        }, 50);
+            `;
+        }
     }
     
     // 顯示每日上班人員模式
@@ -148,102 +136,6 @@ class ModeSwitcher {
             this.contentNav.classList.add('fadein');
         }, 50);
     }
-    
-    // 生成人員班表
-    generateEmployeesTable() {
-        const table = this.contentNav.querySelector('.employees-table');
-        const thead = table.querySelector('thead tr');
-        const tbody = table.querySelector('tbody');
-        
-        // 清空現有內容
-        thead.innerHTML = '<th>員工姓名</th>';
-        tbody.innerHTML = '';
-        
-        // 獲取當前月份的天數
-        const currentDate = new Date();
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        
-        // 生成日期標題
-        for (let day = 1; day <= daysInMonth; day++) {
-            const date = new Date(year, month, day);
-            const dayOfWeek = ['日', '一', '二', '三', '四', '五', '六'][date.getDay()];
-            const th = document.createElement('th');
-            th.textContent = `${day}日(${dayOfWeek})`;
-            th.className = date.getDay() === 0 || date.getDay() === 6 ? 'weekend' : '';
-            thead.appendChild(th);
-        }
-        
-        // 模擬員工數據（實際應用中應該從資料庫獲取）
-        const employees = [
-            { id: 1, name: '張小明' },
-            { id: 2, name: '李小華' },
-            { id: 3, name: '王小美' },
-            { id: 4, name: '陳小強' },
-            { id: 5, name: '林小芳' }
-        ];
-        
-        // 生成員工行
-        employees.forEach(employee => {
-            const row = document.createElement('tr');
-            
-            // 員工姓名欄
-            const nameCell = document.createElement('td');
-            nameCell.textContent = employee.name;
-            row.appendChild(nameCell);
-            
-            // 生成每天的班表欄位
-            for (let day = 1; day <= daysInMonth; day++) {
-                const cell = document.createElement('td');
-                cell.className = 'shift-cell';
-                cell.setAttribute('data-employee', employee.id);
-                cell.setAttribute('data-date', `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
-                
-                // 隨機生成班表（實際應用中應該從資料庫獲取）
-                const shifts = ['早班', '中班', '晚班', '休假', ''];
-                const randomShift = shifts[Math.floor(Math.random() * shifts.length)];
-                cell.textContent = randomShift;
-                
-                // 根據班別設定樣式
-                if (randomShift === '早班') cell.classList.add('morning-shift');
-                else if (randomShift === '中班') cell.classList.add('afternoon-shift');
-                else if (randomShift === '晚班') cell.classList.add('night-shift');
-                else if (randomShift === '休假') cell.classList.add('day-off');
-                
-                // 添加點擊事件（可編輯班表）
-                cell.addEventListener('click', () => this.editShift(cell));
-                
-                row.appendChild(cell);
-            }
-            
-            tbody.appendChild(row);
-        });
-    }
-    
-    // 編輯班表
-    editShift(cell) {
-        const shifts = ['早班', '中班', '晚班', '休假', ''];
-        const currentShift = cell.textContent;
-        const currentIndex = shifts.indexOf(currentShift);
-        const nextIndex = (currentIndex + 1) % shifts.length;
-        const nextShift = shifts[nextIndex];
-        
-        // 移除舊的樣式類別
-        cell.classList.remove('morning-shift', 'afternoon-shift', 'night-shift', 'day-off');
-        
-        // 設定新的班別和樣式
-        cell.textContent = nextShift;
-        if (nextShift === '早班') cell.classList.add('morning-shift');
-        else if (nextShift === '中班') cell.classList.add('afternoon-shift');
-        else if (nextShift === '晚班') cell.classList.add('night-shift');
-        else if (nextShift === '休假') cell.classList.add('day-off');
-        
-        // 這裡可以添加保存到資料庫的邏輯
-        console.log(`員工 ${cell.getAttribute('data-employee')} 在 ${cell.getAttribute('data-date')} 的班別改為: ${nextShift}`);
-    }
-    
-    // 重新初始化月曆（如果需要）
     
     // 更新活動按鈕狀態
     updateActiveButton(activeMode) {
