@@ -324,8 +324,30 @@ body.dark {
   color: var(--grey-color);
   white-space: nowrap;
 }
+.sidebar .calendarmode {
+  display: flex;
+  
+  align-items: center;
+  width: 100%;
+  padding: 4px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--grey-color);
+  white-space: nowrap;
+}
+.sidebar .calendarmode :hover {
+  color: var(--white-color);
+  background: var(--blue-color);
+}
+
+.sidebar.close .calendarmode:hover {
+  background: var(--white-color);
+}
 .sidebar.close .navlink {
   display: none;
+}
+.sidebar.close .calendarmode {
+  justify-content: center;
 }
 .nav_link:hover {
   color: var(--white-color);
@@ -517,4 +539,64 @@ body.dark {
   display: flex;
   align-items: center;
 
+}
+/* === 人員模式專用樣式 === */
+/* 人員班表外框動畫 */
+.employeesmode {
+  display: block;
+  width: 100%;
+  min-height: 400px;
+  animation: fadeInTable 0.4s;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px #0001;
+  margin-top: 30px;
+  padding: 24px 12px 24px 12px;
+  overflow-x: auto;
+  transition: opacity 0.4s;
+}
+.employeesmode.fadein {
+  opacity: 1;
+  animation: fadeInTable 0.4s;
+}
+.employeesmode.fadeout {
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+@keyframes fadeInTable {
+  from { opacity: 0; transform: translateY(30px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+.employees-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 900px;
+}
+.employees-table th, .employees-table td {
+  border: 1px solid #e0e0e0;
+  padding: 6px 8px;
+  text-align: center;
+  font-size: 15px;
+}
+.employees-table th {
+  background: #f5f7fa;
+  font-weight: 600;
+}
+.employees-table td:first-child, .employees-table th:first-child {
+  background: #e3f2fd;
+  font-weight: 500;
+  min-width: 90px;
+}
+.employees-table-outer {
+  overflow-x: auto;
+}
+
+/* === 月曆模式切換動畫 === */
+nav.content.fadein {
+  opacity: 1;
+  transition: opacity 0.4s;
+}
+nav.content.fadeout {
+  opacity: 0;
+  transition: opacity 0.4s;
 }

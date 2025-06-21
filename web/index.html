@@ -60,31 +60,30 @@
         </ul>
         <ul class="menu_items">
           <div class="menu_title menu_editor"></div>
-          
-          <li class="item">
-            <a href="#" class="nav_link">
-              <span class="navlink_icon">
-                <i class='bx  bx-calendar'  ></i> 
-              </span>
-              <span class="navlink">月曆模式</span>
-            </a>
-          </li>
-          <li class="item">
-            <a href="#" class="nav_link">
-              <span class="navlink_icon">
-                <i class="bx bx-user-circle"></i>
-              </span>
-              <span class="navlink">人員模式</span>
-            </a>
-          </li>
-          <li class="item">
-            <a href="#" class="nav_link">
-              <span class="navlink_icon">
-                <i class="bx bx-bookmark-alt"></i>
-              </span>
-              <span class="navlink">每日上班人員模式</span>
-            </a>
-          </li>
+              <li class="calendarmode item">
+                <div class="calendarmode mode-calendar">
+                  <span class="navlink_icon">
+                    <i class='bx bx-calendar'></i> 
+                  </span>  
+                  <span class="navlink">月曆模式</span>
+                </div>
+              </li>
+              <li class="calendarmode item">
+                <div class="calendarmode mode-employees">
+                  <span class="navlink_icon">
+                    <i class="bx bx-user-circle"></i>
+                  </span>
+                  <span class="navlink">人員模式</span>
+                </div>
+              </li>
+              <li class="calendarmode item">
+                <div class="calendarmode mode-daily-employees">
+                  <span class="navlink_icon">
+                    <i class="bx bx-bookmark-alt"></i>
+                  </span>
+                  <span class="navlink">每日上班人員模式</span>
+                </div>
+              </li>
           <li class="item">
             <a href="#" class="nav_link">
               <span class="navlink_icon">
@@ -127,6 +126,7 @@
     <script src="sidebar.js"></script>
     <script type="module" src="./appscript.js"></script>
     <script src="./add_member.js"></script>
+    <script src="./swichmode.js"></script>
     <!-- <script type="module" src="./app.js"></script> -->
   </body>
 </html>
