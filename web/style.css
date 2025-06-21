@@ -15,6 +15,7 @@
   --green-color: #5C786E;
   --fc-dark-btn-color: #455A64;
   --fc-weekend-color: #7f9eb2;
+  --select-mode-color: #58a3ed;
 }
 body {
   background-color: #e7f2fd;
@@ -30,6 +31,7 @@ body.dark {
   --grey-color-light: #aaa;
   --fc-dark-btn-color: #dae9f4;
   --fc-weekend-color: #5f6060;
+  --select-mode-color: #5173a9;
 }
 
 /* 加載動畫 */
@@ -134,7 +136,7 @@ body.dark {
     padding: 12px 16px;          /* 內距讓內容不貼邊 */
     background-color:var(--white-color);   /* 低調底色，可自行調整或拿掉 */
     position: relative;          /* 用於動畫定位 */
-    animation: animate-top 0.4s; /* 動畫持續時間 */
+    animation: animate-top 0.4s; /*動畫持續時間 */
 }
 .preferences-container {
   max-height: 0;
@@ -303,17 +305,6 @@ body.dark {
   text-align: center;
   border-radius: 6px;
 }
-.navlink_icon::before {
-  content: "";
-  position: absolute;
-  height: 100%;
-  width: calc(100% + 100px);
-  left: -20px;
-}
-.navlink_icon:hover {
-  background: var(--blue-color);
-
-}
 .sidebar .nav_link {
   display: flex;
   align-items: center;
@@ -323,21 +314,29 @@ body.dark {
   text-decoration: none;
   color: var(--grey-color);
   white-space: nowrap;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 .sidebar .calendarmode {
-  display: flex;
-  
+  /* display: flex; */
+  display: block; /* 改為區塊佈局，讓項目垂直堆疊 */
   align-items: center;
   width: 100%;
-  padding: 4px;
   border-radius: 8px;
   text-decoration: none;
   color: var(--grey-color);
-  white-space: nowrap;
+  /* white-space: nowrap; */
 }
-.sidebar .calendarmode :hover {
+.sidebar .calendarmode .item{
+  padding: 5px 0px;
+}
+.sidebar .calendarmode .nav_link:hover {
   color: var(--white-color);
-  background: var(--blue-color);
+  background: var(--select-mode-color);
+}
+
+.sidebar .calendarmode .navlink_icon {
+  
+  background-color: transparent;
 }
 
 .sidebar.close .calendarmode:hover {
@@ -345,9 +344,6 @@ body.dark {
 }
 .sidebar.close .navlink {
   display: none;
-}
-.sidebar.close .calendarmode {
-  justify-content: center;
 }
 .nav_link:hover {
   color: var(--white-color);
@@ -599,4 +595,96 @@ nav.content.fadein {
 nav.content.fadeout {
   opacity: 0;
   transition: opacity 0.4s;
+}
+
+/* === 模式切換按鈕樣式 === */
+.mode-calendar.active .nav_link,
+.mode-employees.active .nav_link,
+.mode-daily-employees.active .nav_link {
+  background: var(--select-mode-color);
+  color: var(--white-color);
+}
+
+/* === 人員班表班別樣式 === */
+.shift-cell {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.shift-cell:hover {
+  background: #f0f8ff;
+  transform: scale(1.05);
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* 早班樣式 */
+.morning-shift {
+  background: #e8f5e8;
+  color: #2e7d32;
+  font-weight: 500;
+}
+
+/* 中班樣式 */
+.afternoon-shift {
+  background: #fff3e0;
+  color: #f57c00;
+  font-weight: 500;
+}
+
+/* 晚班樣式 */
+.night-shift {
+  background: #e3f2fd;
+  color: #1976d2;
+  font-weight: 500;
+}
+
+/* 休假樣式 */
+.day-off {
+  background: #ffebee;
+  color: #c62828;
+  font-weight: 500;
+}
+
+/* 週末樣式 */
+.employees-table th.weekend {
+  background: #fce4ec;
+  color: #c2185b;
+}
+
+/* === 每日上班人員模式樣式 === */
+.daily-employees-mode {
+  background: var(--white-color);
+  border-radius: 12px;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 2px 12px #0001;
+  margin-top: 30px;
+}
+
+.daily-employees-mode h3 {
+  color: var(--grey-color);
+  margin-bottom: 15px;
+}
+
+.daily-employees-mode p {
+  color: var(--grey-color-light);
+  font-size: 16px;
+}
+
+/* === 響應式設計 === */
+@media screen and (max-width: 768px) {
+  .employees-table {
+    min-width: 600px;
+    font-size: 12px;
+  }
+  
+  .employees-table th, .employees-table td {
+    padding: 4px 6px;
+  }
+  
+  .employeesmode {
+    padding: 16px 8px;
+  }
 }
