@@ -1,81 +1,94 @@
 // 將 calendar 設為全局變數
 window.calendar;
 
-// Create a single supabase client for interacting with your database
-// 
-
-document.addEventListener('DOMContentLoaded', async () => {
-    const memberListEl = document.getElementById('member-list');
-    const loadingEl = document.createElement('div');
+// 全局初始化日曆函數
+window.initCalendar = function() {
     const el = document.getElementById('calendar-container');
-    
-    // 初始化月曆
+    if (!el) {
+        console.error("找不到日曆容器 #calendar-container");
+        return;
+    }
+
+    // 如果已有日曆實例，先銷毀
+    if (window.calendar) {
+        window.calendar.destroy();
+    }
+
     window.calendar = new FullCalendar.Calendar(el, {
         locale: 'zh-tw',
         initialView: 'dayGridMonth',
         themeSystem: 'bootstrap5',
         headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth'
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth'
         },
         titleFormat: { year: 'numeric', month: 'numeric' },
         events: [
-          {
-            title: '開國紀念日',
-            start: '2025-01-01'
-          },
-          {
-            title: '小年夜',
-            start: '2025-01-27'
-          },
-          {
-            title: '農曆除夕',
-            start: '2025-01-28'
-          },
-          {
-            title: '春節',
-            start: '2025-01-29'
-          },
-          {
-            title: '春節',
-            start: '2025-01-30'
-          },
-          {
-            title: '春節',
-            start: '2025-01-31'
-          },
-          {
-            title: '和平紀念日',
-            start: '2025-02-28'
-          },
-          {
-            title: '補假',
-            start: '2025-04-03'
-          },
-          {
-            title: '兒童節及民族掃墓節',
-            start: '2025-04-04'
-          },
-          {
-            title: '補假',
-            start: '2025-05-30'
-          },
-          {
-            title: '端午節',
-            start: '2025-05-31'
-          },
-          {
-            title: '中秋節',
-            start: '2025-10-06'
-          },
-          {
-            title: '國慶日',
-            start: '2025-10-10'
-          }
-        ],eventColor:'#ff5f2e'
+            {
+                title: '開國紀念日',
+                start: '2025-01-01'
+            },
+            {
+                title: '小年夜',
+                start: '2025-01-27'
+            },
+            {
+                title: '農曆除夕',
+                start: '2025-01-28'
+            },
+            {
+                title: '春節',
+                start: '2025-01-29'
+            },
+            {
+                title: '春節',
+                start: '2025-01-30'
+            },
+            {
+                title: '春節',
+                start: '2025-01-31'
+            },
+            {
+                title: '和平紀念日',
+                start: '2025-02-28'
+            },
+            {
+                title: '補假',
+                start: '2025-04-03'
+            },
+            {
+                title: '兒童節及民族掃墓節',
+                start: '2025-04-04'
+            },
+            {
+                title: '補假',
+                start: '2025-05-30'
+            },
+            {
+                title: '端午節',
+                start: '2025-05-31'
+            },
+            {
+                title: '中秋節',
+                start: '2025-10-06'
+            },
+            {
+                title: '國慶日',
+                start: '2025-10-10'
+            }
+        ],
+        eventColor: '#ff5f2e'
     });
     window.calendar.render();
+};
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const memberListEl = document.getElementById('member-list');
+    const loadingEl = document.createElement('div');
+    
+    // 初始化月曆
+    window.initCalendar();
 
     // 顯示載入中提示
     loadingEl.className = 'text-center p-3';
