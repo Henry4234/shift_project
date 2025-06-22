@@ -1,0 +1,1696 @@
+[
+    {
+        "id": 243,
+        "work_date": "2025-06-04",
+        "employee_id": 1,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 244,
+        "work_date": "2025-06-21",
+        "employee_id": 1,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 245,
+        "work_date": "2025-06-01",
+        "employee_id": 2,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 246,
+        "work_date": "2025-06-02",
+        "employee_id": 2,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 247,
+        "work_date": "2025-06-03",
+        "employee_id": 2,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 248,
+        "work_date": "2025-06-04",
+        "employee_id": 2,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 249,
+        "work_date": "2025-06-05",
+        "employee_id": 2,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 250,
+        "work_date": "2025-06-06",
+        "employee_id": 2,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 251,
+        "work_date": "2025-06-07",
+        "employee_id": 2,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 252,
+        "work_date": "2025-06-08",
+        "employee_id": 2,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 253,
+        "work_date": "2025-06-09",
+        "employee_id": 2,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 254,
+        "work_date": "2025-06-10",
+        "employee_id": 2,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 255,
+        "work_date": "2025-06-11",
+        "employee_id": 2,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 256,
+        "work_date": "2025-06-12",
+        "employee_id": 2,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 257,
+        "work_date": "2025-06-13",
+        "employee_id": 2,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 258,
+        "work_date": "2025-06-14",
+        "employee_id": 2,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 259,
+        "work_date": "2025-06-15",
+        "employee_id": 2,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 260,
+        "work_date": "2025-06-16",
+        "employee_id": 2,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 261,
+        "work_date": "2025-06-17",
+        "employee_id": 2,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 262,
+        "work_date": "2025-06-18",
+        "employee_id": 2,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 263,
+        "work_date": "2025-06-19",
+        "employee_id": 2,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 264,
+        "work_date": "2025-06-20",
+        "employee_id": 2,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 265,
+        "work_date": "2025-06-21",
+        "employee_id": 2,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 266,
+        "work_date": "2025-06-22",
+        "employee_id": 2,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 267,
+        "work_date": "2025-06-23",
+        "employee_id": 2,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 268,
+        "work_date": "2025-06-24",
+        "employee_id": 2,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 269,
+        "work_date": "2025-06-25",
+        "employee_id": 2,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 270,
+        "work_date": "2025-06-26",
+        "employee_id": 2,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 271,
+        "work_date": "2025-06-27",
+        "employee_id": 2,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 272,
+        "work_date": "2025-06-28",
+        "employee_id": 2,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 273,
+        "work_date": "2025-06-29",
+        "employee_id": 2,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 274,
+        "work_date": "2025-06-30",
+        "employee_id": 2,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 275,
+        "work_date": "2025-06-01",
+        "employee_id": 3,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 276,
+        "work_date": "2025-06-02",
+        "employee_id": 3,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 277,
+        "work_date": "2025-06-03",
+        "employee_id": 3,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 278,
+        "work_date": "2025-06-04",
+        "employee_id": 3,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 279,
+        "work_date": "2025-06-05",
+        "employee_id": 3,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 280,
+        "work_date": "2025-06-06",
+        "employee_id": 3,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 281,
+        "work_date": "2025-06-07",
+        "employee_id": 3,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 282,
+        "work_date": "2025-06-08",
+        "employee_id": 3,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 283,
+        "work_date": "2025-06-09",
+        "employee_id": 3,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 284,
+        "work_date": "2025-06-10",
+        "employee_id": 3,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 285,
+        "work_date": "2025-06-11",
+        "employee_id": 3,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 286,
+        "work_date": "2025-06-12",
+        "employee_id": 3,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 287,
+        "work_date": "2025-06-13",
+        "employee_id": 3,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 288,
+        "work_date": "2025-06-14",
+        "employee_id": 3,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 289,
+        "work_date": "2025-06-15",
+        "employee_id": 3,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 290,
+        "work_date": "2025-06-16",
+        "employee_id": 3,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 291,
+        "work_date": "2025-06-17",
+        "employee_id": 3,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 292,
+        "work_date": "2025-06-18",
+        "employee_id": 3,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 293,
+        "work_date": "2025-06-19",
+        "employee_id": 3,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 294,
+        "work_date": "2025-06-20",
+        "employee_id": 3,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 295,
+        "work_date": "2025-06-21",
+        "employee_id": 3,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 296,
+        "work_date": "2025-06-22",
+        "employee_id": 3,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 297,
+        "work_date": "2025-06-23",
+        "employee_id": 3,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 298,
+        "work_date": "2025-06-24",
+        "employee_id": 3,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 299,
+        "work_date": "2025-06-25",
+        "employee_id": 3,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 300,
+        "work_date": "2025-06-26",
+        "employee_id": 3,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 301,
+        "work_date": "2025-06-27",
+        "employee_id": 3,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 302,
+        "work_date": "2025-06-28",
+        "employee_id": 3,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 303,
+        "work_date": "2025-06-29",
+        "employee_id": 3,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 304,
+        "work_date": "2025-06-30",
+        "employee_id": 3,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 305,
+        "work_date": "2025-06-01",
+        "employee_id": 4,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 306,
+        "work_date": "2025-06-02",
+        "employee_id": 4,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 307,
+        "work_date": "2025-06-03",
+        "employee_id": 4,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 308,
+        "work_date": "2025-06-04",
+        "employee_id": 4,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 309,
+        "work_date": "2025-06-05",
+        "employee_id": 4,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 310,
+        "work_date": "2025-06-06",
+        "employee_id": 4,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 311,
+        "work_date": "2025-06-07",
+        "employee_id": 4,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 312,
+        "work_date": "2025-06-08",
+        "employee_id": 4,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 313,
+        "work_date": "2025-06-09",
+        "employee_id": 4,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 314,
+        "work_date": "2025-06-10",
+        "employee_id": 4,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 315,
+        "work_date": "2025-06-11",
+        "employee_id": 4,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 316,
+        "work_date": "2025-06-12",
+        "employee_id": 4,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 317,
+        "work_date": "2025-06-13",
+        "employee_id": 4,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 318,
+        "work_date": "2025-06-14",
+        "employee_id": 4,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 319,
+        "work_date": "2025-06-15",
+        "employee_id": 4,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 320,
+        "work_date": "2025-06-16",
+        "employee_id": 4,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 321,
+        "work_date": "2025-06-17",
+        "employee_id": 4,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 322,
+        "work_date": "2025-06-18",
+        "employee_id": 4,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 323,
+        "work_date": "2025-06-19",
+        "employee_id": 4,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 324,
+        "work_date": "2025-06-20",
+        "employee_id": 4,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 325,
+        "work_date": "2025-06-21",
+        "employee_id": 4,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 326,
+        "work_date": "2025-06-22",
+        "employee_id": 4,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 327,
+        "work_date": "2025-06-23",
+        "employee_id": 4,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 328,
+        "work_date": "2025-06-24",
+        "employee_id": 4,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 329,
+        "work_date": "2025-06-25",
+        "employee_id": 4,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 330,
+        "work_date": "2025-06-26",
+        "employee_id": 4,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 331,
+        "work_date": "2025-06-27",
+        "employee_id": 4,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 332,
+        "work_date": "2025-06-28",
+        "employee_id": 4,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 333,
+        "work_date": "2025-06-29",
+        "employee_id": 4,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 334,
+        "work_date": "2025-06-30",
+        "employee_id": 4,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 335,
+        "work_date": "2025-06-01",
+        "employee_id": 5,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 336,
+        "work_date": "2025-06-02",
+        "employee_id": 5,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 337,
+        "work_date": "2025-06-03",
+        "employee_id": 5,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 338,
+        "work_date": "2025-06-04",
+        "employee_id": 5,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 339,
+        "work_date": "2025-06-05",
+        "employee_id": 5,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 340,
+        "work_date": "2025-06-06",
+        "employee_id": 5,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 341,
+        "work_date": "2025-06-07",
+        "employee_id": 5,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 342,
+        "work_date": "2025-06-08",
+        "employee_id": 5,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 343,
+        "work_date": "2025-06-09",
+        "employee_id": 5,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 344,
+        "work_date": "2025-06-10",
+        "employee_id": 5,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 345,
+        "work_date": "2025-06-11",
+        "employee_id": 5,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 346,
+        "work_date": "2025-06-12",
+        "employee_id": 5,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 347,
+        "work_date": "2025-06-13",
+        "employee_id": 5,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 348,
+        "work_date": "2025-06-14",
+        "employee_id": 5,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 349,
+        "work_date": "2025-06-15",
+        "employee_id": 5,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 350,
+        "work_date": "2025-06-16",
+        "employee_id": 5,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 351,
+        "work_date": "2025-06-17",
+        "employee_id": 5,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 352,
+        "work_date": "2025-06-18",
+        "employee_id": 5,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 353,
+        "work_date": "2025-06-19",
+        "employee_id": 5,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 354,
+        "work_date": "2025-06-20",
+        "employee_id": 5,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 355,
+        "work_date": "2025-06-21",
+        "employee_id": 5,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 356,
+        "work_date": "2025-06-22",
+        "employee_id": 5,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 357,
+        "work_date": "2025-06-23",
+        "employee_id": 5,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 358,
+        "work_date": "2025-06-24",
+        "employee_id": 5,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 359,
+        "work_date": "2025-06-25",
+        "employee_id": 5,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 360,
+        "work_date": "2025-06-26",
+        "employee_id": 5,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 361,
+        "work_date": "2025-06-27",
+        "employee_id": 5,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 362,
+        "work_date": "2025-06-28",
+        "employee_id": 5,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 363,
+        "work_date": "2025-06-29",
+        "employee_id": 5,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 364,
+        "work_date": "2025-06-30",
+        "employee_id": 5,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 365,
+        "work_date": "2025-06-01",
+        "employee_id": 6,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 366,
+        "work_date": "2025-06-02",
+        "employee_id": 6,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 367,
+        "work_date": "2025-06-03",
+        "employee_id": 6,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 368,
+        "work_date": "2025-06-04",
+        "employee_id": 6,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 369,
+        "work_date": "2025-06-05",
+        "employee_id": 6,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 370,
+        "work_date": "2025-06-06",
+        "employee_id": 6,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 371,
+        "work_date": "2025-06-07",
+        "employee_id": 6,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 372,
+        "work_date": "2025-06-08",
+        "employee_id": 6,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 373,
+        "work_date": "2025-06-09",
+        "employee_id": 6,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 374,
+        "work_date": "2025-06-10",
+        "employee_id": 6,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 375,
+        "work_date": "2025-06-11",
+        "employee_id": 6,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 376,
+        "work_date": "2025-06-12",
+        "employee_id": 6,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 377,
+        "work_date": "2025-06-13",
+        "employee_id": 6,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 378,
+        "work_date": "2025-06-14",
+        "employee_id": 6,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 379,
+        "work_date": "2025-06-15",
+        "employee_id": 6,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 380,
+        "work_date": "2025-06-16",
+        "employee_id": 6,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 381,
+        "work_date": "2025-06-17",
+        "employee_id": 6,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 382,
+        "work_date": "2025-06-18",
+        "employee_id": 6,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 383,
+        "work_date": "2025-06-19",
+        "employee_id": 6,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 384,
+        "work_date": "2025-06-20",
+        "employee_id": 6,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 385,
+        "work_date": "2025-06-21",
+        "employee_id": 6,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 386,
+        "work_date": "2025-06-22",
+        "employee_id": 6,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 387,
+        "work_date": "2025-06-23",
+        "employee_id": 6,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 388,
+        "work_date": "2025-06-24",
+        "employee_id": 6,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 389,
+        "work_date": "2025-06-25",
+        "employee_id": 6,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 390,
+        "work_date": "2025-06-26",
+        "employee_id": 6,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 391,
+        "work_date": "2025-06-27",
+        "employee_id": 6,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 392,
+        "work_date": "2025-06-28",
+        "employee_id": 6,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 393,
+        "work_date": "2025-06-29",
+        "employee_id": 6,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 394,
+        "work_date": "2025-06-30",
+        "employee_id": 6,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 395,
+        "work_date": "2025-06-01",
+        "employee_id": 7,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 396,
+        "work_date": "2025-06-02",
+        "employee_id": 7,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 397,
+        "work_date": "2025-06-03",
+        "employee_id": 7,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 398,
+        "work_date": "2025-06-04",
+        "employee_id": 7,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 399,
+        "work_date": "2025-06-05",
+        "employee_id": 7,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 400,
+        "work_date": "2025-06-06",
+        "employee_id": 7,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 401,
+        "work_date": "2025-06-07",
+        "employee_id": 7,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 402,
+        "work_date": "2025-06-08",
+        "employee_id": 7,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 403,
+        "work_date": "2025-06-09",
+        "employee_id": 7,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 404,
+        "work_date": "2025-06-10",
+        "employee_id": 7,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 405,
+        "work_date": "2025-06-11",
+        "employee_id": 7,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 406,
+        "work_date": "2025-06-12",
+        "employee_id": 7,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 407,
+        "work_date": "2025-06-13",
+        "employee_id": 7,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 408,
+        "work_date": "2025-06-14",
+        "employee_id": 7,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 409,
+        "work_date": "2025-06-15",
+        "employee_id": 7,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 410,
+        "work_date": "2025-06-16",
+        "employee_id": 7,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 411,
+        "work_date": "2025-06-17",
+        "employee_id": 7,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 412,
+        "work_date": "2025-06-18",
+        "employee_id": 7,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 413,
+        "work_date": "2025-06-19",
+        "employee_id": 7,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 414,
+        "work_date": "2025-06-20",
+        "employee_id": 7,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 415,
+        "work_date": "2025-06-21",
+        "employee_id": 7,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 416,
+        "work_date": "2025-06-22",
+        "employee_id": 7,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 417,
+        "work_date": "2025-06-23",
+        "employee_id": 7,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 418,
+        "work_date": "2025-06-24",
+        "employee_id": 7,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 419,
+        "work_date": "2025-06-25",
+        "employee_id": 7,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 420,
+        "work_date": "2025-06-26",
+        "employee_id": 7,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 421,
+        "work_date": "2025-06-27",
+        "employee_id": 7,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 422,
+        "work_date": "2025-06-28",
+        "employee_id": 7,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 423,
+        "work_date": "2025-06-29",
+        "employee_id": 7,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 424,
+        "work_date": "2025-06-30",
+        "employee_id": 7,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 425,
+        "work_date": "2025-06-01",
+        "employee_id": 8,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 426,
+        "work_date": "2025-06-02",
+        "employee_id": 8,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 427,
+        "work_date": "2025-06-03",
+        "employee_id": 8,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 428,
+        "work_date": "2025-06-04",
+        "employee_id": 8,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 429,
+        "work_date": "2025-06-05",
+        "employee_id": 8,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 430,
+        "work_date": "2025-06-06",
+        "employee_id": 8,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 431,
+        "work_date": "2025-06-07",
+        "employee_id": 8,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 432,
+        "work_date": "2025-06-08",
+        "employee_id": 8,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 433,
+        "work_date": "2025-06-09",
+        "employee_id": 8,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 434,
+        "work_date": "2025-06-10",
+        "employee_id": 8,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 435,
+        "work_date": "2025-06-11",
+        "employee_id": 8,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 436,
+        "work_date": "2025-06-12",
+        "employee_id": 8,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 437,
+        "work_date": "2025-06-13",
+        "employee_id": 8,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 438,
+        "work_date": "2025-06-14",
+        "employee_id": 8,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 439,
+        "work_date": "2025-06-15",
+        "employee_id": 8,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 440,
+        "work_date": "2025-06-16",
+        "employee_id": 8,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 441,
+        "work_date": "2025-06-17",
+        "employee_id": 8,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 442,
+        "work_date": "2025-06-18",
+        "employee_id": 8,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 443,
+        "work_date": "2025-06-19",
+        "employee_id": 8,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 444,
+        "work_date": "2025-06-20",
+        "employee_id": 8,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 445,
+        "work_date": "2025-06-21",
+        "employee_id": 8,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 446,
+        "work_date": "2025-06-22",
+        "employee_id": 8,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 447,
+        "work_date": "2025-06-23",
+        "employee_id": 8,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 448,
+        "work_date": "2025-06-24",
+        "employee_id": 8,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 449,
+        "work_date": "2025-06-25",
+        "employee_id": 8,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 450,
+        "work_date": "2025-06-26",
+        "employee_id": 8,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 451,
+        "work_date": "2025-06-27",
+        "employee_id": 8,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 452,
+        "work_date": "2025-06-28",
+        "employee_id": 8,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 453,
+        "work_date": "2025-06-29",
+        "employee_id": 8,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 454,
+        "work_date": "2025-06-30",
+        "employee_id": 8,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 455,
+        "work_date": "2025-06-01",
+        "employee_id": 9,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 456,
+        "work_date": "2025-06-02",
+        "employee_id": 9,
+        "shift_type": "C",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 457,
+        "work_date": "2025-06-03",
+        "employee_id": 9,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 458,
+        "work_date": "2025-06-04",
+        "employee_id": 9,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 459,
+        "work_date": "2025-06-05",
+        "employee_id": 9,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 460,
+        "work_date": "2025-06-06",
+        "employee_id": 9,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 461,
+        "work_date": "2025-06-07",
+        "employee_id": 9,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 462,
+        "work_date": "2025-06-08",
+        "employee_id": 9,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 463,
+        "work_date": "2025-06-09",
+        "employee_id": 9,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 464,
+        "work_date": "2025-06-10",
+        "employee_id": 9,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 465,
+        "work_date": "2025-06-11",
+        "employee_id": 9,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 466,
+        "work_date": "2025-06-12",
+        "employee_id": 9,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 467,
+        "work_date": "2025-06-13",
+        "employee_id": 9,
+        "shift_type": "A",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 468,
+        "work_date": "2025-06-14",
+        "employee_id": 9,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 469,
+        "work_date": "2025-06-15",
+        "employee_id": 9,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 470,
+        "work_date": "2025-06-16",
+        "employee_id": 9,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 471,
+        "work_date": "2025-06-17",
+        "employee_id": 9,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 472,
+        "work_date": "2025-06-18",
+        "employee_id": 9,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 473,
+        "work_date": "2025-06-19",
+        "employee_id": 9,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 474,
+        "work_date": "2025-06-20",
+        "employee_id": 9,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 475,
+        "work_date": "2025-06-21",
+        "employee_id": 9,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 476,
+        "work_date": "2025-06-22",
+        "employee_id": 9,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 477,
+        "work_date": "2025-06-23",
+        "employee_id": 9,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 478,
+        "work_date": "2025-06-24",
+        "employee_id": 9,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 479,
+        "work_date": "2025-06-25",
+        "employee_id": 9,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 480,
+        "work_date": "2025-06-26",
+        "employee_id": 9,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 481,
+        "work_date": "2025-06-27",
+        "employee_id": 9,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 482,
+        "work_date": "2025-06-28",
+        "employee_id": 9,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 483,
+        "work_date": "2025-06-29",
+        "employee_id": 9,
+        "shift_type": "O",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    },
+    {
+        "id": 484,
+        "work_date": "2025-06-30",
+        "employee_id": 9,
+        "shift_type": "B",
+        "updated_at": "2025-06-21T12:35:26.105944+00:00"
+    }
+]

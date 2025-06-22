@@ -6,10 +6,10 @@ class EmployeesMode {
         this.container = null;
         this.employees = []; // 員工資料陣列
         this.shiftTypeMap = {
-            'A': { text: '早班', class: 'morning-shift' },
-            'B': { text: '中班', class: 'afternoon-shift' },
-            'C': { text: '晚班', 'class': 'night-shift' },
-            'O': { text: '休假', class: 'day-off' }
+            'A': { text: 'A', class: 'morning-shift' },
+            'B': { text: 'B', class: 'afternoon-shift' },
+            'C': { text: 'C', 'class': 'night-shift' },
+            'O': { text: 'O', class: 'day-off' }
         };
         
         // 初始化
@@ -193,7 +193,8 @@ class EmployeesMode {
 
         console.log(`正在獲取 ${year} 年 ${month} 月的班表...`);
         try {
-            const response = await fetch(`/api/employee-schedules?year=${year}&month=${month}`);
+            // const response = await fetch(`/api/employee-schedules?year=${year}&month=${month}`);
+            const response = await fetch(`./simulate_schedules.json`);
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.error || `HTTP 錯誤! 狀態: ${response.status}`);
