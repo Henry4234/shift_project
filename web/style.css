@@ -330,18 +330,18 @@ body.dark {
   padding: 5px 0px;
 }
 .sidebar .calendarmode .nav_link:hover {
-  color: var(--white-color);
-  background: var(--select-mode-color);
+  color: var(--black-color);
 }
 
 .sidebar .calendarmode .navlink_icon {
-  
+  color: var(--grey-color);
   background-color: transparent;
 }
 
-.sidebar.close .calendarmode:hover {
+/* .sidebar.close .calendarmode:hover {
+  padding: 6px;
   background: var(--white-color);
-}
+} */
 .sidebar.close .navlink {
   display: none;
 }
@@ -705,6 +705,66 @@ nav.content.fadeout {
   background: var(--select-mode-color);
   color: var(--white-color);
 }
+.mode-calendar.active .navlink_icon,
+.mode-employees.active .navlink_icon,
+.mode-daily-employees.active .navlink_icon {
+  color: var(--white-color);
+}
+
+/* 模式切換容器樣式 */
+.calendarmode {
+  position: relative;
+  background: var(--background-color);
+  border-radius: 8px;
+  padding: 4px;
+  margin: 8px 0;
+  overflow: hidden;
+}
+
+/* 選擇指示器 */
+.calendarmode::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc(100% - 8px);
+  height: 60px;
+  background: var(--select-mode-color);
+  border-radius: 6px;
+  transition: transform 0.3s ease;
+  z-index: 0;
+}
+
+/* 根據當前模式移動指示器 */
+.calendarmode.mode-calendar-active::before {
+  transform: translateX(0);
+}
+
+.calendarmode.mode-employees-active::before {
+  transform: translateY(95%);
+}
+
+.calendarmode.mode-daily-employees-active::before {
+  transform: translateY(190%);
+}
+
+/* 確保按鈕在指示器上方 */
+.calendarmode .nav_link {
+  position: relative;
+  z-index: 1;
+  background: transparent !important;
+  transition: color 0.3s ease;
+}
+.sidebar .calendarmode .navlink_icon
+/* 活動狀態的按鈕文字顏色
+.calendarmode .nav_link.active {
+  color: var(--white-color) !important;
+}*/
+
+/* 非活動狀態的按鈕文字顏色 */
+/*.calendarmode .nav_link:not(.active) {
+  color: var(--grey-color) !important;
+} */
 
 /* === 人員班表班別樣式 === */
 .shift-cell {

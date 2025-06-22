@@ -144,9 +144,30 @@ class ModeSwitcher {
             button.classList.remove('active');
         });
         
+        // 移除所有模式容器的活動狀態
+        const calendarmode = document.querySelector('.calendarmode');
+        if (calendarmode) {
+            calendarmode.classList.remove('mode-calendar-active', 'mode-employees-active', 'mode-daily-employees-active');
+        }
+        
         // 添加當前活動按鈕的狀態
         if (this.modeButtons[activeMode]) {
             this.modeButtons[activeMode].classList.add('active');
+        }
+        
+        // 為模式容器添加對應的活動狀態
+        if (calendarmode) {
+            switch (activeMode) {
+                case 'calendar':
+                    calendarmode.classList.add('mode-calendar-active');
+                    break;
+                case 'employees':
+                    calendarmode.classList.add('mode-employees-active');
+                    break;
+                case 'dailyEmployees':
+                    calendarmode.classList.add('mode-daily-employees-active');
+                    break;
+            }
         }
     }
 }
