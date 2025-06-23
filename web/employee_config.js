@@ -105,17 +105,24 @@ class EmployeeConfigManager {
             while (this.panel.childNodes.length > 2) {
                 this.panel.removeChild(this.panel.lastChild);
             }
+            // 顯示 loading 畫面
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'employee-loading';
+            loadingDiv.style.padding = '32px 0';
+            loadingDiv.style.textAlign = 'center';
+            loadingDiv.innerHTML = `<div class="spinner-border text-primary" role="status" style="width:2.5rem;height:2.5rem;"></div><div style="margin-top:12px;">正在讀取員工資料...</div>`;
+            this.panel.appendChild(loadingDiv);
             // 從本地 JSON 檔案讀取資料
-            const [employeesResponse, preferencesResponse, requirementsResponse] = await Promise.all([
-                fetch('./simulate_employees.json'),
-                fetch('./simulate_employeepreferences.json'),
-                fetch('./simulate_shiftrequirements.json')
-            ]);
             // const [employeesResponse, preferencesResponse, requirementsResponse] = await Promise.all([
-            //   fetch('/api/employees'),
-            //   fetch('/api/employee-preferences'),
-            //   fetch('/api/shift-requirements')
+            //     fetch('./simulate_employees.json'),
+            //     fetch('./simulate_employeepreferences.json'),
+            //     fetch('./simulate_shiftrequirements.json')
             // ]);
+            const [employeesResponse, preferencesResponse, requirementsResponse] = await Promise.all([
+              fetch('/api/employees'),
+              fetch('/api/employee-preferences'),
+              fetch('/api/shift-requirements')
+            ]);
 
 
             const [employees, preferences, requirements] = await Promise.all([
@@ -124,6 +131,9 @@ class EmployeeConfigManager {
                 requirementsResponse.json()
             ]);
 
+            // 移除 loading 畫面
+            if (loadingDiv.parentNode) loadingDiv.parentNode.removeChild(loadingDiv);
+            
             // 清空面板內容（保留返回按鈕）
             const contentContainer = document.createElement('div');
             contentContainer.className = 'employee-config-content';
