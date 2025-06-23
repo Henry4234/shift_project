@@ -849,3 +849,28 @@ nav.content.fadeout {
     padding: 16px 8px;
   }
 }
+
+/* === 員工設定面板樣式 === */
+.back-to-menu {
+    margin-bottom: 20px;
+    cursor: pointer;
+}
+
+.back-to-menu:hover {
+    color: var(--white-color);
+    background: var(--blue-color);
+}
+
+.employee-config-content {
+    margin-top: 20px;
+}
+
+.fadein {
+    opacity: 1;
+    transition: opacity 0.4s ease;
+}
+
+.fadeout {
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
