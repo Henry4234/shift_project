@@ -3,7 +3,7 @@ class EmployeeConfigManager {
     constructor() {
         this.sidebarContent = document.querySelector('.menu_content');
         this.initUserConfigPanel();
-        this.bindEvents();
+        // 不再自動綁定事件，事件交由 sidebar.js 控制
     }
 
     // 初始化用戶配置面板
@@ -24,20 +24,23 @@ class EmployeeConfigManager {
         `;
         
         panel.appendChild(backButton);
+
+        // 新增員工按鈕（插入於返回選單之後）
+        const addMemberBtn = document.createElement('div');
+        addMemberBtn.className = 'nav_link add_member';
+        addMemberBtn.innerHTML = `
+            <span class="navlink_icon">
+                <i class="bx bx-user-plus"></i>
+            </span>
+            <span class="navlink">新增員工</span>
+        `;
+        panel.appendChild(addMemberBtn);
+
         this.sidebarContent.appendChild(panel);
         
         this.panel = panel;
         this.backButton = backButton;
-    }
-
-    // 綁定事件
-    bindEvents() {
-        // 監聽員工設定按鈕點擊
-        const userConfigBtn = document.querySelector('.user-config');
-        userConfigBtn.addEventListener('click', () => this.showEmployeeConfig());
-
-        // 監聽返回按鈕點擊
-        this.backButton.addEventListener('click', () => this.hideEmployeeConfig());
+        this.addMemberBtn = addMemberBtn;
     }
 
     // 顯示員工設定面板
@@ -98,8 +101,8 @@ class EmployeeConfigManager {
     // 渲染員工設定面板內容
     async renderEmployeeConfigPanel() {
         try {
-            // 先清空面板內容，只保留返回按鈕
-            while (this.panel.childNodes.length > 1) {
+            // 先清空面板內容，只保留返回按鈕與新增員工按鈕
+            while (this.panel.childNodes.length > 2) {
                 this.panel.removeChild(this.panel.lastChild);
             }
             // 從本地 JSON 檔案讀取資料
@@ -229,9 +232,6 @@ class EmployeeConfigManager {
                 
                 div.appendChild(preferencesContainer);
                 contentContainer.appendChild(div);
-
-                // 為當前員工的偏好設定添加事件監聽器
-                this.bindEmployeeEvents(div, employee, preferencesContainer);
             });
 
             // 將內容添加到面板（在返回按鈕後面）
@@ -241,121 +241,6 @@ class EmployeeConfigManager {
             console.error('渲染員工設定面板時發生錯誤：', err);
             this.panel.innerHTML = '<div class="text-danger">無法載入資料</div>';
         }
-    }
-
-    // 綁定員工相關事件
-    bindEmployeeEvents(container, employee, preferencesContainer) {
-        const checkboxes = preferencesContainer.querySelectorAll('.preference-checkbox');
-        const navLink = container.querySelector('.person_items');
-        const updateShiftsBtn = preferencesContainer.querySelector('.update-shifts-btn');
-        const shiftInputs = preferencesContainer.querySelectorAll('.shift-requirement');
-
-        // 展開/收起偏好設定
-        navLink.addEventListener('click', () => {
-            const isExpanding = !preferencesContainer.classList.contains('show');
-            preferencesContainer.classList.toggle('show');
-            navLink.classList.toggle('show_submenu');
-        });
-
-        // 偏好設定 checkbox 事件
-        checkboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', async (e) => {
-                const preferenceType = e.target.dataset.type;
-                const isChecked = e.target.checked;
-                
-                try {
-                    // 收集所有偏好設定
-                    const preferences = {
-                        max_continuous_days: false,
-                        continuous_c: false,
-                        double_off_after_c: false
-                    };
-                    
-                    // 更新當前變更的偏好
-                    preferences[preferenceType] = isChecked;
-                    
-                    // 從其他 checkbox 獲取現有值
-                    checkboxes.forEach(cb => {
-                        if (cb !== e.target) {
-                            preferences[cb.dataset.type] = cb.checked;
-                        }
-                    });
-
-                    // 發送更新請求
-                    const response = await fetch(`/api/employee-preferences/${employee.id}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(preferences)
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('更新失敗');
-                    }
-
-                    // 更新成功後更新計數
-                    const result = await response.json();
-                    console.log('更新成功：', result);
-
-                    // 更新 UI 顯示
-                    const newCount = Object.values(preferences).filter(v => v === true).length;
-                    const countEl = navLink.querySelector('.preferencetitle');
-                    countEl.textContent = `${newCount} 個偏好設定`;
-
-                    this.showToast('偏好設定已更新', 'success');
-
-                } catch (err) {
-                    console.error('更新偏好設定時發生錯誤：', err);
-                    // 恢復 checkbox 狀態
-                    e.target.checked = !isChecked;
-                    this.showToast('更新失敗，請稍後再試', 'danger');
-                }
-            });
-        });
-
-        // 班別需求輸入驗證
-        shiftInputs.forEach(input => {
-            input.addEventListener('input', (e) => {
-                let value = e.target.value;
-                value = value.replace(/[^0-9]/g, '');
-                if (value !== '') {
-                    const numValue = parseInt(value);
-                    if (numValue > 30) value = '30';
-                    if (numValue < 0) value = '0';
-                }
-                e.target.value = value;
-            });
-        });
-
-        // 更新班別需求按鈕事件
-        updateShiftsBtn.addEventListener('click', async () => {
-            try {
-                const shiftRequirements = {
-                    A: parseInt(preferencesContainer.querySelector('#shift-a-' + employee.id).value) || 0,
-                    B: parseInt(preferencesContainer.querySelector('#shift-b-' + employee.id).value) || 0,
-                    C: parseInt(preferencesContainer.querySelector('#shift-c-' + employee.id).value) || 0
-                };
-
-                const response = await fetch(`/api/employee-amount/${employee.id}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(shiftRequirements)
-                });
-
-                if (!response.ok) {
-                    throw new Error('更新失敗');
-                }
-
-                this.showToast('班別需求已更新', 'success');
-
-            } catch (err) {
-                console.error('更新班別需求時發生錯誤：', err);
-                this.showToast('更新失敗，請稍後再試', 'danger');
-            }
-        });
     }
 
     // 顯示提示訊息
@@ -387,7 +272,7 @@ class EmployeeConfigManager {
     }
 }
 
-// 當 DOM 載入完成後初始化
-document.addEventListener('DOMContentLoaded', () => {
-    new EmployeeConfigManager();
+// 當 DOM 載入完成後初始化，並掛到 window 方便 sidebar.js 調用
+window.addEventListener('DOMContentLoaded', () => {
+    window.employeeConfigManager = new EmployeeConfigManager();
 }); 

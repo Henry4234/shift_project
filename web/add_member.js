@@ -1,6 +1,14 @@
 // 監聽新增員工按鈕點擊事件
 document.addEventListener('DOMContentLoaded', () => {
-    const addMemberBtn = document.querySelector('.add_member');
+    // 只監聽員工設定面板中的新增員工按鈕
+    const panel = document.getElementById('user-config-panel');
+    let addMemberBtn = null;
+    if (panel) {
+        addMemberBtn = panel.querySelector('.add_member');
+    } else {
+        // fallback: 仍保留原本 sidebar 的按鈕（兼容性）
+        addMemberBtn = document.querySelector('.add_member');
+    }
     
     // 創建 Modal HTML
     const modalHTML = `
@@ -80,9 +88,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const addMemberModal = new bootstrap.Modal(document.getElementById('addMemberModal'));
 
     // 監聽新增員工按鈕點擊
-    addMemberBtn.addEventListener('click', () => {
-        addMemberModal.show();
-    });
+    if (addMemberBtn) {
+        addMemberBtn.addEventListener('click', () => {
+            addMemberModal.show();
+        });
+    }
 
     // 監聽確認新增按鈕點擊
     document.getElementById('confirmAddMember').addEventListener('click', async () => {

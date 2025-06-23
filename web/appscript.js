@@ -89,7 +89,7 @@ window.initCalendar = function() {
 document.addEventListener('DOMContentLoaded', async () => {
     const memberListEl = document.getElementById('member-list');
     // 只顯示空內容或提示
-    memberListEl.innerHTML = '<div class="text-muted">請透過「員工設定」進行管理</div>';
+    // memberListEl.innerHTML = '<div class="text-muted">請透過「員工設定」進行管理</div>';
     // 初始化月曆
     window.initCalendar();
     // 初始化模式切換器，並傳入日曆初始化函數

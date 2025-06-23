@@ -64,27 +64,102 @@ submenuItems.forEach((item, index) => {
 });
 
 // 處理員工偏好設定的點擊事件
-document.addEventListener('click', (e) => {
-    const personItem = e.target.closest('.person_items');
-    if (personItem) {
-        const container = personItem.nextElementSibling;
-        if (container && container.classList.contains('preferences-container')) {
-            // 如果有其他展開的容器，先收起它
-            if (currentlyExpanded && currentlyExpanded !== container) {
-                const expandedButton = currentlyExpanded.previousElementSibling;
-                expandedButton.classList.remove('show_submenu');
-                currentlyExpanded.classList.remove('show');
-            }
-
-            // 切換當前容器
-            const isExpanding = !container.classList.contains('show');
-            personItem.classList.toggle('show_submenu');
-            container.classList.toggle('show');
-            
-            // 更新當前展開的容器
-            currentlyExpanded = isExpanding ? container : null;
-        }
+document.addEventListener('click', async (e) => {
+  // 顯示員工設定面板
+  if (e.target.closest('.user-config')) {
+    if (window.employeeConfigManager) {
+      await window.employeeConfigManager.showEmployeeConfig();
     }
+  }
+  // 返回主選單
+  if (e.target.closest('.back-to-menu')) {
+    if (window.employeeConfigManager) {
+      await window.employeeConfigManager.hideEmployeeConfig();
+    }
+  }
+  // 展開/收起員工偏好設定（只能展開一個）
+  if (e.target.closest('.person_items')) {
+    const navLink = e.target.closest('.person_items');
+    const preferencesContainer = navLink.parentElement.querySelector('.preferences-container');
+    if (preferencesContainer) {
+      const isExpanding = !preferencesContainer.classList.contains('show');
+      // 收起所有已展開的偏好設定
+      document.querySelectorAll('.preferences-container.show').forEach(container => {
+        if (container !== preferencesContainer) {
+          container.classList.remove('show');
+          const otherNav = container.parentElement.querySelector('.person_items');
+          if (otherNav) otherNav.classList.remove('show_submenu');
+        }
+      });
+      // 切換當前
+      preferencesContainer.classList.toggle('show', isExpanding);
+      navLink.classList.toggle('show_submenu', isExpanding);
+    }
+  }
+  // 更新班別需求
+  if (e.target.classList.contains('update-shifts-btn')) {
+    const btn = e.target;
+    const employeeId = btn.dataset.employeeId;
+    const container = btn.closest('.preferences-container');
+    const shiftA = parseInt(container.querySelector(`#shift-a-${employeeId}`).value) || 0;
+    const shiftB = parseInt(container.querySelector(`#shift-b-${employeeId}`).value) || 0;
+    const shiftC = parseInt(container.querySelector(`#shift-c-${employeeId}`).value) || 0;
+    try {
+      const response = await fetch(`/api/employee-amount/${employeeId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ A: shiftA, B: shiftB, C: shiftC })
+      });
+      if (!response.ok) throw new Error('更新失敗');
+      window.employeeConfigManager.showToast('班別需求已更新', 'success');
+    } catch (err) {
+      window.employeeConfigManager.showToast('更新失敗，請稍後再試', 'danger');
+    }
+  }
+});
+
+document.addEventListener('change', async (e) => {
+  if (e.target.classList.contains('preference-checkbox')) {
+    const checkbox = e.target;
+    const container = checkbox.closest('.preferences-container');
+    const navLink = container.parentElement.querySelector('.person_items');
+    const employeeId = checkbox.id.split('-').pop();
+    const checkboxes = container.querySelectorAll('.preference-checkbox');
+    const preferences = {
+      max_continuous_days: false,
+      continuous_c: false,
+      double_off_after_c: false
+    };
+    checkboxes.forEach(cb => {
+      preferences[cb.dataset.type] = cb.checked;
+    });
+    try {
+      const response = await fetch(`/api/employee-preferences/${employeeId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(preferences)
+      });
+      if (!response.ok) throw new Error('更新失敗');
+      const newCount = Object.values(preferences).filter(v => v === true).length;
+      navLink.querySelector('.preferencetitle').textContent = `${newCount} 個偏好設定`;
+      window.employeeConfigManager.showToast('偏好設定已更新', 'success');
+    } catch (err) {
+      checkbox.checked = !checkbox.checked;
+      window.employeeConfigManager.showToast('更新失敗，請稍後再試', 'danger');
+    }
+  }
+});
+
+document.addEventListener('input', (e) => {
+  if (e.target.classList.contains('shift-requirement')) {
+    let value = e.target.value.replace(/[^0-9]/g, '');
+    if (value !== '') {
+      let numValue = parseInt(value);
+      if (numValue > 30) value = '30';
+      if (numValue < 0) value = '0';
+    }
+    e.target.value = value;
+  }
 });
 
 function handleResponsiveSidebar() {
