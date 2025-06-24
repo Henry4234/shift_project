@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # 前端服務
   frontend:
@@ -7,13 +5,7 @@ services:
       context: ./web
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - REACT_APP_API_URL=http://backend:5000
-    volumes:
-      - ./web:/app
-      - /app/node_modules
+      - "80:80"
     depends_on:
       - backend
     networks:
@@ -33,6 +25,8 @@ services:
     volumes:
       - .:/app
       - /app/__pycache__
+    env_file:
+      - .env
     networks:
       - app-network
 
