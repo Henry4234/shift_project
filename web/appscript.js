@@ -90,8 +90,8 @@ window.initCalendar = function() {
 async function loadEmployeesData() {
     try {
         console.log('開始從 API 獲取員工資料...');
-        const response = await fetch('/api/employees');
-        
+        // const response = await fetch('/api/employees');
+        const response = await fetch('./simulate_employees.json');
         if (!response.ok) {
             throw new Error(`HTTP 錯誤! 狀態: ${response.status}`);
         }

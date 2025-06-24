@@ -1,15 +1,5 @@
 // 監聽新增員工按鈕點擊事件
 document.addEventListener('DOMContentLoaded', () => {
-    // 只監聽員工設定面板中的新增員工按鈕
-    const panel = document.getElementById('user-config-panel');
-    let addMemberBtn = null;
-    if (panel) {
-        addMemberBtn = panel.querySelector('.add_member');
-    } else {
-        // fallback: 仍保留原本 sidebar 的按鈕（兼容性）
-        addMemberBtn = document.querySelector('.add_member');
-    }
-    
     // 創建 Modal HTML
     const modalHTML = `
         <div class="modal fade" id="addMemberModal" tabindex="-1" aria-labelledby="addMemberModalLabel" aria-hidden="true">
@@ -87,12 +77,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // 初始化 Modal
     const addMemberModal = new bootstrap.Modal(document.getElementById('addMemberModal'));
 
-    // 監聽新增員工按鈕點擊
-    if (addMemberBtn) {
-        addMemberBtn.addEventListener('click', () => {
+    // 使用事件委派，監聽 #user-config-panel 內的 .add_member 按鈕點擊事件
+    document.addEventListener('click', (event) => {
+        // .closest() 會從 event.target 開始往上層尋找符合條件的元素
+        const addMemberBtn = event.target.closest('#user-config-panel .add_member');
+        if (addMemberBtn) {
             addMemberModal.show();
-        });
-    }
+        }
+    });
 
     // 監聽確認新增按鈕點擊
     document.getElementById('confirmAddMember').addEventListener('click', async () => {
