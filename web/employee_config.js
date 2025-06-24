@@ -280,6 +280,33 @@ class EmployeeConfigManager {
             toast.remove();
         }, 3000);
     }
+
+    // 重新載入員工資料並更新全域變數
+    async reloadEmployeesData() {
+        try {
+            console.log('重新載入員工資料...');
+            const response = await fetch('/api/employees');
+            
+            if (!response.ok) {
+                throw new Error(`HTTP 錯誤! 狀態: ${response.status}`);
+            }
+            
+            const employees = await response.json();
+            window.employeesResponse = employees;
+            console.log('成功重新載入員工資料：', employees);
+            
+            // 如果 employeesMode 已存在，更新其員工資料
+            if (window.employeesMode) {
+                window.employeesMode.updateEmployeesData();
+            }
+            
+            return employees;
+        } catch (error) {
+            console.error('重新載入員工資料時發生錯誤：', error);
+            this.showToast('重新載入員工資料失敗', 'danger');
+            return null;
+        }
+    }
 }
 
 // 當 DOM 載入完成後初始化，並掛到 window 方便 sidebar.js 調用

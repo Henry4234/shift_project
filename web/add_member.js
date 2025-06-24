@@ -163,8 +163,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // 顯示成功提示
             showToast('員工新增成功', 'success');
             
-            // 重新載入頁面以更新員工列表
-            window.location.reload();
+            // 重新載入員工資料並更新全域變數
+            if (window.employeeConfigManager) {
+                await window.employeeConfigManager.reloadEmployeesData();
+            }
+            
+            // 重新渲染員工設定面板
+            if (window.employeeConfigManager) {
+                await window.employeeConfigManager.renderEmployeeConfigPanel();
+            }
 
         } catch (error) {
             console.error('新增員工時發生錯誤：', error);

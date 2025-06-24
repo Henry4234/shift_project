@@ -86,10 +86,49 @@ window.initCalendar = function() {
     window.calendar.render();
 };
 
+// 獲取員工資料並設定到全域變數
+async function loadEmployeesData() {
+    try {
+        console.log('開始從 API 獲取員工資料...');
+        const response = await fetch('/api/employees');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP 錯誤! 狀態: ${response.status}`);
+        }
+        
+        const employees = await response.json();
+        window.employeesResponse = employees;
+        console.log('成功獲取員工資料並設定到全域變數：', employees);
+        
+        // 如果 employeesMode 已存在，更新其員工資料
+        if (window.employeesMode) {
+            window.employeesMode.updateEmployeesData();
+        }
+        
+        return employees;
+    } catch (error) {
+        console.error('獲取員工資料時發生錯誤：', error);
+        // 設定預設資料作為備用
+        window.employeesResponse = [
+            { id: 1, name: '張小明' },
+            { id: 2, name: '李小華' },
+            { id: 3, name: '王小美' },
+            { id: 4, name: '陳小強' },
+            { id: 5, name: '林小芳' }
+        ];
+        console.warn('使用預設員工資料作為備用');
+        return window.employeesResponse;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     const memberListEl = document.getElementById('member-list');
     // 只顯示空內容或提示
     // memberListEl.innerHTML = '<div class="text-muted">請透過「員工設定」進行管理</div>';
+    
+    // 先獲取員工資料
+    await loadEmployeesData();
+    
     // 初始化月曆
     window.initCalendar();
     // 初始化模式切換器，並傳入日曆初始化函數
