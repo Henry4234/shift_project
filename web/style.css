@@ -878,3 +878,160 @@ nav.content.fadeout {
     opacity: 0;
     transition: opacity 0.4s ease;
 }
+
+/* === 開始排班彈窗樣式 === */
+#startScheduleModal .modal-content {
+    background-color: var(--white-color);
+    color: var(--grey-color);
+}
+
+#startScheduleModal .modal-header i.bx-play-circle {
+    font-size: 26px;
+    margin-right: 5px;
+    color: var(--blue-color);
+    vertical-align: middle;
+}
+
+#startScheduleModal .modal-header .modal-title {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    color: var(--grey-color);
+}
+
+/* 日期設定區域的表格佈局 */
+#startScheduleModal .date-settings-container {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#startScheduleModal .date-settings-row {
+    display: table-row;
+}
+
+#startScheduleModal .date-settings-cell {
+    display: table-cell;
+    vertical-align: middle;
+    padding: 8px;
+}
+
+/* 左側日期輸入區域 */
+#startScheduleModal .date-inputs {
+    width: 60%;
+    padding-right: 15px;
+}
+
+#startScheduleModal .date-inputs .mb-3 {
+    margin-bottom: 15px !important;
+}
+
+#startScheduleModal .date-inputs .form-label {
+    color: var(--grey-color);
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+#startScheduleModal .date-inputs .form-control {
+    background-color: var(--white-color);
+    border: 1px solid var(--grey-color-light);
+    color: var(--black-color);
+    border-radius: 6px;
+    padding: 8px 12px;
+}
+
+#startScheduleModal .date-inputs .form-control:focus {
+    border-color: var(--blue-color);
+    box-shadow: 0 0 0 0.2rem rgba(64, 112, 244, 0.25);
+}
+
+/* 右側天數顯示區域 */
+#startScheduleModal .days-display {
+    width: 40%;
+    text-align: center;
+    border-left: 1px solid var(--grey-color-light);
+    padding-left: 15px;
+}
+
+#startScheduleModal .days-display .form-label {
+    color: var(--grey-color);
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+#startScheduleModal .days-display #scheduleDays {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--blue-color);
+    background-color: var(--white-color);
+    border: 2px solid var(--blue-color);
+    border-radius: 8px;
+    padding: 15px;
+    margin: 0;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 員工人數顯示 */
+#startScheduleModal .employee-count-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--grey-color-light);
+}
+
+#startScheduleModal .employee-count-section .form-label {
+    color: var(--grey-color);
+    font-weight: 500;
+}
+
+#startScheduleModal .employee-count-section #employeeCount {
+    color: var(--green-color);
+    font-weight: 600;
+    font-size: 18px;
+}
+
+/* 員工參數設定按鈕 */
+#startScheduleModal #employeeConfigBtn {
+    background-color: var(--white-color);
+    border: 2px solid var(--blue-color);
+    color: var(--blue-color);
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+#startScheduleModal #employeeConfigBtn:hover {
+    background-color: var(--blue-color);
+    color: var(--white-color);
+}
+
+/* 確認按鈕樣式 */
+#startScheduleModal #confirmStartSchedule {
+    background-color: var(--green-color);
+    border-color: var(--green-color);
+    font-weight: 500;
+}
+
+#startScheduleModal #confirmStartSchedule:hover {
+    background-color: #4a6b5f;
+    border-color: #4a6b5f;
+}
+
+/* 夜間模式適配 */
+body.dark #startScheduleModal .modal-content {
+    background-color: var(--white-color);
+    color: var(--grey-color);
+}
+
+body.dark #startScheduleModal .form-control {
+    background-color: #f8f9fa;
+    border-color: #6c757d;
+    color: var(--black-color);
+}
+
+body.dark #startScheduleModal #scheduleDays {
+    background-color: #f8f9fa;
+    color: var(--blue-color);
+    border-color: var(--blue-color);
+}
