@@ -234,8 +234,8 @@ body.dark {
   color: var(--grey-color);
   white-space: nowrap;
 }
-.menu_dahsboard::before {
-  content: "人員列表";
+.menu_config::before {
+  content: "設定";
 }
 .menu_editor::before {
   content: "模式選擇";
@@ -755,6 +755,10 @@ nav.content.fadeout {
   background: transparent !important;
   transition: color 0.3s ease;
 }
+.sidebar.close .calendarmode .nav_link {
+  justify-content:center
+}
+
 .sidebar .calendarmode .navlink_icon
 /* 活動狀態的按鈕文字顏色
 .calendarmode .nav_link.active {
