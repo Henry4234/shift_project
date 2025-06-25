@@ -110,7 +110,7 @@ class EmployeeConfigManager {
             loadingDiv.className = 'employee-loading';
             loadingDiv.style.padding = '32px 0';
             loadingDiv.style.textAlign = 'center';
-            loadingDiv.innerHTML = `<div class="spinner-border text-primary" role="status" style="width:2.5rem;height:2.5rem;"></div><div style="margin-top:12px;">正在讀取員工資料...</div>`;
+            loadingDiv.innerHTML = `<div class="spinner-border text-primary" role="status" style="width:2.5rem;height:2.5rem;"></div><div class="loading-title" style="margin-top:12px;">正在讀取員工資料...</div>`;
             this.panel.appendChild(loadingDiv);
             // 從本地 JSON 檔案讀取資料
             // const [employeesResponse, preferencesResponse, requirementsResponse] = await Promise.all([

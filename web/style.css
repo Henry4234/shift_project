@@ -29,6 +29,7 @@ body.dark {
   --blue-color: #fff;
   --grey-color: #f2f2f2;
   --grey-color-light: #aaa;
+  --green-color: #7aa193;
   --fc-dark-btn-color: #dae9f4;
   --fc-weekend-color: #5f6060;
   --select-mode-color: #5173a9;
@@ -234,13 +235,13 @@ body.dark {
   white-space: nowrap;
 }
 .menu_editor::before {
-  content: "模式選擇";
+  content: "- 模式選擇";
 }
 .menu_tempt::before {
-  content: "暫存班表";
+  content: "- 暫存班表";
 }
 .menu_config::before {
-  content: "設定";
+  content: "- 設定";
 }
 .sidebar.close .menu_title::before {
   content: "";
@@ -315,6 +316,11 @@ body.dark {
   text-decoration: none;
   color: var(--grey-color);
   white-space: nowrap;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+.sidebar .btn-start-schedule{
+  color: var(--white-color);
+  background-color: var(--green-color);
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 .sidebar .calendarmode {
@@ -856,6 +862,9 @@ nav.content.fadeout {
 }
 
 /* === 員工設定面板樣式 === */
+.loading-title{
+  color: var(--grey-color);
+}
 .back-to-menu {
     margin-bottom: 20px;
     cursor: pointer;

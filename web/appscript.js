@@ -130,7 +130,7 @@ window.loadDraftCycles = async function() {
         draftDiv.id = 'draft-cycles-list';
         menuTempt.parentNode.insertBefore(draftDiv, menuTempt.nextSibling);
     }
-    draftDiv.innerHTML = '<div class="spinner-border text-primary" role="status" style="width:2.5rem;height:2.5rem;"></div><div class="text-muted">載入中...</div>';
+    draftDiv.innerHTML = '<div class="spinner-border text-primary" role="status" style="width:2.5rem;height:2.5rem;"></div><div class="loadingtitle text-muted">載入中...</div>';
     try {
         const resp = await fetch('/api/schedule-cycles?status=draft');
         const data = await resp.json();
