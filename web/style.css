@@ -962,7 +962,7 @@ nav.content.fadeout {
 #startScheduleModal .days-display #scheduleDays {
     font-size: 24px;
     font-weight: 600;
-    color: var(--blue-color);
+    color: var(--black-color);
     background-color: var(--white-color);
     border: 2px solid var(--blue-color);
     border-radius: 8px;
@@ -1025,13 +1025,5 @@ body.dark #startScheduleModal .modal-content {
 }
 
 body.dark #startScheduleModal .form-control {
-    background-color: #f8f9fa;
-    border-color: #6c757d;
-    color: var(--black-color);
-}
-
-body.dark #startScheduleModal #scheduleDays {
-    background-color: #f8f9fa;
-    color: var(--blue-color);
-    border-color: var(--blue-color);
+  color-scheme: dark;
 }
