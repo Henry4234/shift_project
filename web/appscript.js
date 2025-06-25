@@ -90,8 +90,8 @@ window.initCalendar = function() {
 async function loadEmployeesData() {
     try {
         console.log('開始從 API 獲取員工資料...');
-        // const response = await fetch('/api/employees');
-        const response = await fetch('./simulate_employees.json');
+        const response = await fetch('/api/employees');
+        // const response = await fetch('./simulate_employees.json');
         if (!response.ok) {
             throw new Error(`HTTP 錯誤! 狀態: ${response.status}`);
         }
@@ -121,6 +121,33 @@ async function loadEmployeesData() {
     }
 }
 
+// 新增：載入 draft 班表
+window.loadDraftCycles = async function() {
+    const menuTempt = document.querySelector('.menu_tempt');
+    let draftDiv = document.getElementById('draft-cycles-list');
+    if (!draftDiv) {
+        draftDiv = document.createElement('div');
+        draftDiv.id = 'draft-cycles-list';
+        menuTempt.parentNode.insertBefore(draftDiv, menuTempt.nextSibling);
+    }
+    draftDiv.innerHTML = '<div class="spinner-border text-primary" role="status" style="width:2.5rem;height:2.5rem;"></div><div class="text-muted">載入中...</div>';
+    try {
+        const resp = await fetch('/api/schedule-cycles?status=draft');
+        const data = await resp.json();
+        if (resp.ok) {
+            if (data.length === 0) {
+                draftDiv.innerHTML = '<div class="text-muted">目前沒有暫存班表</div>';
+            } else {
+                draftDiv.innerHTML = data.map(c => `<div>週期#${c.cycle_id}：${c.start_date} ~ ${c.end_date}</div>`).join('');
+            }
+        } else {
+            draftDiv.innerHTML = `<div class="text-danger">載入失敗：${data.error}</div>`;
+        }
+    } catch (err) {
+        draftDiv.innerHTML = `<div class="text-danger">載入失敗</div>`;
+    }
+};
+
 document.addEventListener('DOMContentLoaded', async () => {
     const memberListEl = document.getElementById('member-list');
     // 只顯示空內容或提示
@@ -133,6 +160,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.initCalendar();
     // 初始化模式切換器，並傳入日曆初始化函數
     new ModeSwitcher(window.initCalendar);
+    // 新增：載入暫存班表
+    window.loadDraftCycles();
 });
 
 // 處理開始生成按鈕點擊事件

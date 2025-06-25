@@ -114,7 +114,6 @@ body.dark {
 .sidebar::-webkit-scrollbar {
   display: none;
 }
-
 /* 員工按鈕展開動畫 */
 .form-check {
   transition: all 0.3s ease-out;
@@ -234,13 +233,15 @@ body.dark {
   color: var(--grey-color);
   white-space: nowrap;
 }
-.menu_config::before {
-  content: "設定";
-}
 .menu_editor::before {
   content: "模式選擇";
 }
-
+.menu_tempt::before {
+  content: "暫存班表";
+}
+.menu_config::before {
+  content: "設定";
+}
 .sidebar.close .menu_title::before {
   content: "";
   position: absolute;
@@ -880,6 +881,7 @@ nav.content.fadeout {
 }
 
 /* === 開始排班彈窗樣式 === */
+
 #startScheduleModal .modal-content {
     background-color: var(--white-color);
     color: var(--grey-color);

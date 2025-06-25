@@ -118,9 +118,32 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     // 監聽確認按鈕
-    document.getElementById('confirmStartSchedule').addEventListener('click', () => {
-        // 這裡可以加入送出排班設定的邏輯
-        // 目前僅關閉視窗
-        startScheduleModal.hide();
+    document.getElementById('confirmStartSchedule').addEventListener('click', async () => {
+        // 取得日期
+        const startDate = document.getElementById('scheduleStartDate').value;
+        const endDate = document.getElementById('scheduleEndDate').value;
+        if (!startDate || !endDate) {
+            alert('請選擇開始與結束日期');
+            return;
+        }
+        try {
+            // 呼叫後端 API 建立新 cycle
+            const resp = await fetch('/api/schedule-cycles', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ start_date: startDate, end_date: endDate })
+            });
+            const data = await resp.json();
+            if (resp.ok) {
+                alert('已建立新的排班週期！');
+                startScheduleModal.hide();
+                // 觸發 draft 班表重新載入
+                if (window.loadDraftCycles) window.loadDraftCycles();
+            } else {
+                alert(data.error || '建立失敗');
+            }
+        } catch (err) {
+            alert('建立排班週期時發生錯誤');
+        }
     });
 }); 

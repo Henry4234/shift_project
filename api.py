@@ -306,6 +306,46 @@ class APIServer():
                     'message': f'發生錯誤：{str(e)}'
                 }), 500
 
+        # 新增：建立新的排班週期
+        @self.app.route('/api/schedule-cycles', methods=['POST'])
+        def create_schedule_cycle():
+            """建立新的排班週期（cycle）"""
+            try:
+                data = request.get_json()
+                start_date = data.get('start_date')
+                end_date = data.get('end_date')
+                if not start_date or not end_date:
+                    return jsonify({'error': '缺少開始或結束日期'}), 400
+                # 插入 schedule_cycles
+                response = self.supabase_client.table('schedule_cycles').insert({
+                    'start_date': start_date,
+                    'end_date': end_date,
+                    'status': 'draft'
+                }).execute()
+                if not response.data:
+                    raise Exception("無法建立排班週期")
+                cycle = response.data[0]
+                return jsonify({'cycle_id': cycle['cycle_id'], 'start_date': cycle['start_date'], 'end_date': cycle['end_date'], 'status': cycle['status']})
+            except Exception as err:
+                self.logger.error(f'建立排班週期時發生錯誤：{str(err)}')
+                return jsonify({'error': '無法建立排班週期'}), 500
+
+        # 新增：查詢排班週期（可依 status 過濾）
+        @self.app.route('/api/schedule-cycles', methods=['GET'])
+        def get_schedule_cycles():
+            """查詢排班週期（可依 status 過濾）"""
+            try:
+                status = request.args.get('status')
+                query = self.supabase_client.table('schedule_cycles').select('*')
+                if status:
+                    query = query.eq('status', status)
+                response = query.order('created_at', desc=True).execute()
+                cycles = response.data
+                return jsonify(cycles)
+            except Exception as err:
+                self.logger.error(f'查詢排班週期時發生錯誤：{str(err)}')
+                return jsonify({'error': '無法查詢排班週期'}), 500
+
     def run(self):
         """啟動 Flask 應用"""
         self.app.run(host=self.host, port=self.port, debug=self.debug)
