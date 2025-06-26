@@ -31,7 +31,7 @@ class APIServer():
 
         # init supabase
         url = os.getenv("SUPABASE_URL")
-        api_key = os.getenv("SUPABASE_KEY")  # 使用 SUPABASE_KEY 而不是 SUPABASE_API_KEY
+        api_key = os.getenv("SUPABASE_KEY") 
 
         if not url:
             self.logger.error("Missing env SUPABASE_URL while connecting to Supabase.")
@@ -401,25 +401,24 @@ class APIServer():
                 if not cycle_id or not members:
                     return jsonify({'error': '缺少 cycle_id 或 members'}), 400
                 
-                # 處理重複：因為主鍵是 (cycle_id, employee_id)，每個員工只能有一筆紀錄。
-                # 我們使用字典來確保每個 employee_id 只被處理一次。
-                unique_employees = {}
+                # # 處理重複：因為主鍵是 (cycle_id, employee_id)，每個員工只能有一筆紀錄。
+                # # 我們使用字典來確保每個 employee_id 只被處理一次。
+                cycle_employees_required = []
                 for m in members:
                     employee_id = m['employee_id']
-                    if employee_id not in unique_employees:
-                        unique_employees[employee_id] = {
-                            'cycle_id': cycle_id,
-                            'employee_id': employee_id,
-                            'snapshot_name': m['snapshot_name']
-                            # 暫時忽略 shift_type 和 required_days，因為無法在單一紀錄中儲存多筆
-                        }
+                    cycle_employees_required.append(
+                        {
+                        'employee_id': employee_id,
+                        'cycle_id': cycle_id,
+                        'snapshot_name': m['snapshot_name'],
+                        'shift_type': m['shift_type'],
+                        'required_days': m['required_days']
+                    })
                 
-                insert_data = list(unique_employees.values())
+                if cycle_employees_required:
+                    self.supabase_client.table('schedule_cycle_members').insert(cycle_employees_required).execute()
 
-                if insert_data:
-                    self.supabase_client.table('schedule_cycle_members').insert(insert_data).execute()
-                
-                return jsonify({'status': 'success', 'count': len(insert_data)})
+                return jsonify({'status': 'success', 'count': len(cycle_employees_required)})
             except Exception as err:
                 self.logger.error(f'批次寫入 schedule_cycle_members 時發生錯誤：{str(err)}')
                 return jsonify({'error': '寫入失敗'}), 500
