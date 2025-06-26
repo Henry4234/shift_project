@@ -110,19 +110,19 @@ class EmployeeConfigManager {
             loadingDiv.className = 'employee-loading';
             loadingDiv.style.padding = '32px 0';
             loadingDiv.style.textAlign = 'center';
-            loadingDiv.innerHTML = `<div class="spinner-border text-primary" role="status" style="width:2.5rem;height:2.5rem;"></div><div style="margin-top:12px;">正在讀取員工資料...</div>`;
+            loadingDiv.innerHTML = `<div class="spinner-border text-primary" role="status" style="width:2.5rem;height:2.5rem;"></div><div class="loading-title" style="margin-top:12px;">正在讀取員工資料...</div>`;
             this.panel.appendChild(loadingDiv);
             // 從本地 JSON 檔案讀取資料
-            const [employeesResponse, preferencesResponse, requirementsResponse] = await Promise.all([
-                fetch('./simulate_employees.json'),
-                fetch('./simulate_employeepreferences.json'),
-                fetch('./simulate_shiftrequirements.json')
-            ]);
             // const [employeesResponse, preferencesResponse, requirementsResponse] = await Promise.all([
-            //   fetch('/api/employees'),
-            //   fetch('/api/employee-preferences'),
-            //   fetch('/api/shift-requirements')
+            //     fetch('./simulate_employees.json'),
+            //     fetch('./simulate_employeepreferences.json'),
+            //     fetch('./simulate_shiftrequirements.json')
             // ]);
+            const [employeesResponse, preferencesResponse, requirementsResponse] = await Promise.all([
+              fetch('/api/employees'),
+              fetch('/api/employee-preferences'),
+              fetch('/api/shift-requirements')
+            ]);
 
 
             const [employees, preferences, requirements] = await Promise.all([

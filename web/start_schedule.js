@@ -39,17 +39,34 @@ window.addEventListener('DOMContentLoaded', () => {
                                 </div>
                             </div>
                             
-                            <!-- 員工人數顯示 -->
-                            <div class="employee-count-section">
-                                <label class="form-label">員工人數</label>
-                                <div id="employeeCount" class="form-control-plaintext">0 人</div>
-                            </div>
-                            
-                            <!-- 員工參數設定按鈕 -->
-                            <div class="mb-3">
-                                <button type="button" class="btn btn-outline-primary w-100" id="employeeConfigBtn">
-                                    員工參數設定
-                                </button>
+                            <!-- 分隔線 -->
+                            <hr class="my-3">
+
+                            <!-- 員工設定區域 -->
+                            <div class="employee-settings-container">
+                                <div class="employee-settings-row">
+                                    <!-- 左側區域 -->
+                                    <div class="employee-settings-cell employee-inputs">
+                                        <!-- 員工人數顯示 -->
+                                        <div class="mb-3">
+                                            <label class="form-label">已選擇員工人數</label>
+                                            <div id="employeeCount" class="form-control-plaintext">0 人</div>
+                                        </div>
+                                        <!-- 員工參數設定按鈕 -->
+                                        <div class="mb-3">
+                                            <button type="button" class="btn btn-outline-primary w-100" id="employeeConfigBtn">
+                                                員工參數設定
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <!-- 右側員工列表 -->
+                                    <div class="employee-settings-cell employee-list">
+                                        <label class="form-label">選擇參與排班的員工</label>
+                                        <div id="employeeListGroup" class="list-group">
+                                            <!-- 員工列表將動態生成於此 -->
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -72,10 +89,10 @@ window.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', (event) => {
         const startBtn = event.target.closest('.start-schedule');
         if (startBtn) {
-            // 顯示員工人數
-            updateEmployeeCount();
             // 重設表單
             document.getElementById('startScheduleForm').reset();
+            // 設定員工選擇列表並更新人數
+            setupEmployeeSelection();
             document.getElementById('scheduleDays').textContent = '0 天';
             startScheduleModal.show();
         }
@@ -102,11 +119,83 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 顯示員工人數
+    // 更新所選員工人數
     function updateEmployeeCount() {
-        // 從全域變數 window.employeesResponse 取得員工數
-        const count = Array.isArray(window.employeesResponse) ? window.employeesResponse.length : 0;
-        document.getElementById('employeeCount').textContent = count + ' 人';
+        const selectedCount = document.querySelectorAll('#employeeListGroup .employee-checkbox:checked').length;
+        document.getElementById('employeeCount').textContent = selectedCount + ' 人';
+
+        // 更新全選 checkbox 狀態
+        const employeeCheckboxes = document.querySelectorAll('#employeeListGroup .employee-checkbox');
+        const selectAllCheckbox = document.getElementById('selectAllEmployees');
+        if (selectAllCheckbox) {
+            const totalEmployees = employeeCheckboxes.length;
+
+            if (totalEmployees > 0 && selectedCount > 0 && selectedCount < totalEmployees) {
+                // 部分選擇
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = true;
+            } else {
+                // 全選或全不選
+                selectAllCheckbox.indeterminate = false;
+                selectAllCheckbox.checked = totalEmployees > 0 && selectedCount === totalEmployees;
+            }
+        }
+    }
+
+    // 設定員工選擇列表
+    function setupEmployeeSelection() {
+        const listGroup = document.getElementById('employeeListGroup');
+        const employees = window.employeesResponse || [];
+        
+        listGroup.innerHTML = ''; // 清空舊列表
+
+        if (employees.length === 0) {
+            listGroup.innerHTML = '<div class="list-group-item">沒有可選擇的員工。</div>';
+            updateEmployeeCount();
+            return;
+        }
+
+        // 建立 "全選" Checkbox
+        const selectAllItem = document.createElement('div');
+        selectAllItem.className = 'list-group-item';
+        selectAllItem.innerHTML = `
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="selectAllEmployees">
+                <label class="form-check-label fw-bold" for="selectAllEmployees">全選/取消全選</label>
+            </div>
+        `;
+        listGroup.appendChild(selectAllItem);
+
+        // 建立員工 Checkbox 列表
+        employees.forEach(employee => {
+            const item = document.createElement('div');
+            item.className = 'list-group-item';
+            item.innerHTML = `
+                <div class="form-check">
+                    <input class="form-check-input employee-checkbox" type="checkbox" value="${employee.id}" id="employee-${employee.id}" checked>
+                    <label class="form-check-label" for="employee-${employee.id}">${employee.name}</label>
+                </div>
+            `;
+            listGroup.appendChild(item);
+        });
+
+        // 綁定事件監聽
+        const selectAllCheckbox = document.getElementById('selectAllEmployees');
+        const employeeCheckboxes = document.querySelectorAll('#employeeListGroup .employee-checkbox');
+
+        selectAllCheckbox.addEventListener('change', (e) => {
+            employeeCheckboxes.forEach(checkbox => {
+                checkbox.checked = e.target.checked;
+            });
+            updateEmployeeCount();
+        });
+
+        employeeCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateEmployeeCount);
+        });
+
+        // 初始化人數
+        updateEmployeeCount();
     }
 
     // 監聽員工參數設定按鈕，跳轉到員工設定面板
@@ -118,9 +207,45 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     // 監聽確認按鈕
-    document.getElementById('confirmStartSchedule').addEventListener('click', () => {
-        // 這裡可以加入送出排班設定的邏輯
-        // 目前僅關閉視窗
-        startScheduleModal.hide();
+    document.getElementById('confirmStartSchedule').addEventListener('click', async () => {
+        const startDate = document.getElementById('scheduleStartDate').value;
+        const endDate = document.getElementById('scheduleEndDate').value;
+        const selectedIds = Array.from(document.querySelectorAll('#employeeListGroup .employee-checkbox:checked'))
+            .map(cb => parseInt(cb.value, 10));
+        if (!startDate || !endDate || selectedIds.length === 0) {
+            alert('請選擇日期與員工');
+            return;
+        }
+        try {
+            // 1. 建立 cycle
+            const resp1 = await fetch('/api/schedule-cycles', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ start_date: startDate, end_date: endDate })
+            });
+            const data1 = await resp1.json();
+            if (!resp1.ok) throw new Error(data1.error || '建立週期失敗');
+            const cycle_id = data1.cycle_id;
+
+            // 2. 取得員工快照
+            const resp2 = await fetch('/api/shift-requirements-legacy?employee_ids=' + selectedIds.join(','));
+            const members = await resp2.json();
+            if (!resp2.ok) throw new Error(members.error || '取得員工快照失敗');
+
+            // 3. 批次寫入 schedule_cycle_members
+            const resp3 = await fetch('/api/schedule-cycle-members', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cycle_id, members })
+            });
+            const data3 = await resp3.json();
+            if (!resp3.ok) throw new Error(data3.error || '寫入成員失敗');
+
+            alert('已建立新的排班週期！');
+            startScheduleModal.hide();
+            if (window.loadDraftCycles) window.loadDraftCycles();
+        } catch (err) {
+            alert(err.message || '建立排班週期時發生錯誤');
+        }
     });
 }); 

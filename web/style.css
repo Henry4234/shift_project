@@ -29,6 +29,7 @@ body.dark {
   --blue-color: #fff;
   --grey-color: #f2f2f2;
   --grey-color-light: #aaa;
+  --green-color: #7aa193;
   --fc-dark-btn-color: #dae9f4;
   --fc-weekend-color: #5f6060;
   --select-mode-color: #5173a9;
@@ -114,7 +115,6 @@ body.dark {
 .sidebar::-webkit-scrollbar {
   display: none;
 }
-
 /* 員工按鈕展開動畫 */
 .form-check {
   transition: all 0.3s ease-out;
@@ -234,13 +234,15 @@ body.dark {
   color: var(--grey-color);
   white-space: nowrap;
 }
-.menu_config::before {
-  content: "設定";
-}
 .menu_editor::before {
-  content: "模式選擇";
+  content: "- 模式選擇";
 }
-
+.menu_tempt::before {
+  content: "- 暫存班表";
+}
+.menu_config::before {
+  content: "- 設定";
+}
 .sidebar.close .menu_title::before {
   content: "";
   position: absolute;
@@ -314,6 +316,11 @@ body.dark {
   text-decoration: none;
   color: var(--grey-color);
   white-space: nowrap;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+.sidebar .btn-start-schedule{
+  color: var(--white-color);
+  background-color: var(--green-color);
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 .sidebar .calendarmode {
@@ -855,6 +862,9 @@ nav.content.fadeout {
 }
 
 /* === 員工設定面板樣式 === */
+.loading-title{
+  color: var(--grey-color);
+}
 .back-to-menu {
     margin-bottom: 20px;
     cursor: pointer;
@@ -880,6 +890,7 @@ nav.content.fadeout {
 }
 
 /* === 開始排班彈窗樣式 === */
+
 #startScheduleModal .modal-content {
     background-color: var(--white-color);
     color: var(--grey-color);
@@ -918,7 +929,7 @@ nav.content.fadeout {
 
 /* 左側日期輸入區域 */
 #startScheduleModal .date-inputs {
-    width: 60%;
+    width: 70%;
     padding-right: 15px;
 }
 
@@ -1026,4 +1037,65 @@ body.dark #startScheduleModal .modal-content {
 
 body.dark #startScheduleModal .form-control {
   color-scheme: dark;
+}
+
+/* 員工設定區域的表格佈局 */
+#startScheduleModal .employee-settings-container {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#startScheduleModal .employee-settings-row {
+    display: table-row;
+}
+
+#startScheduleModal .employee-settings-cell {
+    display: table-cell;
+    vertical-align: top; /* 頂端對齊 */
+    padding: 8px;
+}
+
+/* 左側控制區域 */
+#startScheduleModal .employee-inputs {
+    width: 40%;
+    padding-right: 15px;
+}
+#startScheduleModal .employee-inputs #employeeCount{
+  display: flex;
+  justify-content:center;
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--fc-dark-btn-color);
+}
+/* 右側員工列表 */
+#startScheduleModal .employee-list {
+    width: 60%;
+    padding-left: 15px;
+    border-left: 1px solid var(--grey-color-light);
+}
+
+#startScheduleModal #employeeListGroup {
+    max-height: 160px; /* 設定最大高度 */
+    overflow-y: auto; /* 超出高度時顯示滾動條 */
+    border: 1px solid var(--grey-color-light);
+    border-radius: 6px;
+}
+
+#startScheduleModal #employeeListGroup .list-group-item {
+    background-color: var(--white-color);
+    border: none;
+    border-bottom: 1px solid var(--grey-color-light);
+    padding: 8px 12px;
+    color: var(--grey-color);
+}
+
+#startScheduleModal #employeeListGroup .list-group-item:last-child {
+    border-bottom: none;
+}
+
+body.dark #startScheduleModal #employeeListGroup .list-group-item {
+    background-color: var(--white-color);
+    color: var(--grey-color);
+    border-bottom: 1px solid var(--grey-color-light);
 }

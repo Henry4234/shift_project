@@ -31,7 +31,7 @@ class APIServer():
 
         # init supabase
         url = os.getenv("SUPABASE_URL")
-        api_key = os.getenv("SUPABASE_KEY")  # 使用 SUPABASE_KEY 而不是 SUPABASE_API_KEY
+        api_key = os.getenv("SUPABASE_KEY") 
 
         if not url:
             self.logger.error("Missing env SUPABASE_URL while connecting to Supabase.")
@@ -305,6 +305,123 @@ class APIServer():
                     'status': 'error',
                     'message': f'發生錯誤：{str(e)}'
                 }), 500
+        #查詢排班週期
+        @self.app.route('/api/schedule-cycles', methods=['GET'])
+        def get_cycle():
+            """獲取暫存的班表"""
+            try:
+                status = request.args.get('status')
+                query = self.supabase_client.table('schedule_cycles').select('*')
+                if status:
+                    query = query.eq('status', status)
+                response = query.order('created_at', desc=True).execute()
+                cycles = response.data
+                return jsonify(cycles)
+            except Exception as err:
+                self.logger.error(f'查詢排班週期時發生錯誤：{str(err)}')
+                return jsonify({'error': '無法查詢排班週期'}), 500
+        # 建立新的排班週期
+        @self.app.route('/api/schedule-cycles', methods=['POST'])
+        def create_schedule_cycle():
+            try:
+                data = request.get_json()
+                start_date = data.get('start_date')
+                end_date = data.get('end_date')
+                if not start_date or not end_date:
+                    return jsonify({'error': '缺少開始或結束日期'}), 400
+                response = self.supabase_client.table('schedule_cycles').insert({
+                    'start_date': start_date,
+                    'end_date': end_date,
+                    'status': 'draft'
+                }).execute()
+                if not response.data:
+                    raise Exception("無法建立排班週期")
+                cycle = response.data[0]
+                return jsonify({'cycle_id': cycle['cycle_id']})
+            except Exception as err:
+                self.logger.error(f'建立排班週期時發生錯誤：{str(err)}')
+                return jsonify({'error': '無法建立排班週期'}), 500
+
+        # 查詢 shift_requirements_legacy
+        @self.app.route('/api/shift-requirements-legacy', methods=['GET'])
+        def get_shift_requirements_legacy():
+            """
+            取得多位員工在 shift_requirements_legacy 中的班別需求
+            Query param:  employee_ids=1,2,3
+            回傳: [{employee_id, snapshot_name, shift_type, required_days}, ...]
+            """
+            ids_param = request.args.get("employee_ids")
+            if not ids_param:
+                return jsonify({"error": "Query parameter 'employee_ids' is required"}), 400
+
+            try:
+                emp_ids = [int(x) for x in ids_param.split(",") if x.strip()]
+                if not emp_ids:
+                    raise ValueError
+            except ValueError:
+                return jsonify({"error": "employee_ids must be a comma-separated list of integers"}), 400
+
+            try:
+                # Supabase 查詢
+                response = (
+                    self.supabase_client.table("employees")
+                    .select("id, name, shift_requirements_legacy(shift_type, required_days)")
+                    .in_("id", emp_ids)
+                    .execute()
+                )
+                
+                # 扁平化處理，轉換成前端需要的格式
+                flat_result = []
+                for employee in response.data:
+                    employee_id = employee.get('id')
+                    snapshot_name = employee.get('name')
+                    requirements = employee.get('shift_requirements_legacy', [])
+                    
+                    for req in requirements:
+                        flat_result.append({
+                            "employee_id": employee_id,
+                            "snapshot_name": snapshot_name,
+                            "shift_type": req.get('shift_type'),
+                            "required_days": req.get('required_days')
+                        })
+                
+                return jsonify(flat_result)
+
+            except Exception as err:
+                self.logger.error(f'查詢 shift_requirements_legacy 時發生錯誤：{str(err)}')
+                return jsonify({'error': '查詢失敗'}), 500
+
+        # 批次寫入 schedule_cycle_members
+        @self.app.route('/api/schedule-cycle-members', methods=['POST'])
+        def insert_schedule_cycle_members():
+            try:
+                data = request.get_json()
+                cycle_id = data.get('cycle_id')
+                members = data.get('members', [])
+                if not cycle_id or not members:
+                    return jsonify({'error': '缺少 cycle_id 或 members'}), 400
+                
+                # # 處理重複：因為主鍵是 (cycle_id, employee_id)，每個員工只能有一筆紀錄。
+                # # 我們使用字典來確保每個 employee_id 只被處理一次。
+                cycle_employees_required = []
+                for m in members:
+                    employee_id = m['employee_id']
+                    cycle_employees_required.append(
+                        {
+                        'employee_id': employee_id,
+                        'cycle_id': cycle_id,
+                        'snapshot_name': m['snapshot_name'],
+                        'shift_type': m['shift_type'],
+                        'required_days': m['required_days']
+                    })
+                
+                if cycle_employees_required:
+                    self.supabase_client.table('schedule_cycle_members').insert(cycle_employees_required).execute()
+
+                return jsonify({'status': 'success', 'count': len(cycle_employees_required)})
+            except Exception as err:
+                self.logger.error(f'批次寫入 schedule_cycle_members 時發生錯誤：{str(err)}')
+                return jsonify({'error': '寫入失敗'}), 500
 
     def run(self):
         """啟動 Flask 應用"""
