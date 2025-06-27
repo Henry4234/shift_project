@@ -91,7 +91,7 @@ class APIServer():
             try:
                 self.logger.info('開始從 Supabase 獲取班表需求...')
                 
-                response = self.supabase_client.table('shift_requirements').select('*').execute()
+                response = self.supabase_client.table('shift_requirements_legacy').select('*').execute()
                 requirements = response.data
                 
                 self.logger.info(f'從 Supabase 獲取到的班表需求：{requirements}')
@@ -213,7 +213,7 @@ class APIServer():
                     raise Exception("無法新增員工基本資料")
                 
                 employee_id = employee_response.data[0]['id']
-
+                print(employee_id)
                 # 2. 新增員工偏好設定
                 self.supabase_client.table('employee_preferences').insert({
                     'employee_id': employee_id,
@@ -224,7 +224,7 @@ class APIServer():
 
                 # 3. 新增班別需求
                 for shift_type in ['A', 'B', 'C']:
-                    self.supabase_client.table('shift_requirements').insert({
+                    self.supabase_client.table('shift_requirements_legacy').insert({
                         'employee_id': employee_id,
                         'shift_type': shift_type,
                         'required_days': shift_requirements[shift_type]
