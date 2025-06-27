@@ -423,6 +423,29 @@ class APIServer():
                 self.logger.error(f'批次寫入 schedule_cycle_members 時發生錯誤：{str(err)}')
                 return jsonify({'error': '寫入失敗'}), 500
 
+        # 查詢特定週期的成員（含班別資訊）
+        @self.app.route('/api/schedule-cycle-members', methods=['GET'])
+        def get_schedule_cycle_members():
+            """
+            取得指定週期 (cycle_id) 的所有成員資料
+            - 查詢參數: cycle_id (int)
+            - 回傳: [{employee_id, snapshot_name, shift_type, required_days}, ...]
+            """
+            cycle_id = request.args.get('cycle_id')
+            if not cycle_id:
+                return jsonify({'error': '缺少 cycle_id 參數'}), 400
+            try:
+                # 從 schedule_cycle_members 取得所有該週期成員
+                response = self.supabase_client.table('schedule_cycle_members') \
+                    .select('employee_id, snapshot_name, shift_type, required_days') \
+                    .eq('cycle_id', int(cycle_id)) \
+                    .execute()
+                members = response.data if response.data else []
+                return jsonify(members)
+            except Exception as err:
+                self.logger.error(f'查詢 schedule_cycle_members 時發生錯誤：{str(err)}')
+                return jsonify({'error': '查詢失敗'}), 500
+
     def run(self):
         """啟動 Flask 應用"""
         self.app.run(host=self.host, port=self.port, debug=self.debug)

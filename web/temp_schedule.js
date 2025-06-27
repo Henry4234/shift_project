@@ -33,22 +33,27 @@ class TempScheduleMode {
                     </div>
                 </div>
                 <div class="employees-table-outer">
-                    <div class="table-responsive">
-                        <table class="employees-table">
-                            <thead>
-                                <tr>
-                                    <th>員工姓名</th>
-                                    <!-- 日期標題將會動態生成 -->
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- 員工列將會動態生成 -->
-                                <tr><td colspan="32" style="text-align: center; padding: 20px;"><div class="spinner-border text-primary"></div> 載入中...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
+
+                    <table class="employees-table">
+                        <thead>
+                            <tr>
+                                <th>員工姓名</th>
+                                <!-- 日期標題將會動態生成 -->
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- 員工列將會動態生成 -->
+                            <tr>
+                                <td colspan="32" style="text-align: center; padding: 20px;">
+                                <div class="spinner-border text-primary"></div> 載入中...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
                 </div>
             </div>
+            <div class="temp-schedule-require"></div>
         `;
 
         // 2. 獲取此週期的成員
@@ -70,38 +75,40 @@ class TempScheduleMode {
     }
 
     /**
-     * 從後端獲取週期成員
+     * 從後端獲取週期成員（含班別資訊）
      * @returns {Promise<Array>}
      */
     async fetchCycleMembers() {
         console.log(`正在獲取週期 #${this.cycleData.cycle_id} 的成員...`);
-        // TODO: 後續需實作後端 API: GET /api/schedule-cycle-members?cycle_id=...
-        // 該 API 應回傳 schedule_cycle_members 表中特定 cycle_id 的所有成員資料
         try {
-            // 預留的 API 呼叫點
-            // const response = await fetch(`/api/schedule-cycle-members?cycle_id=${this.cycleData.cycle_id}`);
-            // if (!response.ok) {
-            //     throw new Error('無法獲取週期成員');
-            // }
-            // return await response.json();
-            
-            // --- 開發期間使用的模擬資料 ---
-            await new Promise(resolve => setTimeout(resolve, 500)); // 模擬網路延遲
-            const mockMembers = [
-                { employee_id: 1, snapshot_name: '張小明' },
-                { employee_id: 2, snapshot_name: '李小華' },
-                { employee_id: 3, snapshot_name: '王小美' },
-                { employee_id: 4, snapshot_name: '陳小強' },
-                { employee_id: 5, snapshot_name: '林小芳' }
-            ];
-            console.warn('警告：目前使用的是模擬的週期成員資料。');
-            return mockMembers;
-            // --- 模擬資料結束 ---
-
+            // 串接後端 API，取得 schedule_cycle_members
+            const response = await fetch(`/api/schedule-cycle-members?cycle_id=${this.cycleData.cycle_id}`);
+            if (!response.ok) {
+                throw new Error('無法獲取週期成員');
+            }
+            /**
+             * 預期回傳格式：
+             * [
+             *   { employee_id, snapshot_name, shift_type, required_days }, ...
+             * ]
+             */
+            const members = await response.json();
+            // 檢查資料格式
+            if (!Array.isArray(members)) {
+                throw new Error('回傳資料格式錯誤');
+            }
+            // 若無資料，顯示提示
+            if (members.length === 0) {
+                const tbody = this.container.querySelector('.employees-table tbody');
+                if (tbody) {
+                    tbody.innerHTML = `<tr><td colspan="32" style="text-align: center; padding: 20px;">此週期沒有排班成員。</td></tr>`;
+                }
+            }
+            return members;
         } catch (error) {
             console.error(error);
             const tbody = this.container.querySelector('.employees-table tbody');
-            if(tbody) {
+            if (tbody) {
                 tbody.innerHTML = `<tr><td colspan="32" style="text-align: center; color: red; padding: 20px;">無法載入此週期成員。</td></tr>`;
             }
             return [];
@@ -146,18 +153,17 @@ class TempScheduleMode {
             thead.appendChild(th);
         });
 
-        // 產生員工列
-        if (members.length === 0) {
+        // 產生員工列（原本的主表格，僅顯示姓名與日期，暫不顯示班別需求）
+        const uniqueNames = [...new Set(members.map(m => m.snapshot_name))];
+        if (uniqueNames.length === 0) {
             tbody.innerHTML = `<tr><td colspan="${dateArray.length + 1}" style="text-align: center; padding: 20px;">此週期沒有排班成員。</td></tr>`;
             return;
         }
-
-        members.forEach(member => {
+        uniqueNames.forEach(name => {
             const row = document.createElement('tr');
             const nameCell = document.createElement('td');
-            nameCell.textContent = member.snapshot_name;
+            nameCell.textContent = name;
             row.appendChild(nameCell);
-
             dateArray.forEach(date => {
                 const cell = document.createElement('td');
                 cell.className = 'shift-cell';
@@ -165,9 +171,52 @@ class TempScheduleMode {
                 cell.textContent = ''; // 暫時為空
                 row.appendChild(cell);
             });
-
             tbody.appendChild(row);
         });
+
+        // === 新增：員工班別需求表格 ===
+        // 先移除舊的需求表格（避免重複）
+        const reqContainer = this.container.querySelector('.temp-schedule-require');
+        if (reqContainer) reqContainer.innerHTML = '';
+
+        // 建立新表格
+        const reqTable = document.createElement('table');
+        reqTable.className = 'employee-requirements-table'; // 套用相同樣式
+        reqTable.style = 'margin-top: 0; border-collapse: collapse; width: 100%; background: #fff;';
+
+        // 表頭
+        const reqThead = document.createElement('thead');
+        reqThead.innerHTML = `
+            <tr style="background: #f5f5f5;">
+                <th style="padding: 8px 12px; border: 1px solid #e0e0e0;">員工姓名</th>
+                <th style="padding: 8px 12px; border: 1px solid #e0e0e0;">白班</th>
+                <th style="padding: 8px 12px; border: 1px solid #e0e0e0;">小夜班</th>
+                <th style="padding: 8px 12px; border: 1px solid #e0e0e0;">大夜班</th>
+            </tr>
+        `;
+        reqTable.appendChild(reqThead);
+
+        // 表身
+        const reqTbody = document.createElement('tbody');
+        uniqueNames.forEach(name => {
+            const a = members.find(m => m.snapshot_name === name && m.shift_type === 'A');
+            const b = members.find(m => m.snapshot_name === name && m.shift_type === 'B');
+            const c = members.find(m => m.snapshot_name === name && m.shift_type === 'C');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${name}</td>
+                <td>${a ? a.required_days : 0}</td>
+                <td>${b ? b.required_days : 0}</td>
+                <td>${c ? c.required_days : 0}</td>
+            `;
+            reqTbody.appendChild(row);
+        });
+        reqTable.appendChild(reqTbody);
+
+        // 插入到 .temp-schedule-require div 中
+        if (reqContainer) {
+            reqContainer.appendChild(reqTable);
+        }
     }
     
     /**
