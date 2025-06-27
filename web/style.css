@@ -16,6 +16,8 @@
   --fc-dark-btn-color: #455A64;
   --fc-weekend-color: #7f9eb2;
   --select-mode-color: #58a3ed;
+  --cycle-bg-color: #c6e1fa;
+  --wiget-cycle-color: #a2c1cb; 
 }
 body {
   background-color: #e7f2fd;
@@ -33,6 +35,9 @@ body.dark {
   --fc-dark-btn-color: #dae9f4;
   --fc-weekend-color: #5f6060;
   --select-mode-color: #5173a9;
+  --cycle-bg-color: #474747;
+  --wiget-cycle-color: #415b8b; 
+
 }
 
 /* 加載動畫 */
@@ -543,6 +548,54 @@ body.dark {
   align-items: center;
 
 }
+/* === 暫存班表專用樣式 === */
+.temp-schedule-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--black-color);
+    border-radius: 8px;
+    padding: 18px 24px;
+    background-color: var(--wiget-cycle-color);
+    border: 2px solid #b0c4d6;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 0;
+}
+.temp-schedule-header h2, .temp-schedule-header p {
+    margin: 0;
+    text-align: left;
+}
+.temp-schedule-header .header-actions {
+    display: flex;
+    gap: 12px;
+}
+.temp-schedule-header .header-actions button {
+    background: var(--fc-dark-btn-color);
+    color: var(--white-color);
+    border: none;
+    border-radius: 6px;
+    padding: 8px 18px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.temp-schedule-header .header-actions button:hover {
+    background: var(--blue-color);
+}
+.temp-schedule-mode {
+    box-shadow: 0 4px 24px 0 rgba(0,0,0,0.13);
+    border-radius: 12px;
+    background: var(--cycle-bg-color);
+    padding: 24px 24px 32px 24px;
+    margin-top: 10px;
+}
+.temp-schedule-mode .employees-table-outer {
+    margin-top: 24px;
+}
+
 /* === 人員模式專用樣式 === */
 /* 人員班表外框動畫 */
 .employeesmode {
@@ -685,6 +738,23 @@ body.dark {
 .employees-table th {
   background: #f5f7fa;
   font-weight: 600;
+  vertical-align: middle;
+  text-align: center;
+  line-height: 1.2;
+  white-space: normal;
+  font-size: 15px;
+  padding: 6px 8px;
+}
+.employees-table th br {
+  display: block;
+  content: "";
+  margin: 0;
+}
+.employees-table th span.dayofweek {
+  display: block;
+  font-size: 12px;
+  color: #888;
+  margin-top: 2px;
 }
 .employees-table td:first-child, .employees-table th:first-child {
   background: #e3f2fd;

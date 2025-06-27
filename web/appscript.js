@@ -136,15 +136,29 @@ window.loadDraftCycles = async function() {
         const data = await resp.json();
         if (resp.ok) {
             if (data.length === 0) {
-                draftDiv.innerHTML = '<div class="text-muted">目前沒有暫存班表</div>';
+                draftDiv.innerHTML = '<div class="text-muted" style="padding: 0 20px;">目前沒有暫存班表</div>';
             } else {
-                draftDiv.innerHTML = data.map(c => `<div>週期#${c.cycle_id}：<br>${c.start_date} ~ ${c.end_date}</div>`).join('');
+                draftDiv.innerHTML = data.map(c => `
+                    <li class="item">
+                        <div class="nav_link draft-cycle-btn" 
+                                role="button"
+                                tabindex="0"
+                                data-cycle-id="${c.cycle_id}" 
+                                data-start-date="${c.start_date}" 
+                                data-end-date="${c.end_date}">
+                            <span class="navlink_icon">
+                                <i class='bx bx-list-ul'></i>
+                            </span>
+                            <span class="navlink">週期 #${c.cycle_id}</span>
+                        </div>
+                    </li>
+                `).join('');
             }
         } else {
-            draftDiv.innerHTML = `<div class="text-danger">載入失敗：${data.error}</div>`;
+            draftDiv.innerHTML = `<div class="text-danger" style="padding: 0 20px;">載入失敗：${data.error}</div>`;
         }
     } catch (err) {
-        draftDiv.innerHTML = `<div class="text-danger">載入失敗</div>`;
+        draftDiv.innerHTML = `<div class="text-danger" style="padding: 0 20px;">載入失敗</div>`;
     }
 };
 

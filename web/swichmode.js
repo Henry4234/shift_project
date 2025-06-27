@@ -45,6 +45,20 @@ class ModeSwitcher {
             e.preventDefault();
             this.switchToMode('dailyEmployees');
         });
+
+        // 使用事件委派來監聽暫存班表按鈕的點擊
+        document.body.addEventListener('click', (e) => {
+            const draftButton = e.target.closest('.draft-cycle-btn');
+            if (draftButton) {
+                e.preventDefault();
+                const cycleData = {
+                    cycle_id: draftButton.dataset.cycleId,
+                    start_date: draftButton.dataset.startDate,
+                    end_date: draftButton.dataset.endDate,
+                };
+                this.switchToTempScheduleMode(cycleData);
+            }
+        });
     }
     
     // 切換到指定模式
@@ -137,11 +151,32 @@ class ModeSwitcher {
         }, 50);
     }
     
+    // 新增：切換到暫存班表模式
+    switchToTempScheduleMode(cycleData) {
+        // 先隱藏當前模式，並在回調中顯示新模式
+        this.hideCurrentMode(() => {
+            if (window.tempScheduleMode) {
+                window.tempScheduleMode.show(cycleData);
+            } else {
+                console.error('tempScheduleMode 實例不存在');
+                this.contentNav.innerHTML = `
+                    <div class="alert alert-danger">
+                        無法載入暫存班表模式，請重新整理頁面。
+                    </div>
+                `;
+            }
+            
+            // 將當前模式設為一個特殊值，並取消所有主要模式按鈕的 active 狀態
+            this.currentMode = `temp-schedule-${cycleData.cycle_id}`;
+            this.updateActiveButton(null);
+        });
+    }
+    
     // 更新活動按鈕狀態
     updateActiveButton(activeMode) {
         // 移除所有按鈕的活動狀態
         Object.values(this.modeButtons).forEach(button => {
-            button.classList.remove('active');
+            if (button) button.classList.remove('active');
         });
         
         // 移除所有模式容器的活動狀態
@@ -151,7 +186,7 @@ class ModeSwitcher {
         }
         
         // 添加當前活動按鈕的狀態
-        if (this.modeButtons[activeMode]) {
+        if (activeMode && this.modeButtons[activeMode]) {
             this.modeButtons[activeMode].classList.add('active');
         }
         
