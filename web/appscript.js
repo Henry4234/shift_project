@@ -138,7 +138,7 @@ window.loadDraftCycles = async function() {
             if (data.length === 0) {
                 draftDiv.innerHTML = '<div class="text-muted">目前沒有暫存班表</div>';
             } else {
-                draftDiv.innerHTML = data.map(c => `<div>週期#${c.cycle_id}：${c.start_date} ~ ${c.end_date}</div>`).join('');
+                draftDiv.innerHTML = data.map(c => `<div>週期#${c.cycle_id}：<br>${c.start_date} ~ ${c.end_date}</div>`).join('');
             }
         } else {
             draftDiv.innerHTML = `<div class="text-danger">載入失敗：${data.error}</div>`;

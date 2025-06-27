@@ -241,7 +241,7 @@ window.addEventListener('DOMContentLoaded', () => {
             const data3 = await resp3.json();
             if (!resp3.ok) throw new Error(data3.error || '寫入成員失敗');
 
-            alert('已建立新的排班週期！');
+            alert('已建立新的排班週期!請點選左側週期進行畫假!');
             startScheduleModal.hide();
             if (window.loadDraftCycles) window.loadDraftCycles();
         } catch (err) {
