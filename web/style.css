@@ -593,8 +593,21 @@ body.dark {
     margin-top: 10px;
 }
 .temp-schedule-mode .employees-table-outer {
-    margin-top: 24px;
+  margin-top: 24px;
 }
+.temp-schedule-require{
+  box-shadow: 0 4px 24px 0 rgba(0,0,0,0.13);
+  border-radius: 12px;
+  background: var(--cycle-bg-color);
+  padding: 24px 24px 32px 24px;
+  margin-top: 25px;
+}
+.employee-requirements-table{
+  border-collapse: collapse;
+  border: var(--black-color);
+  width: 60%;
+}
+
 
 /* === 人員模式專用樣式 === */
 /* 人員班表外框動畫 */
@@ -756,7 +769,7 @@ body.dark {
   color: #888;
   margin-top: 2px;
 }
-.employees-table td:first-child, .employees-table th:first-child {
+.employees-table td:first-child, .employees-table th:first-child, .employee-requirements-table th:first-child{
   background: #e3f2fd;
   font-weight: 500;
   min-width: 90px;

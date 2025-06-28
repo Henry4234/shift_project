@@ -182,16 +182,15 @@ class TempScheduleMode {
         // 建立新表格
         const reqTable = document.createElement('table');
         reqTable.className = 'employee-requirements-table'; // 套用相同樣式
-        reqTable.style = 'margin-top: 0; border-collapse: collapse; width: 100%; background: #fff;';
 
         // 表頭
         const reqThead = document.createElement('thead');
         reqThead.innerHTML = `
-            <tr style="background: #f5f5f5;">
-                <th style="padding: 8px 12px; border: 1px solid #e0e0e0;">員工姓名</th>
-                <th style="padding: 8px 12px; border: 1px solid #e0e0e0;">白班</th>
-                <th style="padding: 8px 12px; border: 1px solid #e0e0e0;">小夜班</th>
-                <th style="padding: 8px 12px; border: 1px solid #e0e0e0;">大夜班</th>
+            <tr>
+                <th>員工姓名</th>
+                <th>白班</th>
+                <th>小夜班</th>
+                <th>大夜班</th>
             </tr>
         `;
         reqTable.appendChild(reqThead);
