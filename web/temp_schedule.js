@@ -53,7 +53,14 @@ class TempScheduleMode {
 
                 </div>
             </div>
-            <div class="temp-schedule-require"></div>
+            <div class="temp-schedule-bottom">
+                <div class="temp-schedule-require"></div>
+                <div class="temp-schedule-comment">
+                    <h3>備註</h3>
+                    <textarea id="scheduleComment" placeholder="請輸入備註內容..."></textarea>
+                    <button type="button" class="save-comment-btn" onclick="tempScheduleMode.saveComment()">儲存備註</button>
+                </div>
+            </div>
         `;
 
         // 2. 獲取此週期的成員
@@ -232,6 +239,38 @@ class TempScheduleMode {
                 }
             }, { passive: false });
         }
+    }
+
+    /**
+     * 儲存備註內容
+     */
+    saveComment() {
+        const commentTextarea = document.getElementById('scheduleComment');
+        if (!commentTextarea) {
+            console.error('找不到備註文字區域');
+            return;
+        }
+
+        const comment = commentTextarea.value.trim();
+        const cycleId = this.cycleData.cycle_id;
+
+        console.log(`正在儲存週期 #${cycleId} 的備註...`);
+        
+        // TODO: 串接後端 API 儲存備註
+        // 這裡可以發送 POST 請求到後端儲存備註
+        // fetch('/api/schedule-comments', {
+        //     method: 'POST',
+        //     headers: {
+        //         'Content-Type': 'application/json',
+        //     },
+        //     body: JSON.stringify({
+        //         cycle_id: cycleId,
+        //         comment: comment
+        //     })
+        // });
+
+        // 暫時顯示成功訊息
+        alert('備註已儲存！');
     }
 }
 
