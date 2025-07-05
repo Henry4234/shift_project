@@ -10,6 +10,17 @@ class TempScheduleMode {
             'C': { text: 'C', 'class': 'night-shift' },
             'O': { text: 'O', class: 'day-off' }
         };
+        
+        // 休假狀態定義：依序切換的休假類型
+        this.leaveStates = [
+            { text: '', class: '', weight: 0 }, // 空狀態
+            { text: 'O', class: 'leave-high', weight: 2 }, // 紅色底、紅色字體 - 權重較大的休假
+            { text: 'O', class: 'leave-low', weight: 1 }, // 藍色底、藍色字體 - 權重較小的休假
+            { text: '特', class: 'leave-special', weight: 3 } // 紫色底、紫色字體 - 特休（最大權重）
+        ];
+        
+        // 儲存每個員工每天的休假狀態
+        this.leaveData = new Map(); // 格式: Map<"employeeName_date", {state: number, weight: number}>
     }
 
     /**
@@ -28,6 +39,7 @@ class TempScheduleMode {
                         <p>日期區間: ${this.cycleData.start_date} ~ ${this.cycleData.end_date}</p>
                     </div>
                     <div class="header-actions">
+                        <button type="button" class="btn-save-leaves">儲存休假資料</button>    
                         <button type="button" class="btn-auto-schedule">自動排班</button>
                         <button type="button" class="btn-clear-off">清除全部畫假</button>
                     </div>
@@ -79,6 +91,12 @@ class TempScheduleMode {
 
         // 5. 啟用水平滾動
         this.addHorizontalScroll();
+        
+        // 6. 添加點擊事件監聽器
+        this.addClickEventListeners();
+        
+        // 7. 添加按鈕事件監聽器
+        this.addButtonEventListeners();
     }
 
     /**
@@ -171,11 +189,17 @@ class TempScheduleMode {
             const nameCell = document.createElement('td');
             nameCell.textContent = name;
             row.appendChild(nameCell);
-            dateArray.forEach(date => {
+            dateArray.forEach((date, dateIndex) => {
                 const cell = document.createElement('td');
                 cell.className = 'shift-cell';
-                // TODO: 之後需串接真實的班表資料
                 cell.textContent = ''; // 暫時為空
+                
+                // 添加資料屬性，方便後續識別
+                const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD 格式
+                cell.dataset.employeeName = name;
+                cell.dataset.date = dateStr;
+                cell.dataset.dateIndex = dateIndex;
+                
                 row.appendChild(cell);
             });
             tbody.appendChild(row);
@@ -242,6 +266,101 @@ class TempScheduleMode {
     }
 
     /**
+     * 添加點擊事件監聽器到所有 shift-cell
+     */
+    addClickEventListeners() {
+        const shiftCells = this.container.querySelectorAll('.shift-cell');
+        shiftCells.forEach(cell => {
+            cell.addEventListener('click', (event) => {
+                this.handleShiftCellClick(event);
+            });
+        });
+    }
+
+    /**
+     * 添加按鈕事件監聽器
+     */
+    addButtonEventListeners() {
+        // 清除全部畫假按鈕
+        const clearOffBtn = this.container.querySelector('.btn-clear-off');
+        if (clearOffBtn) {
+            clearOffBtn.addEventListener('click', () => {
+                this.clearAllLeaves();
+            });
+        }
+
+        // 自動排班按鈕（預留功能）
+        const autoScheduleBtn = this.container.querySelector('.btn-auto-schedule');
+        if (autoScheduleBtn) {
+            autoScheduleBtn.addEventListener('click', () => {
+                console.log('自動排班功能待實作');
+                // TODO: 實作自動排班邏輯
+            });
+        }
+
+        // 儲存休假資料按鈕
+        const saveLeavesBtn = this.container.querySelector('.btn-save-leaves');
+        if (saveLeavesBtn) {
+            saveLeavesBtn.addEventListener('click', async () => {
+                const result = await this.saveLeaveData();
+                console.log('儲存休假資料結果:', result);
+            });
+        }
+    }
+
+    /**
+     * 處理 shift-cell 的點擊事件
+     * @param {Event} event - 點擊事件物件
+     */
+    handleShiftCellClick(event) {
+        const cell = event.target;
+        const employeeName = cell.dataset.employeeName;
+        const date = cell.dataset.date;
+        const key = `${employeeName}_${date}`;
+        
+        // 獲取當前狀態
+        const currentState = this.leaveData.get(key) || { state: 0, weight: 0 };
+        
+        // 計算下一個狀態（循環切換）
+        const nextStateIndex = (currentState.state + 1) % this.leaveStates.length;
+        const nextState = this.leaveStates[nextStateIndex];
+        
+        // 更新儲存的狀態
+        this.leaveData.set(key, {
+            state: nextStateIndex,
+            weight: nextState.weight
+        });
+        
+        // 更新視覺顯示
+        this.updateCellDisplay(cell, nextState);
+        
+        console.log(`員工 ${employeeName} 在 ${date} 的休假狀態已更新為: ${nextState.text} (權重: ${nextState.weight})`);
+    }
+
+    /**
+     * 更新儲存格的視覺顯示
+     * @param {HTMLElement} cell - 要更新的儲存格
+     * @param {Object} state - 休假狀態物件
+     */
+    updateCellDisplay(cell, state) {
+        // 清除所有可能的休假樣式類別
+        cell.classList.remove('leave-high', 'leave-low', 'leave-special');
+        
+        // 設置文字內容
+        cell.textContent = state.text;
+        
+        // 添加對應的樣式類別
+        if (state.class) {
+            cell.classList.add(state.class);
+        }
+        
+        // 如果沒有休假狀態，清除所有樣式
+        if (!state.text) {
+            cell.className = 'shift-cell';
+        }
+    }
+
+    /**
      * 儲存備註內容
      */
     saveComment() {
@@ -271,6 +390,77 @@ class TempScheduleMode {
 
         // 暫時顯示成功訊息
         alert('備註已儲存！');
+    }
+
+    /**
+     * 儲存休假資料到後端 API
+     * @returns {Promise<Object>} API 回應結果
+     */
+    async saveLeaveData() {
+        const cycleId = this.cycleData.cycle_id;
+        
+        // 將 Map 轉換為陣列格式，方便傳送
+        const leaveDataArray = [];
+        this.leaveData.forEach((value, key) => {
+            const [employeeName, date] = key.split('_');
+            leaveDataArray.push({
+                cycle_id: cycleId,
+                employee_name: employeeName,
+                date: date,
+                leave_state: value.state,
+                leave_weight: value.weight
+            });
+        });
+
+        console.log(`正在儲存週期 #${cycleId} 的休假資料...`, leaveDataArray);
+
+        try {
+            // TODO: 串接後端 API 儲存休假資料
+            // const response = await fetch('/api/schedule-leaves', {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //     },
+            //     body: JSON.stringify({
+            //         cycle_id: cycleId,
+            //         leave_data: leaveDataArray
+            //     })
+            // });
+            
+            // if (!response.ok) {
+            //     throw new Error('儲存休假資料失敗');
+            // }
+            
+            // const result = await response.json();
+            // console.log('休假資料儲存成功:', result);
+            // return result;
+
+            // 暫時顯示成功訊息
+            alert('休假資料已儲存！');
+            return { success: true, message: '休假資料儲存成功' };
+            
+        } catch (error) {
+            console.error('儲存休假資料時發生錯誤:', error);
+            alert('儲存休假資料失敗: ' + error.message);
+            return { success: false, message: error.message };
+        }
+    }
+
+    /**
+     * 清除所有休假標記
+     */
+    clearAllLeaves() {
+        // 清除儲存的資料
+        this.leaveData.clear();
+        
+        // 清除所有儲存格的顯示
+        const shiftCells = this.container.querySelectorAll('.shift-cell');
+        shiftCells.forEach(cell => {
+            cell.textContent = '';
+            cell.classList.remove('leave-high', 'leave-low', 'leave-special');
+        });
+        
+        console.log('已清除所有休假標記');
     }
 }
 

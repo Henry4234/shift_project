@@ -1017,6 +1017,34 @@ nav.content.fadeout {
   font-weight: 500;
 }
 
+/* 休假狀態樣式 */
+.leave-high {
+  background-color: #f44336 !important; /* 紅色底 */
+  color: white !important; /* 白色字體 */
+  font-weight: bold;
+  text-align: center;
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+
+.leave-low {
+  background-color: #2196f3 !important; /* 藍色底 */
+  color: white !important; /* 白色字體 */
+  font-weight: bold;
+  text-align: center;
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+
+.leave-special {
+  background-color: #9c27b0 !important; /* 紫色底 */
+  color: white !important; /* 白色字體 */
+  font-weight: bold;
+  text-align: center;
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+
 /* 週末樣式 */
 .employees-table th.weekend {
   background: #fce4ec;
