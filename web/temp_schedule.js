@@ -81,7 +81,10 @@ class TempScheduleMode {
         // 3. 產生包含日期和成員的表格
         this.generateScheduleTable(members);
 
-        // 4. 添加淡入動畫
+        // 4. 載入已儲存的休假資料
+        await this.loadSavedLeaveData();
+
+        // 5. 添加淡入動畫
         setTimeout(() => {
             const modeElement = this.container.querySelector('.temp-schedule-mode');
             if (modeElement) {
@@ -89,13 +92,13 @@ class TempScheduleMode {
             }
         }, 50);
 
-        // 5. 啟用水平滾動
+        // 6. 啟用水平滾動
         this.addHorizontalScroll();
         
-        // 6. 添加點擊事件監聽器
+        // 7. 添加點擊事件監聽器
         this.addClickEventListeners();
         
-        // 7. 添加按鈕事件監聽器
+        // 8. 添加按鈕事件監聽器
         this.addButtonEventListeners();
     }
 
@@ -415,34 +418,100 @@ class TempScheduleMode {
         console.log(`正在儲存週期 #${cycleId} 的休假資料...`, leaveDataArray);
 
         try {
-            // TODO: 串接後端 API 儲存休假資料
-            // const response = await fetch('/api/schedule-leaves', {
-            //     method: 'POST',
-            //     headers: {
-            //         'Content-Type': 'application/json',
-            //     },
-            //     body: JSON.stringify({
-            //         cycle_id: cycleId,
-            //         leave_data: leaveDataArray
-            //     })
-            // });
+            // 串接後端 API 儲存休假資料
+            const response = await fetch('/api/schedule-cycle-leaves', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    cycle_id: cycleId,
+                    leave_data: leaveDataArray
+                })
+            });
             
-            // if (!response.ok) {
-            //     throw new Error('儲存休假資料失敗');
-            // }
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || '儲存休假資料失敗');
+            }
             
-            // const result = await response.json();
-            // console.log('休假資料儲存成功:', result);
-            // return result;
-
-            // 暫時顯示成功訊息
-            alert('休假資料已儲存！');
-            return { success: true, message: '休假資料儲存成功' };
+            const result = await response.json();
+            console.log('休假資料儲存成功:', result);
+            
+            // 顯示成功訊息
+            if (result.status === 'success') {
+                alert(`休假資料儲存成功！共儲存 ${result.count} 筆資料。`);
+            } else {
+                alert('儲存休假資料時發生錯誤');
+            }
+            
+            return result;
             
         } catch (error) {
             console.error('儲存休假資料時發生錯誤:', error);
             alert('儲存休假資料失敗: ' + error.message);
             return { success: false, message: error.message };
+        }
+    }
+
+    /**
+     * 載入已儲存的休假資料
+     */
+    async loadSavedLeaveData() {
+        const cycleId = this.cycleData.cycle_id;
+        
+        try {
+            console.log(`正在載入週期 #${cycleId} 的已儲存休假資料...`);
+            
+            const response = await fetch(`/api/schedule-cycle-leaves?cycle_id=${cycleId}`);
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.warn('載入休假資料失敗:', errorData.error);
+                return;
+            }
+            
+            const leavesData = await response.json();
+            console.log('載入到的休假資料:', leavesData);
+            
+            // 將休假資料轉換為內部格式並更新顯示
+            leavesData.forEach(leaveItem => {
+                const employeeName = leaveItem.employee_name;
+                const date = leaveItem.date;
+                const offtype = leaveItem.offtype;
+                
+                // 根據 offtype 決定 state
+                let state = 0;
+                if (offtype === '紅O') {
+                    state = 1;
+                } else if (offtype === '藍O') {
+                    state = 2;
+                } else if (offtype === '特休') {
+                    state = 3;
+                }
+                
+                if (state > 0) {
+                    const key = `${employeeName}_${date}`;
+                    const weight = this.leaveStates[state].weight;
+                    
+                    // 更新內部資料
+                    this.leaveData.set(key, {
+                        state: state,
+                        weight: weight
+                    });
+                    
+                    // 更新視覺顯示
+                    const cell = this.container.querySelector(`[data-employee-name="${employeeName}"][data-date="${date}"]`);
+                    if (cell) {
+                        this.updateCellDisplay(cell, this.leaveStates[state]);
+                    }
+                }
+            });
+            
+            console.log(`成功載入 ${leavesData.length} 筆休假資料`);
+            
+        } catch (error) {
+            console.error('載入休假資料時發生錯誤:', error);
         }
     }
 
