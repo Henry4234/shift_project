@@ -582,6 +582,49 @@ class APIServer():
                 self.logger.error(f'查詢週期休假資料時發生錯誤：{str(err)}')
                 return jsonify({'error': '查詢休假資料失敗'}), 500
 
+        # 清除週期休假資料
+        @self.app.route('/api/schedule-cycle-leaves', methods=['DELETE'])
+        def clear_schedule_cycle_leaves():
+            """
+            清除指定週期的所有休假資料
+            - 請求格式: {"cycle_id": 1}
+            - 回傳: {"status": "success", "count": 5}
+            """
+            try:
+                data = request.get_json()
+                cycle_id = data.get('cycle_id')
+                
+                if not cycle_id:
+                    return jsonify({'error': '缺少 cycle_id 參數'}), 400
+                
+                self.logger.info(f'開始清除週期 #{cycle_id} 的所有休假資料...')
+                
+                # 先查詢要刪除的資料數量
+                count_response = self.supabase_client.table('schedule_cycle_temp_offdays') \
+                    .select('uuid', count='exact') \
+                    .eq('cycle_id', int(cycle_id)) \
+                    .execute()
+                
+                delete_count = count_response.count if hasattr(count_response, 'count') else 0
+                
+                # 刪除該週期的所有休假資料
+                self.supabase_client.table('schedule_cycle_temp_offdays') \
+                    .delete() \
+                    .eq('cycle_id', int(cycle_id)) \
+                    .execute()
+                
+                self.logger.info(f'成功清除週期 #{cycle_id} 的 {delete_count} 筆休假資料')
+                
+                return jsonify({
+                    'status': 'success',
+                    'count': delete_count,
+                    'message': f'成功清除 {delete_count} 筆休假資料'
+                })
+                
+            except Exception as err:
+                self.logger.error(f'清除週期休假資料時發生錯誤：{str(err)}')
+                return jsonify({'error': '清除休假資料失敗'}), 500
+
     def run(self):
         """啟動 Flask 應用"""
         self.app.run(host=self.host, port=self.port, debug=self.debug)

@@ -81,10 +81,13 @@ class TempScheduleMode {
         // 3. 產生包含日期和成員的表格
         this.generateScheduleTable(members);
 
-        // 4. 載入已儲存的休假資料
+        // 4. 獲取此週期的休假狀態
+        const leaveStatus = await this.fetchCycleLeaveStatus();
+
+        // 5. 載入已儲存的休假資料
         await this.loadSavedLeaveData();
 
-        // 5. 添加淡入動畫
+        // 6. 添加淡入動畫
         setTimeout(() => {
             const modeElement = this.container.querySelector('.temp-schedule-mode');
             if (modeElement) {
@@ -92,13 +95,13 @@ class TempScheduleMode {
             }
         }, 50);
 
-        // 6. 啟用水平滾動
+        // 7. 啟用水平滾動
         this.addHorizontalScroll();
         
-        // 7. 添加點擊事件監聽器
+        // 8. 添加點擊事件監聽器
         this.addClickEventListeners();
         
-        // 8. 添加按鈕事件監聽器
+        // 9. 添加按鈕事件監聽器
         this.addButtonEventListeners();
     }
 
@@ -139,6 +142,37 @@ class TempScheduleMode {
             if (tbody) {
                 tbody.innerHTML = `<tr><td colspan="32" style="text-align: center; color: red; padding: 20px;">無法載入此週期成員。</td></tr>`;
             }
+            return [];
+        }
+    }
+
+    /**
+     * 從後端獲取週期休假狀態
+     * @returns {Promise<Array>}
+     */
+    async fetchCycleLeaveStatus() {
+        console.log(`正在獲取週期 #${this.cycleData.cycle_id} 的休假狀態...`);
+        try {
+            // 串接後端 API，取得 schedule_cycle_temp_offdays
+            const response = await fetch(`/api/schedule-cycle-leaves?cycle_id=${this.cycleData.cycle_id}`);
+            if (!response.ok) {
+                throw new Error('無法獲取週期休假狀態');
+            }
+            /**
+             * 預期回傳格式：
+             * [
+             *   { employee_name, date, offtype }, ...
+             * ]
+             */
+            const leaveStatus = await response.json();
+            // 檢查資料格式
+            if (!Array.isArray(leaveStatus)) {
+                throw new Error('回傳休假狀態資料格式錯誤');
+            }
+            console.log(`成功獲取週期 #${this.cycleData.cycle_id} 的休假狀態:`, leaveStatus);
+            return leaveStatus;
+        } catch (error) {
+            console.error('獲取週期休假狀態時發生錯誤:', error);
             return [];
         }
     }
@@ -288,7 +322,7 @@ class TempScheduleMode {
         const clearOffBtn = this.container.querySelector('.btn-clear-off');
         if (clearOffBtn) {
             clearOffBtn.addEventListener('click', () => {
-                this.clearAllLeaves();
+                this.showClearConfirmation();
             });
         }
 
@@ -516,7 +550,65 @@ class TempScheduleMode {
     }
 
     /**
-     * 清除所有休假標記
+     * 顯示清除確認彈出視窗
+     */
+    showClearConfirmation() {
+        const cycleId = this.cycleData.cycle_id;
+        const confirmed = confirm(`確定要清除週期 #${cycleId} 的所有休假資料嗎？\n\n此操作將永久刪除資料庫中的所有休假記錄，且無法復原。`);
+        
+        if (confirmed) {
+            this.clearAllLeavesFromDatabase();
+        }
+    }
+
+    /**
+     * 從資料庫清除所有休假資料
+     */
+    async clearAllLeavesFromDatabase() {
+        const cycleId = this.cycleData.cycle_id;
+        
+        try {
+            console.log(`正在清除週期 #${cycleId} 的所有休假資料...`);
+            
+            const response = await fetch('/api/schedule-cycle-leaves', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    cycle_id: cycleId
+                })
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || '清除休假資料失敗');
+            }
+            
+            const result = await response.json();
+            console.log('清除休假資料成功:', result);
+            
+            // 清除前端顯示
+            this.clearAllLeaves();
+            
+            // 顯示成功訊息
+            if (result.status === 'success') {
+                alert(`成功清除 ${result.count} 筆休假資料！`);
+            } else {
+                alert('清除休假資料時發生錯誤');
+            }
+            
+            return result;
+            
+        } catch (error) {
+            console.error('清除休假資料時發生錯誤:', error);
+            alert('清除休假資料失敗: ' + error.message);
+            return { success: false, message: error.message };
+        }
+    }
+
+    /**
+     * 清除所有休假標記（僅前端顯示）
      */
     clearAllLeaves() {
         // 清除儲存的資料
