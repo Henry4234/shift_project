@@ -893,6 +893,15 @@ body.dark {
   overflow-x: auto;
 }
 
+/* sticky 員工姓名欄位 */
+.employees-table .sticky-col {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #e3f2fd;
+  box-shadow: 2px 0 4px -2px #b0bec5;
+}
+
 /* === 月曆模式切換動畫 === */
 nav.content.fadein {
   opacity: 1;

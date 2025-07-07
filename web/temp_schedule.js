@@ -49,13 +49,13 @@ class TempScheduleMode {
                     <table class="employees-table">
                         <thead>
                             <tr>
-                                <th>員工姓名</th>
+                                <th class="sticky-col">員工姓名</th>
                                 <!-- 日期標題將會動態生成 -->
                             </tr>
                         </thead>
                         <tbody>
                             <!-- 員工列將會動態生成 -->
-                            <tr>
+                            <tr class="loading-row">
                                 <td colspan="32" style="text-align: center; padding: 20px;">
                                 <div class="spinner-border text-primary"></div> 載入中...
                                 </td>
@@ -75,18 +75,14 @@ class TempScheduleMode {
             </div>
         `;
 
-        // 2. 獲取此週期的成員
+        // 2. 先獲取此週期的成員
         const members = await this.fetchCycleMembers();
-
         // 3. 產生包含日期和成員的表格
         this.generateScheduleTable(members);
-
-        // 4. 獲取此週期的休假狀態
-        const leaveStatus = await this.fetchCycleLeaveStatus();
-
-        // 5. 載入已儲存的休假資料
+        // 4. 載入已儲存的休假資料（合併原 fetchCycleLeaveStatus）
         await this.loadSavedLeaveData();
-
+        // 5. 載入完畢後移除 loading 畫面
+        this.hideLoading();
         // 6. 添加淡入動畫
         setTimeout(() => {
             const modeElement = this.container.querySelector('.temp-schedule-mode');
@@ -94,13 +90,10 @@ class TempScheduleMode {
                 modeElement.classList.add('fadein');
             }
         }, 50);
-
         // 7. 啟用水平滾動
         this.addHorizontalScroll();
-        
         // 8. 添加點擊事件監聽器
         this.addClickEventListeners();
-        
         // 9. 添加按鈕事件監聽器
         this.addButtonEventListeners();
     }
@@ -147,37 +140,6 @@ class TempScheduleMode {
     }
 
     /**
-     * 從後端獲取週期休假狀態
-     * @returns {Promise<Array>}
-     */
-    async fetchCycleLeaveStatus() {
-        console.log(`正在獲取週期 #${this.cycleData.cycle_id} 的休假狀態...`);
-        try {
-            // 串接後端 API，取得 schedule_cycle_temp_offdays
-            const response = await fetch(`/api/schedule-cycle-leaves?cycle_id=${this.cycleData.cycle_id}`);
-            if (!response.ok) {
-                throw new Error('無法獲取週期休假狀態');
-            }
-            /**
-             * 預期回傳格式：
-             * [
-             *   { employee_name, date, offtype }, ...
-             * ]
-             */
-            const leaveStatus = await response.json();
-            // 檢查資料格式
-            if (!Array.isArray(leaveStatus)) {
-                throw new Error('回傳休假狀態資料格式錯誤');
-            }
-            console.log(`成功獲取週期 #${this.cycleData.cycle_id} 的休假狀態:`, leaveStatus);
-            return leaveStatus;
-        } catch (error) {
-            console.error('獲取週期休假狀態時發生錯誤:', error);
-            return [];
-        }
-    }
-
-    /**
      * 產生班表表格
      * @param {Array} members - 員工成員列表
      */
@@ -188,7 +150,7 @@ class TempScheduleMode {
         const thead = table.querySelector('thead tr');
         const tbody = table.querySelector('tbody');
 
-        thead.innerHTML = '<th>員工姓名</th>';
+        thead.innerHTML = '<th class="sticky-col">員工姓名</th>';
         tbody.innerHTML = '';
 
         // 產生日期標題
@@ -225,6 +187,7 @@ class TempScheduleMode {
             const row = document.createElement('tr');
             const nameCell = document.createElement('td');
             nameCell.textContent = name;
+            nameCell.classList.add('sticky-col'); // sticky for each row
             row.appendChild(nameCell);
             dateArray.forEach((date, dateIndex) => {
                 const cell = document.createElement('td');
@@ -451,6 +414,21 @@ class TempScheduleMode {
 
         console.log(`正在儲存週期 #${cycleId} 的休假資料...`, leaveDataArray);
 
+        // ===== 新增 toast loading =====
+        const toastContainer = document.querySelector('.toast-container');
+        let loadingToast = document.createElement('div');
+        loadingToast.className = 'toast';
+        loadingToast.innerHTML = `
+            <div class="toast-header">
+                <strong class="me-auto">系統訊息</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">正在儲存休假資料...</div>
+        `;
+        toastContainer.appendChild(loadingToast);
+        let bsLoadingToast = new bootstrap.Toast(loadingToast);
+        bsLoadingToast.show();
+
         try {
             // 串接後端 API 儲存休假資料
             const response = await fetch('/api/schedule-cycle-leaves', {
@@ -472,18 +450,50 @@ class TempScheduleMode {
             const result = await response.json();
             console.log('休假資料儲存成功:', result);
             
-            // 顯示成功訊息
-            if (result.status === 'success') {
-                alert(`休假資料儲存成功！共儲存 ${result.count} 筆資料。`);
-            } else {
-                alert('儲存休假資料時發生錯誤');
-            }
-            
+            // 移除 loading toast
+            bsLoadingToast.hide();
+            loadingToast.remove();
+
+            // 顯示成功訊息 toast
+            let resultToast = document.createElement('div');
+            resultToast.className = 'toast';
+            resultToast.innerHTML = `
+                <div class="toast-header">
+                    <strong class="me-auto">系統訊息</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">儲存成功！共儲存 ${result.count} 筆資料。</div>
+            `;
+            toastContainer.appendChild(resultToast);
+            let bsResultToast = new bootstrap.Toast(resultToast);
+            bsResultToast.show();
+            // 3秒後移除 toast
+            setTimeout(() => {
+                resultToast.remove();
+            }, 3000);
             return result;
             
         } catch (error) {
-            console.error('儲存休假資料時發生錯誤:', error);
-            alert('儲存休假資料失敗: ' + error.message);
+            // 移除 loading toast
+            bsLoadingToast.hide();
+            loadingToast.remove();
+            // 顯示錯誤訊息 toast
+            let errorToast = document.createElement('div');
+            errorToast.className = 'toast';
+            errorToast.innerHTML = `
+                <div class="toast-header">
+                    <strong class="me-auto">錯誤訊息</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">儲存失敗：${error.message}</div>
+            `;
+            toastContainer.appendChild(errorToast);
+            let bsErrorToast = new bootstrap.Toast(errorToast);
+            bsErrorToast.show();
+            // 3秒後移除 toast
+            setTimeout(() => {
+                errorToast.remove();
+            }, 3000);   
             return { success: false, message: error.message };
         }
     }
@@ -622,6 +632,15 @@ class TempScheduleMode {
         });
         
         console.log('已清除所有休假標記');
+    }
+
+    // 新增：移除 loading 畫面
+    hideLoading() {
+        const tbody = this.container.querySelector('.employees-table tbody');
+        if (tbody) {
+            const loadingRow = tbody.querySelector('.loading-row');
+            if (loadingRow) loadingRow.remove();
+        }
     }
 }
 
