@@ -66,7 +66,10 @@ class TempScheduleMode {
                 </div>
             </div>
             <div class="temp-schedule-bottom">
-                <div class="temp-schedule-require"></div>
+                <div class="temp-schedule-require">
+                    <h3>員工班別</h3>
+                    <div class="temp-schedule-require-table"></div>
+                </div>
                 <div class="temp-schedule-comment">
                     <h3>備註</h3>
                     <textarea id="scheduleComment" placeholder="請輸入備註內容..."></textarea>
@@ -208,7 +211,7 @@ class TempScheduleMode {
 
         // === 新增：員工班別需求表格 ===
         // 先移除舊的需求表格（避免重複）
-        const reqContainer = this.container.querySelector('.temp-schedule-require');
+        const reqContainer = this.container.querySelector('.temp-schedule-require-table');
         if (reqContainer) reqContainer.innerHTML = '';
 
         // 建立新表格
@@ -244,7 +247,7 @@ class TempScheduleMode {
         });
         reqTable.appendChild(reqTbody);
 
-        // 插入到 .temp-schedule-require div 中
+        // 插入到 .temp-schedule-require-table div 中
         if (reqContainer) {
             reqContainer.appendChild(reqTable);
         }
