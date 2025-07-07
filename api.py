@@ -423,6 +423,208 @@ class APIServer():
                 self.logger.error(f'批次寫入 schedule_cycle_members 時發生錯誤：{str(err)}')
                 return jsonify({'error': '寫入失敗'}), 500
 
+        # 查詢特定週期的成員（含班別資訊）
+        @self.app.route('/api/schedule-cycle-members', methods=['GET'])
+        def get_schedule_cycle_members():
+            """
+            取得指定週期 (cycle_id) 的所有成員資料
+            - 查詢參數: cycle_id (int)
+            - 回傳: [{employee_id, snapshot_name, shift_type, required_days}, ...]
+            """
+            cycle_id = request.args.get('cycle_id')
+            if not cycle_id:
+                return jsonify({'error': '缺少 cycle_id 參數'}), 400
+            try:
+                # 從 schedule_cycle_members 取得所有該週期成員
+                response = self.supabase_client.table('schedule_cycle_members') \
+                    .select('employee_id, snapshot_name, shift_type, required_days') \
+                    .eq('cycle_id', int(cycle_id)) \
+                    .execute()
+                members = response.data if response.data else []
+                return jsonify(members)
+            except Exception as err:
+                self.logger.error(f'查詢 schedule_cycle_members 時發生錯誤：{str(err)}')
+                return jsonify({'error': '查詢失敗'}), 500
+
+        # 儲存週期休假資料
+        @self.app.route('/api/schedule-cycle-leaves', methods=['POST'])
+        def save_schedule_cycle_leaves():
+            """
+            儲存指定週期的休假資料到 schedule_cycle_temp_offdays 表格
+            - 請求格式: {
+                "cycle_id": 1,
+                "leave_data": [
+                    {
+                        "employee_name": "張小明",
+                        "date": "2025-01-01",
+                        "leave_state": 1,
+                        "leave_weight": 1
+                    }
+                ]
+            }
+            - 回傳: {"status": "success", "count": 5}
+            """
+            try:
+                data = request.get_json()
+                cycle_id = data.get('cycle_id')
+                leave_data = data.get('leave_data', [])
+                
+                if not cycle_id:
+                    return jsonify({'error': '缺少 cycle_id 參數'}), 400
+                
+                if not leave_data:
+                    return jsonify({'status': 'success', 'count': 0, 'message': '沒有休假資料需要儲存'})
+                
+                self.logger.info(f'開始儲存週期 #{cycle_id} 的休假資料...')
+                self.logger.info(f'休假資料數量: {len(leave_data)}')
+                
+                # 先清除該週期的舊休假資料
+                self.supabase_client.table('schedule_cycle_temp_offdays') \
+                    .delete() \
+                    .eq('cycle_id', int(cycle_id)) \
+                    .execute()
+                
+                self.logger.info(f'已清除週期 #{cycle_id} 的舊休假資料')
+                
+                # 準備新的休假資料
+                offdays_data = []
+                for leave_item in leave_data:
+                    employee_name = leave_item.get('employee_name')
+                    date = leave_item.get('date')
+                    leave_state = leave_item.get('leave_state')
+                    
+                    # 根據 leave_state 決定 offtype
+                    if leave_state == 1:
+                        offtype = "紅O"
+                    elif leave_state == 2:
+                        offtype = "藍O"
+                    elif leave_state == 3:
+                        offtype = "特休"
+                    else:
+                        continue  # 跳過無效狀態
+                    
+                    # 根據員工姓名查詢 employee_id
+                    employee_response = self.supabase_client.table('employees') \
+                        .select('id') \
+                        .eq('name', employee_name) \
+                        .execute()
+                    
+                    if not employee_response.data:
+                        self.logger.warning(f'找不到員工: {employee_name}')
+                        continue
+                    
+                    employee_id = employee_response.data[0]['id']
+                    
+                    offdays_data.append({
+                        'cycle_id': int(cycle_id),
+                        'employee_id': employee_id,
+                        'offdate': date,
+                        'offtype': offtype
+                    })
+                
+                # 批次插入休假資料
+                if offdays_data:
+                    response = self.supabase_client.table('schedule_cycle_temp_offdays') \
+                        .insert(offdays_data) \
+                        .execute()
+                    
+                    inserted_count = len(response.data) if response.data else 0
+                    self.logger.info(f'成功儲存 {inserted_count} 筆休假資料')
+                    
+                    return jsonify({
+                        'status': 'success',
+                        'count': inserted_count,
+                        'message': f'成功儲存 {inserted_count} 筆休假資料'
+                    })
+                else:
+                    return jsonify({
+                        'status': 'success',
+                        'count': 0,
+                        'message': '沒有有效的休假資料需要儲存'
+                    })
+                    
+            except Exception as err:
+                self.logger.error(f'儲存週期休假資料時發生錯誤：{str(err)}')
+                return jsonify({'error': '儲存休假資料失敗'}), 500
+
+        # 查詢週期休假資料
+        @self.app.route('/api/schedule-cycle-leaves', methods=['GET'])
+        def get_schedule_cycle_leaves():
+            """
+            取得指定週期的休假資料
+            - 查詢參數: cycle_id (int)
+            - 回傳: [{employee_name, date, offtype}, ...]
+            """
+            cycle_id = request.args.get('cycle_id')
+            if not cycle_id:
+                return jsonify({'error': '缺少 cycle_id 參數'}), 400
+            
+            try:
+                # 聯結查詢取得員工姓名和休假資料
+                response = self.supabase_client.table('schedule_cycle_temp_offdays') \
+                    .select('offdate, offtype, employees(name)') \
+                    .eq('cycle_id', int(cycle_id)) \
+                    .execute()
+                
+                # 轉換資料格式
+                leaves_data = []
+                for item in response.data:
+                    leaves_data.append({
+                        'employee_name': item['employees']['name'],
+                        'date': item['offdate'],
+                        'offtype': item['offtype']
+                    })
+                
+                self.logger.info(f'查詢到週期 #{cycle_id} 的休假資料: {len(leaves_data)} 筆')
+                return jsonify(leaves_data)
+                
+            except Exception as err:
+                self.logger.error(f'查詢週期休假資料時發生錯誤：{str(err)}')
+                return jsonify({'error': '查詢休假資料失敗'}), 500
+
+        # 清除週期休假資料
+        @self.app.route('/api/schedule-cycle-leaves', methods=['DELETE'])
+        def clear_schedule_cycle_leaves():
+            """
+            清除指定週期的所有休假資料
+            - 請求格式: {"cycle_id": 1}
+            - 回傳: {"status": "success", "count": 5}
+            """
+            try:
+                data = request.get_json()
+                cycle_id = data.get('cycle_id')
+                
+                if not cycle_id:
+                    return jsonify({'error': '缺少 cycle_id 參數'}), 400
+                
+                self.logger.info(f'開始清除週期 #{cycle_id} 的所有休假資料...')
+                
+                # 先查詢要刪除的資料數量
+                count_response = self.supabase_client.table('schedule_cycle_temp_offdays') \
+                    .select('uuid', count='exact') \
+                    .eq('cycle_id', int(cycle_id)) \
+                    .execute()
+                
+                delete_count = count_response.count if hasattr(count_response, 'count') else 0
+                
+                # 刪除該週期的所有休假資料
+                self.supabase_client.table('schedule_cycle_temp_offdays') \
+                    .delete() \
+                    .eq('cycle_id', int(cycle_id)) \
+                    .execute()
+                
+                self.logger.info(f'成功清除週期 #{cycle_id} 的 {delete_count} 筆休假資料')
+                
+                return jsonify({
+                    'status': 'success',
+                    'count': delete_count,
+                    'message': f'成功清除 {delete_count} 筆休假資料'
+                })
+                
+            except Exception as err:
+                self.logger.error(f'清除週期休假資料時發生錯誤：{str(err)}')
+                return jsonify({'error': '清除休假資料失敗'}), 500
+
     def run(self):
         """啟動 Flask 應用"""
         self.app.run(host=self.host, port=self.port, debug=self.debug)
