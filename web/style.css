@@ -650,6 +650,12 @@ body.dark {
     font-size: 18px;
     font-weight: 600;
 }
+.temp-schedule-require h3 {
+  color: var(--black-color);
+  margin-bottom: 15px;
+  font-size: 18px;
+  font-weight: 600;
+}
 
 .temp-schedule-comment textarea {
     width: 100%;
@@ -864,7 +870,8 @@ body.dark {
   font-size: 15px;
 }
 .employees-table th {
-  background: #f5f7fa;
+  background: var(--table-th-color);
+  color: var(--grey-color);
   font-weight: 600;
   vertical-align: middle;
   text-align: center;
@@ -881,11 +888,12 @@ body.dark {
 .employees-table th span.dayofweek {
   display: block;
   font-size: 12px;
-  color: #888;
+  color: var(--grey-color);
   margin-top: 2px;
 }
 .employees-table td:first-child, .employees-table th:first-child{
-  background: #e3f2fd;
+  background: var(--table-td-color);
+  color: var(--black-color);
   font-weight: 500;
   min-width: 90px;
 }
