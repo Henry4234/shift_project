@@ -342,6 +342,53 @@ class APIServer():
                 self.logger.error(f'建立排班週期時發生錯誤：{str(err)}')
                 return jsonify({'error': '無法建立排班週期'}), 500
 
+        # 新增/更新週期備註
+        @self.app.route('/api/schedule-cycles-comment', methods=['POST'])
+        def update_cycle_comment():
+            """
+            更新指定週期的 cycle_comment
+            請求格式: { "cycle_id": 1, "cycle_comment": "備註內容" }
+            回傳: { "status": "success" }
+            """
+            try:
+                data = request.get_json()
+                cycle_id = data.get('cycle_id')
+                cycle_comment = data.get('cycle_comment', '')
+                if not cycle_id:
+                    return jsonify({'error': '缺少 cycle_id 參數'}), 400
+                # 更新 cycle_comment
+                response = self.supabase_client.table('schedule_cycles') \
+                    .update({'cycle_comment': cycle_comment}) \
+                    .eq('cycle_id', int(cycle_id)) \
+                    .execute()
+                return jsonify({'status': 'success'})
+            except Exception as err:
+                self.logger.error(f'更新週期備註時發生錯誤：{str(err)}')
+                return jsonify({'error': '無法更新週期備註'}), 500
+
+        # 查詢週期備註
+        @self.app.route('/api/schedule-cycles-comment', methods=['GET'])
+        def get_cycle_comment():
+            """
+            查詢指定週期的 cycle_comment
+            查詢參數: cycle_id
+            回傳: { "cycle_comment": "..." }
+            """
+            cycle_id = request.args.get('cycle_id')
+            if not cycle_id:
+                return jsonify({'error': '缺少 cycle_id 參數'}), 400
+            try:
+                response = self.supabase_client.table('schedule_cycles') \
+                    .select('cycle_comment') \
+                    .eq('cycle_id', int(cycle_id)) \
+                    .single() \
+                    .execute()
+                comment = response.data['cycle_comment'] if response.data else None
+                return jsonify({'cycle_comment': comment})
+            except Exception as err:
+                self.logger.error(f'查詢週期備註時發生錯誤：{str(err)}')
+                return jsonify({'error': '無法查詢週期備註'}), 500
+
         # 查詢 shift_requirements_legacy
         @self.app.route('/api/shift-requirements-legacy', methods=['GET'])
         def get_shift_requirements_legacy():

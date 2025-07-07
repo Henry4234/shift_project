@@ -74,7 +74,8 @@ class TempScheduleMode {
                 </div>
             </div>
         `;
-
+        // 1.5 載入備註
+        await this.loadComment();
         // 2. 先獲取此週期的成員
         const members = await this.fetchCycleMembers();
         // 3. 產生包含日期和成員的表格
@@ -361,35 +362,97 @@ class TempScheduleMode {
     }
 
     /**
+     * 載入 cycle_comment
+     */
+    async loadComment() {
+        const cycleId = this.cycleData.cycle_id;
+        const commentTextarea = document.getElementById('scheduleComment');
+        if (!commentTextarea) return;
+        try {
+            const response = await fetch(`/api/schedule-cycles-comment?cycle_id=${cycleId}`);
+            if (!response.ok) throw new Error('無法取得備註');
+            const data = await response.json();
+            if (data.cycle_comment) {
+                commentTextarea.value = data.cycle_comment;
+            } else {
+                commentTextarea.value = '';
+                commentTextarea.placeholder = "請輸入備註內容...";
+            }
+        } catch (err) {
+            commentTextarea.value = '';
+            commentTextarea.placeholder = "請輸入備註內容...";
+        }
+    }
+
+    /**
      * 儲存備註內容
      */
-    saveComment() {
+    async saveComment() {
         const commentTextarea = document.getElementById('scheduleComment');
         if (!commentTextarea) {
             console.error('找不到備註文字區域');
             return;
         }
-
         const comment = commentTextarea.value.trim();
         const cycleId = this.cycleData.cycle_id;
-
-        console.log(`正在儲存週期 #${cycleId} 的備註...`);
-        
-        // TODO: 串接後端 API 儲存備註
-        // 這裡可以發送 POST 請求到後端儲存備註
-        // fetch('/api/schedule-comments', {
-        //     method: 'POST',
-        //     headers: {
-        //         'Content-Type': 'application/json',
-        //     },
-        //     body: JSON.stringify({
-        //         cycle_id: cycleId,
-        //         comment: comment
-        //     })
-        // });
-
-        // 暫時顯示成功訊息
-        alert('備註已儲存！');
+        // Toast loading
+        const toastContainer = document.querySelector('.toast-container');
+        let loadingToast = document.createElement('div');
+        loadingToast.className = 'toast';
+        loadingToast.innerHTML = `
+            <div class="toast-header">
+                <strong class="me-auto">系統訊息</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">正在儲存備註...</div>
+        `;
+        toastContainer.appendChild(loadingToast);
+        let bsLoadingToast = new bootstrap.Toast(loadingToast);
+        bsLoadingToast.show();
+        try {
+            const response = await fetch('/api/schedule-cycles-comment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cycle_id: cycleId, cycle_comment: comment })
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || '儲存備註失敗');
+            }
+            // 移除 loading toast
+            bsLoadingToast.hide();
+            loadingToast.remove();
+            // 成功 toast
+            let resultToast = document.createElement('div');
+            resultToast.className = 'toast';
+            resultToast.innerHTML = `
+                <div class="toast-header">
+                    <strong class="me-auto">系統訊息</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">備註已儲存！</div>
+            `;
+            toastContainer.appendChild(resultToast);
+            let bsResultToast = new bootstrap.Toast(resultToast);
+            bsResultToast.show();
+            setTimeout(() => { resultToast.remove(); }, 3000);
+        } catch (error) {
+            bsLoadingToast.hide();
+            loadingToast.remove();
+            let errorToast = document.createElement('div');
+            errorToast.className = 'toast';
+            errorToast.innerHTML = `
+                <div class="toast-header">
+                    <strong class="me-auto">錯誤訊息</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">儲存失敗：${error.message}</div>
+            `;
+            toastContainer.appendChild(errorToast);
+            let bsErrorToast = new bootstrap.Toast(errorToast);
+            bsErrorToast.show();
+            setTimeout(() => { errorToast.remove(); }, 3000);
+        }
     }
 
     /**
