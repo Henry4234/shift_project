@@ -1,6 +1,8 @@
 from supabase import create_client
 import os
 from dotenv import load_dotenv
+from datetime import datetime
+
 
 # 載入環境變數
 load_dotenv('/app/web/.env')
@@ -20,20 +22,21 @@ def fetch_employees():
         print(f"Error fetching employees: {e}")
         return []
 
-def fetch_shift_requirements():
-    """獲取所有班次需求資料，並轉換為所需格式"""
+def fetch_shift_requirements(cycle_id: int):
+    """獲取指定週期中所有班次需求資料，並轉換為所需格式"""
     try:
         # 直接使用 Supabase 查詢而不是 RPC
         response = (supabase
-            .from_('shift_requirements')
-            .select('employees(name), shift_type, required_days')
+            .from_('schedule_cycle_members')
+            .select('snapshot_name, shift_type, required_days')
+            .eq('cycle_id',cycle_id)
             .execute()
         )
         
         # 轉換為程式所需的格式
         requirements = {}
         for row in response.data:
-            emp_name = row['employees']['name']
+            emp_name = row['snapshot_name']
             if emp_name not in requirements:
                 requirements[emp_name] = {'A': 0, 'B': 0, 'C': 0}
             requirements[emp_name][row['shift_type']] = row['required_days']
@@ -65,3 +68,43 @@ def fetch_employee_preferences():
     except Exception as e:
         print(f"Error fetching employee preferences: {e}")
         return {} 
+    
+def fetch_temp_offdays(cycle_id:int):
+    """指定週期中所有休假需求資料"""
+    try:
+        response = (supabase
+            .from_('schedule_cycle_temp_offdays')
+            .select('employees(name),offdate,offtype')
+            .eq('cycle_id',cycle_id)
+            .execute()
+            )
+        off_date ={}
+        for row in response.data:
+            employee = row['employees']['name']
+            off_date.setdefault(employee,[])
+            off_date[employee].append({
+                'date': datetime.fromisoformat(row['offdate']).date(),
+                'type': row['offtype'] 
+            })
+        return off_date
+    except Exception as e:
+        print(f"Error fetching employee offdate: {e}")
+        return {} 
+
+def fetch_schedule_cycle(cycle_id: int):
+    """根據 cycle_id 取得 schedule_cycles 的週期資訊（start_date, end_date, status, cycle_comment）"""
+    try:
+        response = (
+            supabase
+            .from_('schedule_cycles')
+            .select('cycle_id, start_date, end_date, status, cycle_comment')
+            .eq('cycle_id', cycle_id)
+            .execute()
+        )
+        if response.data:
+            return response.data[0]
+        else:
+            return None
+    except Exception as e:
+        print(f"Error fetching schedule cycle: {e}")
+        return None 
