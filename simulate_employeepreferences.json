@@ -1,65 +1,11 @@
-[
-    {
-        "id": 3,
-        "employee_id": 3,
-        "max_continuous_days": false,
-        "continuous_c": false,
-        "double_off_after_c": false
-    },
-    {
-        "id": 4,
-        "employee_id": 4,
-        "max_continuous_days": false,
-        "continuous_c": false,
-        "double_off_after_c": false
-    },
-    {
-        "id": 5,
-        "employee_id": 5,
-        "max_continuous_days": true,
-        "continuous_c": false,
-        "double_off_after_c": false
-    },
-    {
-        "id": 6,
-        "employee_id": 6,
-        "max_continuous_days": false,
-        "continuous_c": false,
-        "double_off_after_c": false
-    },
-    {
-        "id": 7,
-        "employee_id": 7,
-        "max_continuous_days": false,
-        "continuous_c": false,
-        "double_off_after_c": false
-    },
-    {
-        "id": 8,
-        "employee_id": 8,
-        "max_continuous_days": false,
-        "continuous_c": true,
-        "double_off_after_c": true
-    },
-    {
-        "id": 9,
-        "employee_id": 9,
-        "max_continuous_days": true,
-        "continuous_c": false,
-        "double_off_after_c": false
-    },
-    {
-        "id": 1,
-        "employee_id": 1,
-        "max_continuous_days": false,
-        "continuous_c": false,
-        "double_off_after_c": false
-    },
-    {
-        "id": 2,
-        "employee_id": 2,
-        "max_continuous_days": false,
-        "continuous_c": false,
-        "double_off_after_c": false
-    }
-]
+{
+    "員工2": {"max_continuous_days": false, "continuous_C": false, "double_off_after_C": false},
+    "員工5": {"max_continuous_days": false, "continuous_C": false, "double_off_after_C": false},
+    "員工6": {"max_continuous_days": false, "continuous_C": false, "double_off_after_C": false},
+    "員工3": {"max_continuous_days": false, "continuous_C": false, "double_off_after_C": false},
+    "員工1": {"max_continuous_days": false, "continuous_C": false, "double_off_after_C": false},
+    "員工0": {"max_continuous_days": false, "continuous_C": false, "double_off_after_C": false},
+    "員工4": {"max_continuous_days": false, "continuous_C": false, "double_off_after_C": false},
+    "員工8": {"max_continuous_days": false, "continuous_C": false, "double_off_after_C": false},
+    "員工7": {"max_continuous_days": false, "continuous_C": false, "double_off_after_C": false}
+}

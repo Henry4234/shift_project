@@ -27,10 +27,15 @@ class CPMODEL:
         # 判斷每一天是否為工作日
         self.workdays = [d for d in self.date_list if (d.weekday() < 5)]
         # 從 Supabase 獲取資料
-        self.employees_data = fetch_employees()
-        self.shift_requirements_data = fetch_shift_requirements(cycle_id)
-        self.employee_preferences_data = fetch_employee_preferences()
-        self.temp_offdays_data = fetch_temp_offdays(cycle_id)
+        # self.employees_data = fetch_employees()
+        # self.shift_requirements_data = fetch_shift_requirements(cycle_id)
+        # self.employee_preferences_data = fetch_employee_preferences()
+        # self.124553 = fetch_temp_offdays(cycle_id)
+        # 從本地抓取資料
+        self.employees_data = json.load(open('simulate_employees.json'))
+        self.shift_requirements_data = json.load(open('simulate_shiftrequirements.json'))
+        self.employee_preferences_data = json.load(open('simulate_employeepreferences.json'))
+        self.temp_offdays_data = json.load(open('simulate_offdays.json'))
         # 定義基本資料
         self.employees = [emp['name'] for emp in self.employees_data]
         self.shifts = ['A', 'B', 'C', 'O']  # A: 白班, B: 小夜班, C: 大夜班, O:休息
@@ -105,7 +110,7 @@ class CPMODEL:
         for e in self.employees:
             offdays = self.temp_offdays_data.get(e, [])
             for off in offdays:
-                day_idx = (off['date'] - self.start_date).days + 1
+                day_idx = (datetime.fromisoformat(off['date']).date() - self.start_date).days + 1
                 if 1 <= day_idx <= self.days:
                     if off['type'] in ['紅O', '特休']:
                         # 硬性限制：必須休假
@@ -164,7 +169,7 @@ class CPMODEL:
         for e in self.employees:
             offdays = self.temp_offdays_data.get(e, [])
             for off in offdays:
-                day_idx = (off['date'] - self.start_date).days + 1
+                day_idx = (datetime.fromisoformat(off['date']).date() - self.start_date).days + 1
                 if 1 <= day_idx <= self.days:
                     if off['type'] == '藍O':
                         prefer_blue_off = self.model.NewBoolVar(f'{e}_blueO_{day_idx}')
@@ -276,7 +281,7 @@ class CPMODEL:
 
 def main():
     # 這裡請傳入 cycle_id，例如 1
-    cycle_id = 1
+    cycle_id = 14
     cp_model_instance = CPMODEL(cycle_id)
     
     # 添加限制條件
@@ -290,7 +295,7 @@ def main():
     
     # 獲取結果
     result = cp_model_instance.print_results(solver, status)
-    
+    print(result)
     # 如果是成功的情況，將結果寫入檔案
     if result['status'] == 'success':
         with open('schedule_result.json', 'w', encoding='utf-8') as f:
