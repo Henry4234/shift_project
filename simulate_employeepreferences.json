@@ -1,11 +1,11 @@
 {
     "員工2": {"max_continuous_days": false, "continuous_C": false, "double_off_after_C": false},
-    "員工5": {"max_continuous_days": false, "continuous_C": false, "double_off_after_C": false},
+    "員工5": {"max_continuous_days": true, "continuous_C": false, "double_off_after_C": false},
     "員工6": {"max_continuous_days": false, "continuous_C": false, "double_off_after_C": false},
     "員工3": {"max_continuous_days": false, "continuous_C": false, "double_off_after_C": false},
     "員工1": {"max_continuous_days": false, "continuous_C": false, "double_off_after_C": false},
     "員工0": {"max_continuous_days": false, "continuous_C": false, "double_off_after_C": false},
-    "員工4": {"max_continuous_days": false, "continuous_C": false, "double_off_after_C": false},
+    "員工4": {"max_continuous_days": true, "continuous_C": false, "double_off_after_C": false},
     "員工8": {"max_continuous_days": false, "continuous_C": false, "double_off_after_C": false},
     "員工7": {"max_continuous_days": false, "continuous_C": false, "double_off_after_C": false}
 }
