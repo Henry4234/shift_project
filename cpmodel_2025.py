@@ -27,15 +27,15 @@ class CPMODEL:
         # 判斷每一天是否為工作日
         self.workdays = [d for d in self.date_list if (d.weekday() < 5)]
         # 從 Supabase 獲取資料
-        # self.employees_data = fetch_employees()
-        # self.shift_requirements_data = fetch_shift_requirements(cycle_id)
-        # self.employee_preferences_data = fetch_employee_preferences()
-        # self.124553 = fetch_temp_offdays(cycle_id)
+        self.employees_data = fetch_employees()
+        self.shift_requirements_data = fetch_shift_requirements(cycle_id)
+        self.employee_preferences_data = fetch_employee_preferences()
+        self.offdays_data = fetch_temp_offdays(cycle_id)
         # 從本地抓取資料
-        self.employees_data = json.load(open('simulate_employees.json'))
-        self.shift_requirements_data = json.load(open('simulate_shiftrequirements.json'))
-        self.employee_preferences_data = json.load(open('simulate_employeepreferences.json'))
-        self.temp_offdays_data = json.load(open('simulate_offdays.json'))
+        # self.employees_data = json.load(open('simulate_employees.json'))
+        # self.shift_requirements_data = json.load(open('simulate_shiftrequirements.json'))
+        # self.employee_preferences_data = json.load(open('simulate_employeepreferences.json'))
+        # self.temp_offdays_data = json.load(open('simulate_offdays.json'))
         # 定義基本資料
         self.employees = [emp['name'] for emp in self.employees_data]
         self.shifts = ['A', 'B', 'C', 'O']  # A: 白班, B: 小夜班, C: 大夜班, O:休息
@@ -108,9 +108,9 @@ class CPMODEL:
 
         # 新增：員工預先選定的休假日期（紅O/特休為硬性休假）
         for e in self.employees:
-            offdays = self.temp_offdays_data.get(e, [])
+            offdays = self.offdays_data.get(e, [])
             for off in offdays:
-                day_idx = (datetime.fromisoformat(off['date']).date() - self.start_date).days + 1
+                day_idx = (off['date'] - self.start_date).days + 1
                 if 1 <= day_idx <= self.days:
                     if off['type'] in ['紅O', '特休']:
                         # 硬性限制：必須休假
@@ -120,6 +120,38 @@ class CPMODEL:
     def add_preferences(self):
         # 偏好設定 (軟性限制)
         self.penalties = []
+
+        # 調整：每位員工各班次指定天數（允許正負1~3天但有懲罰分數，0天嚴格禁止）
+        for e in self.employees:
+            if e in self.shift_requirements_data:
+                for s in ['A','B','C']:
+                    required = self.shift_requirements_data[e][s]
+                    total = sum(self.shifts_var[(e,d,s)] for d in range(1,self.days+1))
+                    if required == 0:
+                        # 嚴格禁止此班別
+                        self.model.Add(total == 0)
+                    else:
+                        # 允許正負1~3天但有懲罰
+                        diff = self.model.NewIntVar(-self.days, self.days, f'{e}_{s}_diff')
+                        self.model.Add(diff == total - required)
+                        # 懲罰正負1天
+                        penalty1 = self.model.NewBoolVar(f'{e}_{s}_penalty1')
+                        self.model.AddAbsEquality(penalty1, diff)
+                        self.model.Add(penalty1 == 1).OnlyEnforceIf(penalty1)
+                        self.model.Add(penalty1 != 1).OnlyEnforceIf(penalty1.Not())
+                        self.penalties.append((penalty1, 15))
+                        # 懲罰正負2天
+                        penalty2 = self.model.NewBoolVar(f'{e}_{s}_penalty2')
+                        self.model.AddAbsEquality(penalty2, diff)
+                        self.model.Add(penalty2 == 2).OnlyEnforceIf(penalty2)
+                        self.model.Add(penalty2 != 2).OnlyEnforceIf(penalty2.Not())
+                        self.penalties.append((penalty2, 30))
+                        # 懲罰正負3天
+                        penalty3 = self.model.NewBoolVar(f'{e}_{s}_penalty3')
+                        self.model.AddAbsEquality(penalty3, diff)
+                        self.model.Add(penalty3 == 3).OnlyEnforceIf(penalty3)
+                        self.model.Add(penalty3 != 3).OnlyEnforceIf(penalty3.Not())
+                        self.penalties.append((penalty3, 50))
 
         # 1️⃣ 偏好不連續上班超過5天
         for e in self.employees:
@@ -167,9 +199,9 @@ class CPMODEL:
 
         # 新增：藍O為軟性偏好
         for e in self.employees:
-            offdays = self.temp_offdays_data.get(e, [])
+            offdays = self.offdays_data.get(e, [])
             for off in offdays:
-                day_idx = (datetime.fromisoformat(off['date']).date() - self.start_date).days + 1
+                day_idx = (off['date'] - self.start_date).days + 1
                 if 1 <= day_idx <= self.days:
                     if off['type'] == '藍O':
                         prefer_blue_off = self.model.NewBoolVar(f'{e}_blueO_{day_idx}')
@@ -182,8 +214,11 @@ class CPMODEL:
 
     def solve(self):
         solver = cp_model.CpSolver()
-        solver.parameters.max_time_in_seconds = 120
+        solver.parameters.max_time_in_seconds = 300
+        solver.parameters.enumerate_all_solutions = True
         status = solver.Solve(self.model)
+        print(cp_model.FEASIBLE,cp_model.OPTIMAL)
+        print(status)
         return solver, status
 
     def print_results(self, solver, status):
@@ -271,7 +306,12 @@ class CPMODEL:
                 'diff': diff,
                 'status': "足夠" if diff == 0 else ("多出" if diff > 0 else "不足")
             }
-
+        print({
+            'employee_totals': employee_totals,
+            'total_supplied': total_supplied,
+            'daily_requirements': daily_requirements_summary,
+            'supply_demand_diff': supply_demand_diff
+        })
         return {
             'employee_totals': employee_totals,
             'total_supplied': total_supplied,

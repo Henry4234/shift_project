@@ -32,10 +32,6 @@ than 5 consecutive work‑days incurs a linear penalty in the objective.
 
 The script prints a CSV‑like table and writes **schedule.json** with
 0/1 indicators for downstream steps.
-
-Usage
------
-$ python offday_planning_step1.py
 """
 
 import json
@@ -49,7 +45,7 @@ from supabase_client import (
     fetch_temp_offdays,
     fetch_schedule_cycle
 )
-
+# ===================== 第一階段：休假分配 =====================
 class OffdayPlanner:
     def __init__(self, cycle_id):
         self.cycle_id = cycle_id
@@ -206,9 +202,154 @@ class OffdayPlanner:
         self.build_model()
         solver, status = self.solve()
         result = self.format_result(solver, status)
-        self.print_table(result)
+        # self.print_table(result)
         return result
 
-if __name__ == '__main__':
+# ===================== 第二階段：班別分配 =====================
+
+class ShiftAssignmentSolver:
+    def __init__(self, first_stage_result, shift_requirements, offdays_raw, dates=None):
+        """
+        first_stage_result: dict, 來自第一階段的 result['schedule']，格式 {員工: [0/1, ...]}
+        shift_requirements: dict, 來自 simulate_shiftrequirements.json
+        offdays_raw: dict, 來自 simulate_offdays.json
+        dates: list, 日期字串清單（可選，若有則用於藍O判斷）
+        """
+        self.model = cp_model.CpModel()
+        self.employees = list(first_stage_result.keys())
+        self.D = len(next(iter(first_stage_result.values())))
+        self.shifts = ['A', 'B', 'C']
+        self.shift_requirements = shift_requirements
+        self.offdays_raw = offdays_raw
+        self.dates = dates if dates is not None else [str(i) for i in range(self.D)]
+        print(self.employees)
+        print(self.D)
+        print(self.shift_requirements)
+        # 取得藍O日期
+        self.blue_off = {name: set(item['date'] for item in offdays_raw.get(name, []) if item['type'] == '藍O') for name in self.employees}
+
+        # 只針對 W 的日子建立班別決策變數
+        self.x = {}  # (e, d, s): BoolVar
+        for e, name in enumerate(self.employees):
+            for d in range(self.D):
+                if int(first_stage_result[name][d]) == 1:
+                    for s in self.shifts:
+                        self.x[(e, d, s)] = self.model.NewBoolVar(f'{name}_{d}_{s}')
+
+    def add_constraints(self):
+        # 1. 每個 W 的日子只能排一種班
+        for e, name in enumerate(self.employees):
+            for d in range(self.D):
+                if any(self.x.get((e, d, s)) is not None for s in self.shifts):
+                    self.model.Add(sum(self.x[(e, d, s)] for s in self.shifts if self.x.get((e, d, s)) is not None) == 1)
+
+        # 2. 硬限制: 班與班之間必須休息超過11小時
+        for e, name in enumerate(self.employees):
+            for d in range(self.D - 1):
+                # C班後不可A/B
+                if self.x.get((e, d, 'C')) is not None and self.x.get((e, d+1, 'A')) is not None:
+                    self.model.Add(self.x[(e, d, 'C')] + self.x[(e, d+1, 'A')] <= 1)
+                if self.x.get((e, d, 'C')) is not None and self.x.get((e, d+1, 'B')) is not None:
+                    self.model.Add(self.x[(e, d, 'C')] + self.x[(e, d+1, 'B')] <= 1)
+                # B班後不可A
+                if self.x.get((e, d, 'B')) is not None and self.x.get((e, d+1, 'A')) is not None:
+                    self.model.Add(self.x[(e, d, 'B')] + self.x[(e, d+1, 'A')] <= 1)
+
+        # 3. 硬限制: shift_requirements==0 的班別嚴格禁止
+        for e, name in enumerate(self.employees):
+            for s in self.shifts:
+                if self.shift_requirements[name][s] == 0:
+                    for d in range(self.D):
+                        if self.x.get((e, d, s)) is not None:
+                            self.model.Add(self.x[(e, d, s)] == 0)
+
+    def add_soft_constraints(self):
+        self.penalties = []
+
+        # 4. 軟限制: 各班別總和與需求相差0不罰，正負1/2/3天分別懲罰
+        for e, name in enumerate(self.employees):
+            for s in self.shifts:
+                total = sum(self.x[(e, d, s)] for d in range(self.D) if self.x.get((e, d, s)) is not None)
+                required = self.shift_requirements[name][s]
+                diff = self.model.NewIntVar(-self.D, self.D, f'diff_{name}_{s}')
+                self.model.Add(diff == total - required)
+                # 懲罰正負1天
+                penalty1 = self.model.NewBoolVar(f'penalty1_{name}_{s}')
+                self.model.AddAbsEquality(penalty1, diff)
+                self.model.Add(penalty1 == 1).OnlyEnforceIf(penalty1)
+                self.model.Add(penalty1 != 1).OnlyEnforceIf(penalty1.Not())
+                self.penalties.append(penalty1 * 15)
+                # 懲罰正負2天
+                penalty2 = self.model.NewBoolVar(f'penalty2_{name}_{s}')
+                self.model.AddAbsEquality(penalty2, diff)
+                self.model.Add(penalty2 == 2).OnlyEnforceIf(penalty2)
+                self.model.Add(penalty2 != 2).OnlyEnforceIf(penalty2.Not())
+                self.penalties.append(penalty2 * 30)
+                # 懲罰正負3天
+                penalty3 = self.model.NewBoolVar(f'penalty3_{name}_{s}')
+                self.model.AddAbsEquality(penalty3, diff)
+                self.model.Add(penalty3 == 3).OnlyEnforceIf(penalty3)
+                self.model.Add(penalty3 != 3).OnlyEnforceIf(penalty3.Not())
+                self.penalties.append(penalty3 * 50)
+
+        # 5. 軟限制: 藍O日安排任何班別都罰50
+        for e, name in enumerate(self.employees):
+            for d in range(self.D):
+                if self.dates and str(self.dates[d]) in self.blue_off.get(name, set()):
+                    for s in self.shifts:
+                        if self.x.get((e, d, s)) is not None:
+                            self.penalties.append(self.x[(e, d, s)] * 50)
+
+        if self.penalties:
+            self.model.Minimize(sum(self.penalties))
+        else:
+            self.model.Minimize(0)
+
+    def solve(self):
+        solver = cp_model.CpSolver()
+        solver.parameters.max_time_in_seconds = 60
+        status = solver.Solve(self.model)
+        return solver, status
+
+    def get_result(self, solver, status):
+        result = {}
+        if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+            for e, name in enumerate(self.employees):
+                result[name] = []
+                for d in range(self.D):
+                    if any(self.x.get((e, d, s)) is not None for s in self.shifts):
+                        for s in self.shifts:
+                            var = self.x.get((e, d, s))
+                            if var is not None and solver.Value(var):
+                                result[name].append(s)
+                                break
+                        else:
+                            # 若該天有W但沒排到班，標記為O
+                            result[name].append('O')
+                    else:
+                        result[name].append('O')
+        return result
+
+# ===================== 主流程串接 =====================
+def main():
+    # 第一階段：休假安排
     planner = OffdayPlanner(cycle_id=14)
-    planner.run()
+    first_stage_result = planner.run()
+
+    # 第二階段：班別分配
+    # 這裡 shift_requirements, offdays_raw 可直接用 supabase_client 或本地json
+    shift_requirements = planner.shift_req_data
+    offdays_raw = planner.offdays_raw
+    shift_solver = ShiftAssignmentSolver(first_stage_result['schedule'], shift_requirements, offdays_raw, dates=planner.dates)
+    shift_solver.add_constraints()
+    shift_solver.add_soft_constraints()
+    solver, status = shift_solver.solve()
+    shift_result = shift_solver.get_result(solver, status)
+
+    # 輸出班別分配結果
+    print('\n=== 第二階段班別分配結果 ===')
+    for name, row in shift_result.items():
+        print(name, ','.join(row))
+
+if __name__ == '__main__':
+    main()
