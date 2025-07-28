@@ -45,6 +45,8 @@ from supabase_client import (
     fetch_temp_offdays,
     fetch_schedule_cycle
 )
+from verify_shift import verify_shift_assignment
+
 # ===================== 第一階段：休假分配 =====================
 class OffdayPlanner:
     def __init__(self, cycle_id):
@@ -75,23 +77,30 @@ class OffdayPlanner:
         self.emp_idx = {name: i for i, name in enumerate(self.emp_names)}
 
         # 需求、休假、偏好
+        #每個員工的上班總天數
+        #格式:{str(員工):int(天數)}
         self.total_days_req = {
             name: sum(self.shift_req_data.get(name, {}).values())
             for name in self.emp_names
         }
+        #各員工的休假
+        #格式:{str(員工):set(休假日期YYYY-MM-DD)}
         self.offday_set = {
             name: {item['date'].strftime('%Y-%m-%d') if hasattr(item['date'], 'strftime') else str(item['date']) for item in self.offdays_raw.get(name, [])}
             for name in self.emp_names
         }
+        #軟限制:偏好不上超過五天
+        #格式:{str(員工):boolyn}
         self.pref_max_cont = {
             name: self.prefs_raw.get(name, {}).get('max_continuous_days', False)
             for name in self.emp_names
         }
+        #軟限制:偏好C(大夜)班後休兩天
+        #格式:{str(員工):boolyn}
         self.double_off_after_c = {
             name: self.prefs_raw.get(name, {}).get('double_off_after_C', False)
             for name in self.emp_names
         }
-
     def build_model(self):
         # 建立決策變數
         self.x = {
@@ -202,7 +211,7 @@ class OffdayPlanner:
         self.build_model()
         solver, status = self.solve()
         result = self.format_result(solver, status)
-        # self.print_table(result)
+        self.print_table(result)
         return result
 
 # ===================== 第二階段：班別分配 =====================
@@ -222,9 +231,9 @@ class ShiftAssignmentSolver:
         self.shift_requirements = shift_requirements
         self.offdays_raw = offdays_raw
         self.dates = dates if dates is not None else [str(i) for i in range(self.D)]
-        print(self.employees)
-        print(self.D)
-        print(self.shift_requirements)
+        # print(self.employees)
+        # print(self.D)
+        # print(self.shift_requirements)
         # 取得藍O日期
         self.blue_off = {name: set(item['date'] for item in offdays_raw.get(name, []) if item['type'] == '藍O') for name in self.employees}
 
@@ -242,8 +251,40 @@ class ShiftAssignmentSolver:
             for d in range(self.D):
                 if any(self.x.get((e, d, s)) is not None for s in self.shifts):
                     self.model.Add(sum(self.x[(e, d, s)] for s in self.shifts if self.x.get((e, d, s)) is not None) == 1)
+        
+        # 2. 硬限制:每日需求(每日上班人數)
+        # 改為軟限制，避免與其他限制衝突導致無解
+        self.daily_penalties = []
+        for d in range(self.D):
+            # 取得該日期對應的星期幾
+            date_str = self.dates[d]
+            dt = datetime.strptime(date_str, '%Y-%m-%d')
+            weekday = dt.weekday()  # Monday = 0, Sunday = 6
+            
+            # 根據星期幾設定每日班別需求
+            if weekday <= 4:  # 週一到週五
+                daily_req = {'A': 3, 'B': 2, 'C': 1}
+            elif weekday == 5:  # 週六
+                daily_req = {'A': 2, 'B': 1, 'C': 1}
+            else:  # 週日
+                daily_req = {'A': 1, 'B': 1, 'C': 1}
+            # 加入每日班別需求限制（懲罰不足的情況）
+            for s in self.shifts:
+                # if daily_req[s] > 0:
+                #     pol=sum(self.x[(e, d, s)] for e, name in enumerate(self.employees) if self.x.get((e, d, s)) is not None) == daily_req[s]
+                #     # print(pol)
+                #     self.model.Add(pol)
 
-        # 2. 硬限制: 班與班之間必須休息超過11小時
+                if daily_req[s] > 0:
+                    actual = sum(self.x[(e, d, s)] for e, name in enumerate(self.employees) if self.x.get((e, d, s)) is not None)
+                    # print(actual)
+                    shortage = self.model.NewIntVar(0, daily_req[s], f'shortage_{d}_{s}')
+                    self.model.Add(shortage >= daily_req[s] - actual)
+                    self.daily_penalties.append(shortage * 100)  # 每日需求不足的懲罰權重
+
+        
+        
+        # 3. 硬限制: 班與班之間必須休息超過11小時
         for e, name in enumerate(self.employees):
             for d in range(self.D - 1):
                 # C班後不可A/B
@@ -255,7 +296,7 @@ class ShiftAssignmentSolver:
                 if self.x.get((e, d, 'B')) is not None and self.x.get((e, d+1, 'A')) is not None:
                     self.model.Add(self.x[(e, d, 'B')] + self.x[(e, d+1, 'A')] <= 1)
 
-        # 3. 硬限制: shift_requirements==0 的班別嚴格禁止
+        # 4. 硬限制: shift_requirements==0 的班別嚴格禁止
         for e, name in enumerate(self.employees):
             for s in self.shifts:
                 if self.shift_requirements[name][s] == 0:
@@ -266,7 +307,7 @@ class ShiftAssignmentSolver:
     def add_soft_constraints(self):
         self.penalties = []
 
-        # 4. 軟限制: 各班別總和與需求相差0不罰，正負1/2/3天分別懲罰
+        # 5. 軟限制: 各班別總和與需求相差0不罰，正負1/2/3天分別懲罰
         for e, name in enumerate(self.employees):
             for s in self.shifts:
                 total = sum(self.x[(e, d, s)] for d in range(self.D) if self.x.get((e, d, s)) is not None)
@@ -292,7 +333,7 @@ class ShiftAssignmentSolver:
                 self.model.Add(penalty3 != 3).OnlyEnforceIf(penalty3.Not())
                 self.penalties.append(penalty3 * 50)
 
-        # 5. 軟限制: 藍O日安排任何班別都罰50
+        # 6. 軟限制: 藍O日安排任何班別都罰50
         for e, name in enumerate(self.employees):
             for d in range(self.D):
                 if self.dates and str(self.dates[d]) in self.blue_off.get(name, set()):
@@ -301,13 +342,12 @@ class ShiftAssignmentSolver:
                             self.penalties.append(self.x[(e, d, s)] * 50)
 
         if self.penalties:
-            self.model.Minimize(sum(self.penalties))
+            self.model.Minimize(sum(self.penalties) + sum(self.daily_penalties))
         else:
-            self.model.Minimize(0)
-
+            self.model.Minimize(sum(self.daily_penalties))
     def solve(self):
         solver = cp_model.CpSolver()
-        solver.parameters.max_time_in_seconds = 60
+        solver.parameters.max_time_in_seconds = 300
         status = solver.Solve(self.model)
         return solver, status
 
@@ -336,20 +376,55 @@ def main():
     planner = OffdayPlanner(cycle_id=14)
     first_stage_result = planner.run()
 
-    # 第二階段：班別分配
-    # 這裡 shift_requirements, offdays_raw 可直接用 supabase_client 或本地json
-    shift_requirements = planner.shift_req_data
-    offdays_raw = planner.offdays_raw
-    shift_solver = ShiftAssignmentSolver(first_stage_result['schedule'], shift_requirements, offdays_raw, dates=planner.dates)
-    shift_solver.add_constraints()
-    shift_solver.add_soft_constraints()
-    solver, status = shift_solver.solve()
-    shift_result = shift_solver.get_result(solver, status)
-
-    # 輸出班別分配結果
-    print('\n=== 第二階段班別分配結果 ===')
-    for name, row in shift_result.items():
-        print(name, ','.join(row))
+    # 第二階段：班別分配與驗證
+    max_retries = 5  # 最大重試次數
+    current_retry = 0
+    
+    while current_retry < max_retries:
+        print(f"\n=== 第二階段班別分配 (第 {current_retry + 1} 次嘗試) ===")
+        
+        # 這裡 shift_requirements, offdays_raw 可直接用 supabase_client 或本地json
+        shift_requirements = planner.shift_req_data
+        offdays_raw = planner.offdays_raw
+        shift_solver = ShiftAssignmentSolver(first_stage_result['schedule'], shift_requirements, offdays_raw, dates=planner.dates)
+        shift_solver.add_constraints()
+        shift_solver.add_soft_constraints()
+        solver, status = shift_solver.solve()
+        
+        # 檢查是否有解
+        if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+            shift_result = shift_solver.get_result(solver, status)
+            
+            # 輸出班別分配結果
+            print('\n=== 第二階段班別分配結果 ===')
+            print("日期區間: %s-%s"%(planner.start_date,planner.end_date))
+            for name, row in shift_result.items():
+                print(name, ','.join(row))
+            
+            # 驗證班別分配結果
+            print('\n' + '='*60)
+            print('開始驗證班別分配結果...')
+            print('='*60)
+            
+            verification_passed = verify_shift_assignment(shift_result, planner.dates)
+            
+            if verification_passed:
+                print('\n' + '='*60)
+                print('✓ 驗證通過！班別分配結果符合所有限制條件')
+                print('='*60)
+                return shift_result
+            else:
+                print(f'\n✗ 驗證未通過，準備重新生成 (第 {current_retry + 1}/{max_retries} 次)')
+                current_retry += 1
+                
+                if current_retry >= max_retries:
+                    print(f'\n❌ 已達到最大重試次數 ({max_retries})，無法生成符合條件的班別分配')
+                    return None
+        else:
+            print("第二階段無可行解")
+            return None
+    
+    return None
 
 if __name__ == '__main__':
     main()
