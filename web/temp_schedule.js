@@ -65,6 +65,14 @@ class TempScheduleMode {
 
                 </div>
             </div>
+            <div class="verify-schedule">
+                <div class="verify-schedule-header">
+                    <h3>驗證排班</h3>
+                    <button type="button" class="verify-shift-btn" onclick="">驗證班表</button>
+                </div>
+                <textarea id="verifycomment" placeholder="點擊右上角驗證按鈕開始驗證...&#10;自動驗證是否符合以下情況&#10;1. 每日上班人數&#10;2. 連續上班天數&#10;3. 班別銜接"></textarea>
+            </div>
+
             <div class="temp-schedule-bottom">
                 <div class="temp-schedule-require">
                     <h3>員工班別</h3>
@@ -196,6 +204,10 @@ class TempScheduleMode {
             dateArray.forEach((date, dateIndex) => {
                 const cell = document.createElement('td');
                 cell.className = 'shift-cell';
+                // 如果是週末，加上 weekend 樣式
+                if (date.getDay() === 0 || date.getDay() === 6) {
+                    cell.classList.add('weekend');
+                }
                 cell.textContent = ''; // 暫時為空
                 
                 // 添加資料屬性，方便後續識別
@@ -360,7 +372,11 @@ class TempScheduleMode {
         
         // 如果沒有休假狀態，清除所有樣式
         if (!state.text) {
-            cell.className = 'shift-cell';
+            if (cell.classList.contains('weekend')) {
+                cell.className = 'shift-cell weekend';
+            } else {
+                cell.className = 'shift-cell';
+            }
         }
     }
 

@@ -605,15 +605,63 @@ body.dark {
 .temp-schedule-header .header-actions button:hover {
     background: var(--blue-color);
 }
-.temp-schedule-mode {
+.temp-schedule-mode, .verify-schedule {
     box-shadow: 0 4px 24px 0 rgba(0,0,0,0.13);
     border-radius: 12px;
     background: var(--cycle-bg-color);
     padding: 24px 24px 32px 24px;
-    margin-top: 10px;
+    margin-top: 15px;
+}
+.verify-schedule {
+  margin-top: 20px !important;
 }
 .temp-schedule-mode .employees-table-outer {
   margin-top: 24px;
+}
+/* 驗證排班區域 */
+.verify-schedule-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.verify-schedule-header h3 {
+    margin: 0;
+    color: var(--black-color);
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.verify-schedule-header .verify-shift-btn {
+    background: var(--green-color);
+    color: var(--white-color);
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.verify-schedule-header .verify-shift-btn:hover {
+    background: #4a6b5f;
+}
+
+.verify-schedule textarea{
+  width: 100%;
+  min-height: 100px;
+  padding: 12px;
+  border: 1px solid var(--grey-color);
+  border-radius: 6px;
+  background-color: var(--white-color);
+  color: var(--black-color);
+  font-family: "Poppins", sans-serif;
+  font-size: 14px;
+  resize: vertical;
+  margin-bottom: 15px;
 }
 
 /* 暫存班表底部區域容器 */
@@ -643,18 +691,12 @@ body.dark {
     flex: 1; /* 佔據剩餘空間的一半 */
     min-width: 300px; /* 最小寬度確保RWD */
 }
-
-.temp-schedule-comment h3 {
+/* 各子欄位的標題 */
+.temp-schedule-comment h3, .temp-schedule-require h3, .verify-schedule h3{
     color: var(--black-color);
     margin-bottom: 15px;
     font-size: 18px;
     font-weight: 600;
-}
-.temp-schedule-require h3 {
-  color: var(--black-color);
-  margin-bottom: 15px;
-  font-size: 18px;
-  font-weight: 600;
 }
 
 .temp-schedule-comment textarea {
@@ -900,6 +942,15 @@ body.dark {
   overflow-x: auto;
 }
 
+/* 週末樣式 */
+.employees-table th.weekend {
+  background: #fce4ec;
+  color: #c2185b;
+}
+/* 週末人員樣式 */
+.employees-table td.weekend {
+  background: #fce4ec;
+}
 /* sticky 員工姓名欄位 */
 .employees-table .sticky-col {
   position: sticky;
@@ -1061,11 +1112,7 @@ nav.content.fadeout {
   padding: 4px 8px;
 }
 
-/* 週末樣式 */
-.employees-table th.weekend {
-  background: #fce4ec;
-  color: #c2185b;
-}
+
 
 /* === 每日上班人員模式樣式 === */
 .daily-employees-mode {
