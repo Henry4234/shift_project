@@ -371,60 +371,244 @@ class ShiftAssignmentSolver:
         return result
 
 # ===================== 主流程串接 =====================
-def main():
-    # 第一階段：休假安排
-    planner = OffdayPlanner(cycle_id=14)
-    first_stage_result = planner.run()
 
-    # 第二階段：班別分配與驗證
-    max_retries = 5  # 最大重試次數
-    current_retry = 0
-    
-    while current_retry < max_retries:
-        print(f"\n=== 第二階段班別分配 (第 {current_retry + 1} 次嘗試) ===")
+def run_auto_scheduling(cycle_id):
+    """
+    執行自動排班流程，回傳 JSON 格式結果
+    @param cycle_id: 週期 ID
+    @return: dict, 包含排班結果的 JSON 格式資料
+    """
+    try:
+        # 第一階段：休假安排
+        planner = OffdayPlanner(cycle_id=cycle_id)
+        first_stage_result = planner.run()
         
-        # 這裡 shift_requirements, offdays_raw 可直接用 supabase_client 或本地json
+        # 檢查第一階段是否成功
+        if first_stage_result['status'] != 'success':
+            return {
+                'success': False,
+                'message': f'第一階段排班失敗: {first_stage_result["message"]}',
+                'stage': 'first',
+                'data': None
+            }
+
+        # 第二階段：班別分配與驗證
+        max_retries = 5  # 最大重試次數
+        current_retry = 0
         shift_requirements = planner.shift_req_data
         offdays_raw = planner.offdays_raw
-        shift_solver = ShiftAssignmentSolver(first_stage_result['schedule'], shift_requirements, offdays_raw, dates=planner.dates)
-        shift_solver.add_constraints()
-        shift_solver.add_soft_constraints()
-        solver, status = shift_solver.solve()
         
-        # 檢查是否有解
-        if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-            shift_result = shift_solver.get_result(solver, status)
+        while current_retry < max_retries:
+            # 建立第二階段求解器
+            shift_solver = ShiftAssignmentSolver(
+                first_stage_result['schedule'], 
+                shift_requirements, 
+                offdays_raw, 
+                dates=planner.dates
+            )
+            shift_solver.add_constraints()
+            shift_solver.add_soft_constraints()
+            solver, status = shift_solver.solve()
             
-            # 輸出班別分配結果
-            print('\n=== 第二階段班別分配結果 ===')
-            print("日期區間: %s-%s"%(planner.start_date,planner.end_date))
-            for name, row in shift_result.items():
-                print(name, ','.join(row))
-            
-            # 驗證班別分配結果
-            print('\n' + '='*60)
-            print('開始驗證班別分配結果...')
-            print('='*60)
-            
-            verification_passed = verify_shift_assignment(shift_result, planner.dates)
-            
-            if verification_passed:
-                print('\n' + '='*60)
-                print('✓ 驗證通過！班別分配結果符合所有限制條件')
-                print('='*60)
-                return shift_result
-            else:
-                print(f'\n✗ 驗證未通過，準備重新生成 (第 {current_retry + 1}/{max_retries} 次)')
-                current_retry += 1
+            # 檢查是否有解
+            if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+                shift_result = shift_solver.get_result(solver, status)
                 
-                if current_retry >= max_retries:
-                    print(f'\n❌ 已達到最大重試次數 ({max_retries})，無法生成符合條件的班別分配')
-                    return None
-        else:
-            print("第二階段無可行解")
-            return None
+                # 驗證班別分配結果
+                verification_passed = verify_shift_assignment(shift_result, planner.dates)
+                
+                if verification_passed:
+                    # 驗證通過，回傳成功結果
+                    return {
+                        'success': True,
+                        'message': '自動排班成功！班別分配結果符合所有限制條件',
+                        'stage': 'complete',
+                        'data': {
+                            'cycle_id': cycle_id,
+                            'start_date': planner.start_date.strftime('%Y-%m-%d'),
+                            'end_date': planner.end_date.strftime('%Y-%m-%d'),
+                            'dates': planner.dates,
+                            'schedule': shift_result,
+                            'first_stage_result': first_stage_result['schedule'],
+                            'retry_count': current_retry + 1,
+                            'verification_passed': True
+                        }
+                    }
+                else:
+                    # 驗證未通過，準備重試
+                    current_retry += 1
+                    if current_retry >= max_retries:
+                        return {
+                            'success': False,
+                            'message': f'已達到最大重試次數 ({max_retries})，無法生成符合條件的班別分配',
+                            'stage': 'second',
+                            'data': {
+                                'cycle_id': cycle_id,
+                                'retry_count': current_retry,
+                                'last_result': shift_result,
+                                'verification_passed': False
+                            }
+                        }
+            else:
+                # 第二階段無可行解
+                return {
+                    'success': False,
+                    'message': '第二階段無可行解',
+                    'stage': 'second',
+                    'data': {
+                        'cycle_id': cycle_id,
+                        'retry_count': current_retry,
+                        'solver_status': status
+                    }
+                }
+        
+        return {
+            'success': False,
+            'message': '未知錯誤',
+            'stage': 'unknown',
+            'data': None
+        }
+        
+    except Exception as e:
+        return {
+            'success': False,
+            'message': f'執行自動排班時發生錯誤: {str(e)}',
+            'stage': 'error',
+            'data': None
+        }
+
+def debug_auto_scheduling(cycle_id):
+    """
+    除錯用的自動排班函數，會輸出詳細的除錯資訊
+    @param cycle_id: 週期 ID
+    @return: dict, 包含詳細除錯資訊的 JSON 格式資料
+    """
+    try:
+        print(f"=== 開始除錯自動排班，週期 ID: {cycle_id} ===")
+        
+        # 第一階段：休假安排
+        print("\n=== 第一階段：休假安排 ===")
+        planner = OffdayPlanner(cycle_id=cycle_id)
+        first_stage_result = planner.run()
+        
+        print(f"第一階段結果: {first_stage_result['status']}")
+        if first_stage_result['status'] != 'success':
+            print(f"第一階段失敗原因: {first_stage_result['message']}")
+            return {
+                'success': False,
+                'message': f'第一階段排班失敗: {first_stage_result["message"]}',
+                'stage': 'first',
+                'debug_info': {
+                    'cycle_id': cycle_id,
+                    'first_stage_status': first_stage_result['status']
+                }
+            }
+
+        # 第二階段：班別分配與驗證
+        print("\n=== 第二階段：班別分配與驗證 ===")
+        max_retries = 5
+        current_retry = 0
+        shift_requirements = planner.shift_req_data
+        offdays_raw = planner.offdays_raw
+        
+        while current_retry < max_retries:
+            print(f"\n--- 第二階段第 {current_retry + 1} 次嘗試 ---")
+            
+            shift_solver = ShiftAssignmentSolver(
+                first_stage_result['schedule'], 
+                shift_requirements, 
+                offdays_raw, 
+                dates=planner.dates
+            )
+            shift_solver.add_constraints()
+            shift_solver.add_soft_constraints()
+            solver, status = shift_solver.solve()
+            
+            print(f"求解器狀態: {status}")
+            
+            if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+                shift_result = shift_solver.get_result(solver, status)
+                print("班別分配結果:")
+                for name, row in shift_result.items():
+                    print(f"  {name}: {','.join(row)}")
+                
+                print("\n開始驗證班別分配結果...")
+                verification_passed = verify_shift_assignment(shift_result, planner.dates)
+                print(f"驗證結果: {'通過' if verification_passed else '未通過'}")
+                
+                if verification_passed:
+                    print("✓ 驗證通過！班別分配結果符合所有限制條件")
+                    return {
+                        'success': True,
+                        'message': '自動排班成功！班別分配結果符合所有限制條件',
+                        'stage': 'complete',
+                        'debug_info': {
+                            'cycle_id': cycle_id,
+                            'start_date': planner.start_date.strftime('%Y-%m-%d'),
+                            'end_date': planner.end_date.strftime('%Y-%m-%d'),
+                            'dates': planner.dates,
+                            'schedule': shift_result,
+                            'first_stage_result': first_stage_result['schedule'],
+                            'retry_count': current_retry + 1,
+                            'verification_passed': True,
+                            'solver_status': status
+                        }
+                    }
+                else:
+                    print(f"✗ 驗證未通過，準備重新生成 (第 {current_retry + 1}/{max_retries} 次)")
+                    current_retry += 1
+                    if current_retry >= max_retries:
+                        print(f"❌ 已達到最大重試次數 ({max_retries})，無法生成符合條件的班別分配")
+                        return {
+                            'success': False,
+                            'message': f'已達到最大重試次數 ({max_retries})，無法生成符合條件的班別分配',
+                            'stage': 'second',
+                            'debug_info': {
+                                'cycle_id': cycle_id,
+                                'retry_count': current_retry,
+                                'last_result': shift_result,
+                                'verification_passed': False,
+                                'solver_status': status
+                            }
+                        }
+            else:
+                print("第二階段無可行解")
+                return {
+                    'success': False,
+                    'message': '第二階段無可行解',
+                    'stage': 'second',
+                    'debug_info': {
+                        'cycle_id': cycle_id,
+                        'retry_count': current_retry,
+                        'solver_status': status
+                    }
+                }
+        
+        return {
+            'success': False,
+            'message': '未知錯誤',
+            'stage': 'unknown',
+            'debug_info': None
+        }
+        
+    except Exception as e:
+        print(f"執行自動排班時發生錯誤: {str(e)}")
+        return {
+            'success': False,
+            'message': f'執行自動排班時發生錯誤: {str(e)}',
+            'stage': 'error',
+            'debug_info': None
+        }
+
+def main():
+    """
+    原本的 main 函數，保留用於獨立測試
+    """
+    # 使用預設的週期 ID 進行測試
+    result = run_auto_scheduling(cycle_id=14)
     
-    return None
+    # 輸出 JSON 格式結果
+    print(json.dumps(result, ensure_ascii=False, indent=2))
 
 if __name__ == '__main__':
     main()
