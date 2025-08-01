@@ -23,9 +23,12 @@
   --fc-schedule-day:#2E7D32;
   --fc-schedule-eveing:#f57c00;
   --fc-schedule-night:#1976d2;
+  --fc-schedule-off:#585353;
   --bg-schedule-day:#e8f5e8;
   --bg-schedule-eveing:#fff3e0;
   --bg-schedule-night:#e3f2fd;
+  --bg-schedule-off:#eae6e6;
+
 
 }
 body {
@@ -51,9 +54,11 @@ body.dark {
   --fc-schedule-day:#e8f5e8;
   --fc-schedule-eveing:#fff3e0;
   --fc-schedule-night:#e3f2fd;
-  --bg-schedule-day:#2E7D32;
-  --bg-schedule-eveing:#f57c00;
-  --bg-schedule-night:#1976d2;
+  --fc-schedule-off:#d0cece;
+  --bg-schedule-day:#48765f;
+  --bg-schedule-eveing:#d45500;
+  --bg-schedule-night:#336699;
+  --bg-schedule-off: #3b3b3b;
 }
 
 /* 加載動畫 */
@@ -1092,8 +1097,8 @@ nav.content.fadeout {
 
 /* 休假樣式 */
 .day-off {
-  background: #ffebee;
-  color: #c62828;
+  background: var(--bg-schedule-off) !important;
+  color: var(--fc-schedule-off);
   font-weight: 500;
 }
 

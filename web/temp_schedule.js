@@ -952,7 +952,8 @@ class TempScheduleMode {
                     cell.textContent = shift;
                     cell.classList.add(this.shiftTypeMap[shift]?.class || '');
                 } else {
-                    cell.textContent = '';
+                    cell.textContent = 'O';
+                    cell.classList.add('day-off');
                 }
                 
                 // 如果是週末，加上 weekend 樣式
