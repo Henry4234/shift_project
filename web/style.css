@@ -775,6 +775,7 @@ body.dark {
     border-collapse: collapse;
     width: 100%; /* 改為100%以適應容器 */
     color: var(--black-color); /* 符合夜間模式 */
+    margin-top: 10px;
 }
 
 .employee-requirements-table th,
@@ -795,6 +796,7 @@ body.dark {
     white-space: normal;
     font-size: 15px;
     padding: 6px 8px;
+    min-width: 70px;
     color: var(--black-color); /* 符合夜間模式 */
 }
 
@@ -802,9 +804,124 @@ body.dark {
 .employee-requirements-table th:first-child {
     background: var(--table-td-color);
     font-weight: 500;
-    min-width: 90px; /* 與上方employees-table相符 */
+    min-width: 20px; /* 與上方employees-table相符 */
 }
 
+.requirement-cell {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  position: relative;
+}
+
+.requirement-cell:hover {
+  background-color: #f0f8ff;
+}
+
+.requirement-cell.selected {
+  background-color: #e6f3ff;
+  border: 2px solid #007bff;
+}
+
+.requirement-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.requirement-value {
+  font-weight: bold;
+  min-width: 20px;
+  text-align: center;
+}
+
+.requirement-btn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  color: #333;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.requirement-btn:hover {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.requirement-btn:active {
+  transform: scale(0.95);
+}
+
+.requirement-btn-minus {
+  background-color: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+
+.requirement-btn-minus:hover {
+  background-color: #c82333;
+  border-color: #c82333;
+}
+
+.requirement-btn-plus {
+  background-color: #28a745;
+  color: white;
+  border-color: #28a745;
+}
+
+.requirement-btn-plus:hover {
+  background-color: #218838;
+  border-color: #218838;
+}
+
+/* 更新按鈕樣式 */
+.update-require-btn {
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.update-require-btn:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.update-require-btn:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+  .requirement-content {
+      gap: 4px;
+  }
+  
+  .requirement-btn {
+      width: 20px;
+      height: 20px;
+      font-size: 12px;
+  }
+  
+  .requirement-value {
+      min-width: 16px;
+      font-size: 14px;
+  }
+}
 
 /* === 人員模式專用樣式 === */
 /* 人員班表外框動畫 */

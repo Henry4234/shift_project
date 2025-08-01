@@ -35,6 +35,16 @@ class TempScheduleMode {
         
         // 標記是否已經執行過自動排班
         this.hasAutoScheduled = false;
+        
+        // === 新增：員工班別需求管理 ===
+        // 儲存原始需求資料（用於比較是否有變更）
+        this.originalRequirements = new Map(); // 格式: Map<"employeeName_shiftType", number>
+        // 儲存當前需求資料
+        this.currentRequirements = new Map(); // 格式: Map<"employeeName_shiftType", number>
+        // 標記是否有需求變更
+        this.hasRequirementsChanged = false;
+        // 當前選中的需求儲存格
+        this.selectedRequirementCell = null;
     }
 
     /**
@@ -265,12 +275,38 @@ class TempScheduleMode {
             const a = members.find(m => m.snapshot_name === name && m.shift_type === 'A');
             const b = members.find(m => m.snapshot_name === name && m.shift_type === 'B');
             const c = members.find(m => m.snapshot_name === name && m.shift_type === 'C');
+            
+            // 儲存原始需求資料
+            const aValue = a ? a.required_days : 0;
+            const bValue = b ? b.required_days : 0;
+            const cValue = c ? c.required_days : 0;
+            
+            this.originalRequirements.set(`${name}_A`, aValue);
+            this.originalRequirements.set(`${name}_B`, bValue);
+            this.originalRequirements.set(`${name}_C`, cValue);
+            
+            this.currentRequirements.set(`${name}_A`, aValue);
+            this.currentRequirements.set(`${name}_B`, bValue);
+            this.currentRequirements.set(`${name}_C`, cValue);
+            
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${name}</td>
-                <td>${a ? a.required_days : 0}</td>
-                <td>${b ? b.required_days : 0}</td>
-                <td>${c ? c.required_days : 0}</td>
+                <td class="requirement-cell" data-employee="${name}" data-shift="A">
+                    <div class="requirement-content">
+                        <span class="requirement-value">${aValue}</span>
+                    </div>
+                </td>
+                <td class="requirement-cell" data-employee="${name}" data-shift="B">
+                    <div class="requirement-content">
+                        <span class="requirement-value">${bValue}</span>
+                    </div>
+                </td>
+                <td class="requirement-cell" data-employee="${name}" data-shift="C">
+                    <div class="requirement-content">
+                        <span class="requirement-value">${cValue}</span>
+                    </div>
+                </td>
             `;
             reqTbody.appendChild(row);
         });
@@ -280,6 +316,9 @@ class TempScheduleMode {
         if (reqContainer) {
             reqContainer.appendChild(reqTable);
         }
+        
+        // 添加需求表格的點擊事件監聽器
+        this.addRequirementTableEventListeners();
     }
     
     /**
@@ -336,6 +375,16 @@ class TempScheduleMode {
             saveLeavesBtn.addEventListener('click', async () => {
                 const result = await this.saveLeaveData();
                 console.log('儲存休假資料結果:', result);
+            });
+        }
+
+        // === 新增：上班天數更新按鈕 ===
+        const updateRequireBtn = this.container.querySelector('.update-require-btn');
+        if (updateRequireBtn) {
+            // 初始狀態設為 disabled
+            updateRequireBtn.disabled = true;
+            updateRequireBtn.addEventListener('click', async () => {
+                await this.saveRequirementsChanges();
             });
         }
     }
@@ -988,6 +1037,269 @@ class TempScheduleMode {
         if (tbody) {
             const loadingRow = tbody.querySelector('.loading-row');
             if (loadingRow) loadingRow.remove();
+        }
+    }
+
+    /**
+     * 添加需求表格的點擊事件監聽器
+     */
+    addRequirementTableEventListeners() {
+        const requirementCells = this.container.querySelectorAll('.requirement-cell');
+        requirementCells.forEach(cell => {
+            cell.addEventListener('click', (event) => {
+                this.handleRequirementCellClick(event);
+            });
+        });
+    }
+
+    /**
+     * 處理需求表格的點擊事件
+     * @param {Event} event - 點擊事件物件
+     */
+    handleRequirementCellClick(event) {
+        const cell = event.target.closest('.requirement-cell');
+        if (!cell) return;
+        
+        const employeeName = cell.dataset.employee;
+        const shiftType = cell.dataset.shift;
+        const key = `${employeeName}_${shiftType}`;
+
+        // 如果已經有選中的儲存格，先清除之前的 +/- 按鈕
+        if (this.selectedRequirementCell && this.selectedRequirementCell !== cell) {
+            this.clearRequirementCellButtons(this.selectedRequirementCell);
+        }
+
+        // 如果點擊的是同一個儲存格，切換 +/- 按鈕的顯示
+        if (this.selectedRequirementCell === cell) {
+            this.clearRequirementCellButtons(cell);
+            this.selectedRequirementCell = null;
+            return;
+        }
+
+        // 為當前儲存格添加 +/- 按鈕
+        this.addRequirementCellButtons(cell);
+        this.selectedRequirementCell = cell;
+    }
+
+    /**
+     * 為需求儲存格添加 +/- 按鈕
+     * @param {HTMLElement} cell - 需求儲存格元素
+     */
+    addRequirementCellButtons(cell) {
+        const employeeName = cell.dataset.employee;
+        const shiftType = cell.dataset.shift;
+        const key = `${employeeName}_${shiftType}`;
+        const currentValue = this.currentRequirements.get(key) || 0;
+
+        // 更新儲存格的 HTML 結構
+        cell.innerHTML = `
+            <div class="requirement-content">
+                <button type="button" class="requirement-btn requirement-btn-minus" data-action="decrease">-</button>
+                <span class="requirement-value">${currentValue}</span>
+                <button type="button" class="requirement-btn requirement-btn-plus" data-action="increase">+</button>
+            </div>
+        `;
+
+        // 添加按鈕事件監聽器
+        const minusBtn = cell.querySelector('.requirement-btn-minus');
+        const plusBtn = cell.querySelector('.requirement-btn-plus');
+
+        minusBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.updateRequirementValue(cell, -1);
+        });
+
+        plusBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.updateRequirementValue(cell, 1);
+        });
+
+        // 添加選中樣式
+        cell.classList.add('selected');
+    }
+
+    /**
+     * 清除需求儲存格的 +/- 按鈕
+     * @param {HTMLElement} cell - 需求儲存格元素
+     */
+    clearRequirementCellButtons(cell) {
+        const employeeName = cell.dataset.employee;
+        const shiftType = cell.dataset.shift;
+        const key = `${employeeName}_${shiftType}`;
+        const currentValue = this.currentRequirements.get(key) || 0;
+
+        // 恢復原始 HTML 結構
+        cell.innerHTML = `
+            <div class="requirement-content">
+                <span class="requirement-value">${currentValue}</span>
+            </div>
+        `;
+
+        // 移除選中樣式
+        cell.classList.remove('selected');
+    }
+
+    /**
+     * 更新需求值
+     * @param {HTMLElement} cell - 需求儲存格元素
+     * @param {number} delta - 增減值
+     */
+    updateRequirementValue(cell, delta) {
+        const employeeName = cell.dataset.employee;
+        const shiftType = cell.dataset.shift;
+        const key = `${employeeName}_${shiftType}`;
+        const currentValue = this.currentRequirements.get(key) || 0;
+
+        // 計算新值（限制在 0-30 範圍內）
+        let newValue = currentValue + delta;
+        newValue = Math.max(0, Math.min(30, newValue));
+
+        // 更新儲存的值
+        this.currentRequirements.set(key, newValue);
+
+        // 更新視覺顯示
+        const valueSpan = cell.querySelector('.requirement-value');
+        if (valueSpan) {
+            valueSpan.textContent = newValue;
+        }
+
+        // 檢查是否有變更
+        this.checkRequirementsChanged();
+        this.updateRequirementButtonState();
+
+        console.log(`員工 ${employeeName} 的 ${shiftType} 需求已更新為: ${newValue}`);
+    }
+
+    /**
+     * 更新需求按鈕狀態
+     */
+    updateRequirementButtonState() {
+        const updateRequireBtn = this.container.querySelector('.update-require-btn');
+        if (updateRequireBtn) {
+            updateRequireBtn.disabled = !this.hasRequirementsChanged;
+        }
+    }
+
+    /**
+     * 檢查是否有需求變更
+     */
+    checkRequirementsChanged() {
+        let hasChanges = false;
+        this.originalRequirements.forEach((originalValue, key) => {
+            const currentValue = this.currentRequirements.get(key);
+            if (originalValue !== currentValue) {
+                hasChanges = true;
+                return;
+            }
+        });
+        this.hasRequirementsChanged = hasChanges;
+        return hasChanges;
+    }
+
+    /**
+     * 儲存需求變更到後端 API
+     */
+    async saveRequirementsChanges() {
+        const cycleId = this.cycleData.cycle_id;
+        const changes = [];
+        this.currentRequirements.forEach((value, key) => {
+            const originalValue = this.originalRequirements.get(key);
+            if (value !== originalValue) {
+                const [employeeName, shiftType] = key.split('_');
+                changes.push({
+                    cycle_id: cycleId,
+                    employee_name: employeeName,
+                    shift_type: shiftType,
+                    required_days: value
+                });
+            }
+        });
+
+        if (changes.length === 0) {
+            this.showMessage('沒有需求變更，不需儲存。', 'info');
+            return;
+        }
+
+        // Toast loading
+        const toastContainer = document.querySelector('.toast-container');
+        let loadingToast = document.createElement('div');
+        loadingToast.className = 'toast';
+        loadingToast.innerHTML = `
+            <div class="toast-header">
+                <strong class="me-auto">系統訊息</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">正在儲存需求變更...</div>
+        `;
+        toastContainer.appendChild(loadingToast);
+        let bsLoadingToast = new bootstrap.Toast(loadingToast);
+        bsLoadingToast.show();
+
+        try {
+            const response = await fetch('/api/update-employee-requirements', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    cycle_id: cycleId,
+                    changes: changes
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || '儲存需求變更失敗');
+            }
+
+            const result = await response.json();
+            console.log('需求變更儲存成功:', result);
+
+            // 移除 loading toast
+            bsLoadingToast.hide();
+            loadingToast.remove();
+
+            // 顯示成功訊息 toast
+            let resultToast = document.createElement('div');
+            resultToast.className = 'toast';
+            resultToast.innerHTML = `
+                <div class="toast-header">
+                    <strong class="me-auto">系統訊息</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">需求變更已儲存！</div>
+            `;
+            toastContainer.appendChild(resultToast);
+            let bsResultToast = new bootstrap.Toast(resultToast);
+            bsResultToast.show();
+            setTimeout(() => { resultToast.remove(); }, 3000);
+
+            // 重新載入原始需求資料，以便下次比較
+            await this.loadSavedLeaveData(); // 重新載入休假資料，因為需求變更也會影響休假安排
+            this.originalRequirements.clear();
+            this.currentRequirements.forEach((value, key) => {
+                const [employeeName, shiftType] = key.split('_');
+                this.originalRequirements.set(key, value);
+            });
+            this.hasRequirementsChanged = false;
+            this.showMessage('需求變更已儲存！', 'success');
+
+        } catch (error) {
+            bsLoadingToast.hide();
+            loadingToast.remove();
+            let errorToast = document.createElement('div');
+            errorToast.className = 'toast';
+            errorToast.innerHTML = `
+                <div class="toast-header">
+                    <strong class="me-auto">錯誤訊息</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">儲存失敗：${error.message}</div>
+            `;
+            toastContainer.appendChild(errorToast);
+            let bsErrorToast = new bootstrap.Toast(errorToast);
+            bsErrorToast.show();
+            setTimeout(() => { errorToast.remove(); }, 3000);
         }
     }
 }
