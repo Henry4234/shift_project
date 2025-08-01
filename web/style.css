@@ -637,14 +637,14 @@ body.dark {
   margin-top: 24px;
 }
 /* 驗證排班區域 */
-.verify-schedule-header {
+.verify-schedule-header, .schedule-require-header{
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 15px;
 }
 
-.verify-schedule-header h3 {
+.verify-schedule-header h3, .schedule-require-header h3{
     margin: 0;
     color: var(--black-color);
     font-size: 18px;
@@ -670,7 +670,7 @@ body.dark {
 
 .verify-schedule textarea{
   width: 100%;
-  min-height: 100px;
+  min-height: 120px;
   padding: 12px;
   border: 1px solid var(--grey-color);
   border-radius: 6px;
@@ -700,6 +700,23 @@ body.dark {
     min-width: 300px; /* 最小寬度確保RWD */
 }
 
+.schedule-require-header .update-require-btn {
+  background: var(--green-color);
+  color: var(--white-color);
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.schedule-require-header .update-require-btn:hover {
+  background: #4a6b5f;
+}
+
 /* 備註區域 */
 .temp-schedule-comment {
     box-shadow: 0 4px 24px 0 rgba(0,0,0,0.13);
@@ -712,7 +729,6 @@ body.dark {
 /* 各子欄位的標題 */
 .temp-schedule-comment h3, .temp-schedule-require h3, .verify-schedule h3{
     color: var(--black-color);
-    margin-bottom: 15px;
     font-size: 18px;
     font-weight: 600;
 }
@@ -797,9 +813,9 @@ body.dark {
   width: 100%;
   min-height: 400px;
   animation: fadeInTable 0.4s;
-  background: #fff;
+  background: var(--cycle-bg-color);
   border-radius: 12px;
-  box-shadow: 0 2px 12px #0001;
+  box-shadow: 0 4px 24px #0001;
   margin-top: 15px;
   padding: 24px 12px 24px 12px;
   overflow-x: auto;

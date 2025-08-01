@@ -89,8 +89,11 @@ class TempScheduleMode {
 
             <div class="temp-schedule-bottom">
                 <div class="temp-schedule-require">
-                    <h3>員工班別</h3>
-                    <div class="temp-schedule-require-table"></div>
+                    <div class="schedule-require-header">    
+                        <h3>員工班別</h3>
+                        <button type="button" class="update-require-btn" onclick="">上班天數更新</button>
+                    </div>
+                        <div class="temp-schedule-require-table"></div>
                 </div>
                 <div class="temp-schedule-comment">
                     <h3>備註</h3>
