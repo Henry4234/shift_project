@@ -1,0 +1,137 @@
+{
+    {'snapshot_name': '員工0','shift_type': 'A', 'required_days': 4},
+    {'snapshot_name': '員工0', 'shift_type': 'B', 'required_days': 0},
+    {'snapshot_name': '員工0', 'shift_type': 'C', 'required_days': 0
+    },
+    {'snapshot_name': '員工1', 'shift_type': 'A', 'required_days': 11
+    },
+    {'snapshot_name': '員工1', 'shift_type': 'B', 'required_days': 6
+    },
+    {'snapshot_name': '員工1', 'shift_type': 'C', 'required_days': 3
+    },
+    {'snapshot_name': '員工2', 'shift_type': 'A', 'required_days': 12
+    },
+    {'snapshot_name': '員工2', 'shift_type': 'B', 'required_days': 7
+    },
+    {'snapshot_name': '員工2', 'shift_type': 'C', 'required_days': 0
+    },
+    {'snapshot_name': '員工3', 'shift_type': 'A', 'required_days': 13
+    },
+    {'snapshot_name': '員工3', 'shift_type': 'B', 'required_days': 7
+    },
+    {'snapshot_name': '員工3', 'shift_type': 'C', 'required_days': 0
+    },
+    {'snapshot_name': '員工4', 'shift_type': 'A', 'required_days': 11
+    },
+    {'snapshot_name': '員工4', 'shift_type': 'B', 'required_days': 6
+    },
+    {'snapshot_name': '員工4', 'shift_type': 'C', 'required_days': 3
+    },
+    {'snapshot_name': '員工5', 'shift_type': 'A', 'required_days': 9
+    },
+    {'snapshot_name': '員工5', 'shift_type': 'B', 'required_days': 8
+    },
+    {'snapshot_name': '員工5', 'shift_type': 'C', 'required_days': 4
+    },
+    {'snapshot_name': '員工6', 'shift_type': 'A', 'required_days': 10
+    },
+    {'snapshot_name': '員工6', 'shift_type': 'B', 'required_days': 11
+    },
+    {'snapshot_name': '員工6', 'shift_type': 'C', 'required_days': 0
+    },
+    {'snapshot_name': '員工7', 'shift_type': 'A', 'required_days': 4
+    },
+    {'snapshot_name': '員工7', 'shift_type': 'B', 'required_days': 0
+    },
+    {'snapshot_name': '員工7', 'shift_type': 'C', 'required_days': 15
+    },
+    {'snapshot_name': '員工8', 'shift_type': 'A', 'required_days': 4
+    },
+    {'snapshot_name': '員工8', 'shift_type': 'B', 'required_days': 7
+    },
+    {'snapshot_name': '員工8', 'shift_type': 'C', 'required_days': 6
+    }
+}
+
+
+{'shift_type': 'A', 'required_days': 11, 'employees': {'name': '員工1'
+    }
+},
+{'shift_type': 'B', 'required_days': 6, 'employees': {'name': '員工1'
+    }
+},
+{'shift_type': 'C', 'required_days': 3, 'employees': {'name': '員工1'
+    }
+},
+{'shift_type': 'A', 'required_days': 12, 'employees': {'name': '員工2'
+    }
+},
+{'shift_type': 'B', 'required_days': 7, 'employees': {'name': '員工2'
+    }
+},
+{'shift_type': 'C', 'required_days': 0, 'employees': {'name': '員工2'
+    }
+},
+{'shift_type': 'A', 'required_days': 13, 'employees': {'name': '員工3'
+    }
+},
+{'shift_type': 'B', 'required_days': 7, 'employees': {'name': '員工3'
+    }
+},
+{'shift_type': 'C', 'required_days': 0, 'employees': {'name': '員工3'
+    }
+},
+{'shift_type': 'A', 'required_days': 11, 'employees': {'name': '員工4'
+    }
+},
+{'shift_type': 'B', 'required_days': 6, 'employees': {'name': '員工4'
+    }
+},
+{'shift_type': 'C', 'required_days': 3, 'employees': {'name': '員工4'
+    }
+},
+{'shift_type': 'A', 'required_days': 9, 'employees': {'name': '員工5'
+    }
+},
+{'shift_type': 'B', 'required_days': 8, 'employees': {'name': '員工5'
+    }
+},
+{'shift_type': 'C', 'required_days': 4, 'employees': {'name': '員工5'
+    }
+},
+{'shift_type': 'A', 'required_days': 10, 'employees': {'name': '員工6'
+    }
+},
+{'shift_type': 'B', 'required_days': 11, 'employees': {'name': '員工6'
+    }
+},
+{'shift_type': 'C', 'required_days': 0, 'employees': {'name': '員工6'
+    }
+},
+{'shift_type': 'A', 'required_days': 4, 'employees': {'name': '員工8'
+    }
+},
+{'shift_type': 'B', 'required_days': 7, 'employees': {'name': '員工8'
+    }
+},
+{'shift_type': 'C', 'required_days': 6, 'employees': {'name': '員工8'
+    }
+},
+{'shift_type': 'A', 'required_days': 4, 'employees': {'name': '員工7'
+    }
+},
+{'shift_type': 'B', 'required_days': 0, 'employees': {'name': '員工7'
+    }
+},
+{'shift_type': 'C', 'required_days': 15, 'employees': {'name': '員工7'
+    }
+},
+{'shift_type': 'A', 'required_days': 4, 'employees': {'name': '員工0'
+    }
+},
+{'shift_type': 'B', 'required_days': 0, 'employees': {'name': '員工0'
+    }
+},
+{'shift_type': 'C', 'required_days': 0, 'employees': {'name': '員工0'
+    }
+}

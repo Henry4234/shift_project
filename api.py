@@ -4,6 +4,7 @@ import subprocess
 import json
 import os
 from cpmodel_2025 import main as run_schedule_model
+from test_plup import run_auto_scheduling
 from supabase import create_client
 import logging
 from dotenv import load_dotenv
@@ -278,32 +279,32 @@ class APIServer():
         def run_schedule():
             """執行排班模型"""
             try:
-                # 直接執行排班模型
-                result = run_schedule_model()
+                data = request.get_json()
+                cycle_id = data.get('cycle_id')
                 
-                if result['status'] == 'success':
+                if not cycle_id:
                     return jsonify({
-                        'status': 'success',
-                        'message': result['message'],
-                        'data': {
-                            'schedules': result['schedules'],
-                            'penalty': result['penalty']
-                        }
-                    })
+                        'success': False,
+                        'message': '缺少 cycle_id 參數',
+                        'stage': 'error',
+                        'data': None
+                    }), 400
+                
+                # 執行排班模型
+                result = run_auto_scheduling(cycle_id=cycle_id)
+                
+                # 直接回傳 run_auto_scheduling 的結果，保持格式一致
+                if result['success']:
+                    return jsonify(result)
                 else:
-                    return jsonify({
-                        'status': 'error',
-                        'message': result['message'],
-                        'data': {
-                            'violations': result.get('violations', {}),
-                            'diagnostic_info': result.get('diagnostic_info', {})
-                        }
-                    }), 500
+                    return jsonify(result), 500
                     
             except Exception as e:
                 return jsonify({
-                    'status': 'error',
-                    'message': f'發生錯誤：{str(e)}'
+                    'success': False,
+                    'message': f'執行排班時發生錯誤：{str(e)}',
+                    'stage': 'error',
+                    'data': None
                 }), 500
         #查詢排班週期
         @self.app.route('/api/schedule-cycles', methods=['GET'])

@@ -20,6 +20,16 @@
   --wiget-cycle-color: #a2c1cb; 
   --table-th-color:#f5f7fa;
   --table-td-color: #e3f2fd;
+  --fc-schedule-day:#2E7D32;
+  --fc-schedule-eveing:#f57c00;
+  --fc-schedule-night:#1976d2;
+  --fc-schedule-off:#585353;
+  --bg-schedule-day:#e8f5e8;
+  --bg-schedule-eveing:#fff3e0;
+  --bg-schedule-night:#e3f2fd;
+  --bg-schedule-off:#eae6e6;
+
+
 }
 body {
   background-color: #e7f2fd;
@@ -41,6 +51,14 @@ body.dark {
   --wiget-cycle-color: #415b8b; 
   --table-th-color: #394653;
   --table-td-color:#30577d;
+  --fc-schedule-day:#e8f5e8;
+  --fc-schedule-eveing:#fff3e0;
+  --fc-schedule-night:#e3f2fd;
+  --fc-schedule-off:#d0cece;
+  --bg-schedule-day:#48765f;
+  --bg-schedule-eveing:#d45500;
+  --bg-schedule-night:#336699;
+  --bg-schedule-off: #3b3b3b;
 }
 
 /* 加載動畫 */
@@ -605,15 +623,63 @@ body.dark {
 .temp-schedule-header .header-actions button:hover {
     background: var(--blue-color);
 }
-.temp-schedule-mode {
+.temp-schedule-mode, .verify-schedule {
     box-shadow: 0 4px 24px 0 rgba(0,0,0,0.13);
     border-radius: 12px;
     background: var(--cycle-bg-color);
     padding: 24px 24px 32px 24px;
-    margin-top: 10px;
+    margin-top: 15px;
+}
+.verify-schedule {
+  margin-top: 20px !important;
 }
 .temp-schedule-mode .employees-table-outer {
   margin-top: 24px;
+}
+/* 驗證排班區域 */
+.verify-schedule-header, .schedule-require-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.verify-schedule-header h3, .schedule-require-header h3{
+    margin: 0;
+    color: var(--black-color);
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.verify-schedule-header .verify-shift-btn {
+    background: var(--green-color);
+    color: var(--white-color);
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.verify-schedule-header .verify-shift-btn:hover {
+    background: #4a6b5f;
+}
+
+.verify-schedule textarea{
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  border: 1px solid var(--grey-color);
+  border-radius: 6px;
+  background-color: var(--white-color);
+  color: var(--black-color);
+  font-family: "Poppins", sans-serif;
+  font-size: 14px;
+  resize: vertical;
+  margin-bottom: 15px;
 }
 
 /* 暫存班表底部區域容器 */
@@ -634,6 +700,23 @@ body.dark {
     min-width: 300px; /* 最小寬度確保RWD */
 }
 
+.schedule-require-header .update-require-btn {
+  background: var(--green-color);
+  color: var(--white-color);
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.schedule-require-header .update-require-btn:hover {
+  background: #4a6b5f;
+}
+
 /* 備註區域 */
 .temp-schedule-comment {
     box-shadow: 0 4px 24px 0 rgba(0,0,0,0.13);
@@ -643,18 +726,11 @@ body.dark {
     flex: 1; /* 佔據剩餘空間的一半 */
     min-width: 300px; /* 最小寬度確保RWD */
 }
-
-.temp-schedule-comment h3 {
+/* 各子欄位的標題 */
+.temp-schedule-comment h3, .temp-schedule-require h3, .verify-schedule h3{
     color: var(--black-color);
-    margin-bottom: 15px;
     font-size: 18px;
     font-weight: 600;
-}
-.temp-schedule-require h3 {
-  color: var(--black-color);
-  margin-bottom: 15px;
-  font-size: 18px;
-  font-weight: 600;
 }
 
 .temp-schedule-comment textarea {
@@ -737,9 +813,9 @@ body.dark {
   width: 100%;
   min-height: 400px;
   animation: fadeInTable 0.4s;
-  background: #fff;
+  background: var(--cycle-bg-color);
   border-radius: 12px;
-  box-shadow: 0 2px 12px #0001;
+  box-shadow: 0 4px 24px #0001;
   margin-top: 15px;
   padding: 24px 12px 24px 12px;
   overflow-x: auto;
@@ -888,7 +964,6 @@ body.dark {
 .employees-table th span.dayofweek {
   display: block;
   font-size: 12px;
-  color: var(--grey-color);
   margin-top: 2px;
 }
 .employees-table td:first-child, .employees-table th:first-child{
@@ -901,6 +976,15 @@ body.dark {
   overflow-x: auto;
 }
 
+/* 週末樣式 */
+.employees-table th.weekend {
+  background: #fce4ec;
+  color: #c2185b;
+}
+/* 週末人員樣式 */
+.employees-table td.weekend {
+  background: #fce4ec;
+}
 /* sticky 員工姓名欄位 */
 .employees-table .sticky-col {
   position: sticky;
@@ -1008,29 +1092,29 @@ nav.content.fadeout {
 
 /* 早班樣式 */
 .morning-shift {
-  background: #e8f5e8;
-  color: #2e7d32;
+  background: var(--bg-schedule-day) !important;
+  color: var(--fc-schedule-day);
   font-weight: 500;
 }
 
 /* 中班樣式 */
 .afternoon-shift {
-  background: #fff3e0;
-  color: #f57c00;
+  background: var(--bg-schedule-eveing) !important;
+  color: var(--fc-schedule-eveing);
   font-weight: 500;
 }
 
 /* 晚班樣式 */
 .night-shift {
-  background: #e3f2fd;
-  color: #1976d2;
+  background: var(--bg-schedule-night) !important;
+  color: var(--fc-schedule-night);
   font-weight: 500;
 }
 
 /* 休假樣式 */
 .day-off {
-  background: #ffebee;
-  color: #c62828;
+  background: var(--bg-schedule-off) !important;
+  color: var(--fc-schedule-off);
   font-weight: 500;
 }
 
@@ -1062,11 +1146,7 @@ nav.content.fadeout {
   padding: 4px 8px;
 }
 
-/* 週末樣式 */
-.employees-table th.weekend {
-  background: #fce4ec;
-  color: #c2185b;
-}
+
 
 /* === 每日上班人員模式樣式 === */
 .daily-employees-mode {
@@ -1341,4 +1421,152 @@ body.dark #startScheduleModal #employeeListGroup .list-group-item {
     background-color: var(--white-color);
     color: var(--grey-color);
     border-bottom: 1px solid var(--grey-color-light);
+}
+
+/* 載入遮罩樣式 */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+}
+
+body.dark .loading-overlay {
+    background-color: rgba(51, 51, 51, 0.8);
+}
+
+.loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    padding: 30px;
+    background-color: var(--white-color);
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+body.dark .loading-content {
+    background-color: var(--white-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.loading-message {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--black-color);
+    text-align: center;
+}
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* 訊息框樣式 */
+.message-box {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    max-width: 400px;
+    z-index: 2000;
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.message-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    background-color: var(--white-color);
+    border-left: 4px solid;
+}
+
+.message-success {
+    border-left-color: #28a745;
+}
+
+.message-error {
+    border-left-color: #dc3545;
+}
+
+.message-info {
+    border-left-color: #17a2b8;
+}
+
+body.dark .message-content {
+    background-color: var(--white-color);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.message-text {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--black-color);
+    margin-right: 10px;
+}
+
+.message-close {
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: var(--grey-color);
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.message-close:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+    color: var(--black-color);
+}
+
+body.dark .message-close:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 響應式設計 */
+@media screen and (max-width: 768px) {
+    .message-box {
+        bottom: 20px;
+        right: 20px;
+        left: 20px;
+        max-width: none;
+    }
+    
+    .loading-content {
+        padding: 20px;
+        margin: 20px;
+    }
+    
+    .loading-message {
+        font-size: 14px;
+    }
 }
