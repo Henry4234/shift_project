@@ -139,7 +139,7 @@ class EmployeesMode {
             const date = new Date(year, month, day);
             const dayOfWeek = ['日', '一', '二', '三', '四', '五', '六'][date.getDay()];
             const th = document.createElement('th');
-            th.textContent = `${day}日(${dayOfWeek})`;
+            th.innerHTML = `${parseInt(month, 10) + 1}/${day}<br>(${dayOfWeek})`;
             th.className = date.getDay() === 0 || date.getDay() === 6 ? 'weekend' : '';
             thead.appendChild(th);
         }
