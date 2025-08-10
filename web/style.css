@@ -28,7 +28,9 @@
   --bg-schedule-eveing:#fff3e0;
   --bg-schedule-night:#e3f2fd;
   --bg-schedule-off:#eae6e6;
-
+  --bg-table-selected: #e6f3ff;
+  --border-selected:#007bff;
+  --schedule-verify-checkbox: #e3f2fd;
 
 }
 body {
@@ -59,6 +61,9 @@ body.dark {
   --bg-schedule-eveing:#d45500;
   --bg-schedule-night:#336699;
   --bg-schedule-off: #3b3b3b;
+  --bg-table-selected: #5B6271;
+  --border-selected: #b0c4d6;
+  --schedule-verify-checkbox: #30577d;
 }
 
 /* 加載動畫 */
@@ -512,10 +517,10 @@ body.dark {
 
 /* 確保內容與外框一起動畫 */
 .preference-box * {
-  animation: fade-in 0.4s;
+  animation: preference-fade-in 0.4s;
 }
 
-@keyframes fade-in {
+@keyframes preference-fade-in {
   0% {
       opacity: 0;
   }
@@ -670,7 +675,7 @@ body.dark {
 
 .verify-schedule textarea{
   width: 100%;
-  min-height: 120px;
+  min-height: 130px;
   padding: 12px;
   border: 1px solid var(--grey-color);
   border-radius: 6px;
@@ -681,6 +686,87 @@ body.dark {
   resize: vertical;
   margin-bottom: 15px;
 }
+.verify-schedule-content {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.verify-schedule-row {
+  display: table-row;
+}
+
+.verify-schedule-cell {
+  display: table-cell;
+  vertical-align: top;
+  padding: 0 15px;
+}
+
+.verify-schedule-cell:first-child {
+  width: 30%;
+}
+
+.verify-schedule-cell:last-child {
+  width: 70%;
+  border-left: 1px solid;
+}
+
+
+.verify-options h4 {
+  color: var(--black-color);
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.verify-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.verify-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: var(--schedule-verify-checkbox);
+  transition: background-color 0.2s ease;
+}
+
+.verify-checkbox-item:hover {
+  background-color: #e9ecef;
+}
+
+.verify-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--green-color);
+}
+
+.verify-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.verify-checkbox-item label {
+  color: var(--black-color);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  flex: 1;
+  margin: 0;
+}
+
+.verify-checkbox-item:has(.verify-checkbox:disabled) label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 
 /* 暫存班表底部區域容器 */
 .temp-schedule-bottom {
@@ -776,6 +862,7 @@ body.dark {
     width: 100%; /* 改為100%以適應容器 */
     color: var(--black-color); /* 符合夜間模式 */
     margin-top: 10px;
+    table-layout: fixed; /* 固定表格佈局，防止欄位寬度變化 */
 }
 
 .employee-requirements-table th,
@@ -785,6 +872,8 @@ body.dark {
     text-align: center;
     font-size: 15px;
     color: var(--black-color); /* 符合夜間模式 */
+    overflow: hidden; /* 防止內容溢出 */
+    white-space: nowrap; /* 防止文字換行 */
 }
 
 .employee-requirements-table th {
@@ -805,21 +894,29 @@ body.dark {
     background: var(--table-td-color);
     font-weight: 500;
     min-width: 20px; /* 與上方employees-table相符 */
+    width: 30%; /* 員工姓名欄位固定寬度 */
+}
+
+/* 需求儲存格固定寬度 */
+.employee-requirements-table td:not(:first-child) {
+    width: 23.33%; /* 每個需求欄位平均分配剩餘寬度 */
 }
 
 .requirement-cell {
   cursor: pointer;
   transition: background-color 0.2s ease;
   position: relative;
+  width: 100%; /* 確保儲存格佔滿整個 td */
+  height: 100%; /* 確保儲存格佔滿整個 td */
 }
 
 .requirement-cell:hover {
-  background-color: #f0f8ff;
+  background-color: var(--bg-table-selected);
 }
 
 .requirement-cell.selected {
-  background-color: #e6f3ff;
-  border: 2px solid #007bff;
+  background-color: var(--bg-table-selected);
+  border: 2px solid var(--border-selected);
 }
 
 .requirement-content {
@@ -828,14 +925,18 @@ body.dark {
   justify-content: center;
   gap: 8px;
   min-height: 24px;
+  width: 100%; /* 確保內容區域佔滿整個儲存格 */
+  position: relative; /* 為動畫定位 */
 }
 
 .requirement-value {
   font-weight: bold;
   min-width: 20px;
   text-align: center;
+  flex-shrink: 0; /* 防止數值被壓縮 */
 }
 
+/* +/- 按鈕基礎樣式 */
 .requirement-btn {
   width: 24px;
   height: 24px;
@@ -849,6 +950,39 @@ body.dark {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  flex-shrink: 0; /* 防止按鈕被壓縮 */
+  opacity: 0; /* 初始狀態為透明 */
+  transform: scale(0.8); /* 初始狀態稍微縮小 */
+  animation: fade-in 0.3s ease-out forwards; /* 淡入動畫 */
+}
+
+/* 淡入動畫 - 專門用於按鈕 */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 淡出動畫 - 專門用於按鈕 */
+@keyframes fade-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+/* 淡出狀態 */
+.requirement-btn.fade-out {
+  animation: fade-out 0.2s ease-in forwards;
 }
 
 .requirement-btn:hover {
@@ -887,7 +1021,7 @@ body.dark {
 .update-require-btn {
   padding: 8px 16px;
   background-color: #007bff;
-  color: white;
+  color: var(--black-color);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -900,7 +1034,7 @@ body.dark {
 }
 
 .update-require-btn:disabled {
-  background-color: #6c757d;
+  background-color: var(--grey-color);
   cursor: not-allowed;
   opacity: 0.6;
 }
@@ -1255,6 +1389,14 @@ nav.content.fadeout {
 }
 
 .leave-special {
+  background-color: #9c27b0 !important; /* 紫色底 */
+  color: white !important; /* 白色字體 */
+  font-weight: bold;
+  text-align: center;
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+.leave-auto {
   background-color: #9c27b0 !important; /* 紫色底 */
   color: white !important; /* 白色字體 */
   font-weight: bold;

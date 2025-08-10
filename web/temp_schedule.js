@@ -27,7 +27,8 @@ class TempScheduleMode {
             { text: 'C', class: 'night-shift', weight: 3 }, // 晚班
             { text: 'O', class: 'leave-high', weight: 4 }, // 紅色底休假
             { text: 'O', class: 'leave-low', weight: 5 }, // 藍色底休假
-            { text: '特', class: 'leave-special', weight: 6 } // 特休
+            { text: '特', class: 'leave-special', weight: 6 }, // 特休
+            { text: 'O', class: 'day-off', weight: 7 }, //自動排班的O
         ];
         
         // 儲存每個員工每天的休假狀態
@@ -94,7 +95,31 @@ class TempScheduleMode {
                     <h3>驗證排班</h3>
                     <button type="button" class="verify-shift-btn" onclick="">驗證班表</button>
                 </div>
-                <textarea id="verifycomment" placeholder="點擊右上角驗證按鈕開始驗證...&#10;自動驗證是否符合以下情況&#10;1. 每日上班人數&#10;2. 連續上班天數&#10;3. 班別銜接"></textarea>
+                <div class="verify-schedule-content">
+                    <div class="verify-schedule-row">
+                        <div class="verify-schedule-cell">
+                            <div class="verify-checkbox-group">
+                                <div class="verify-checkbox-item">
+                                    <input type="checkbox" id="verify-daily-count" class="verify-checkbox" disabled>
+                                    <label for="verify-daily-count">每日上班人數</label>
+                                </div>
+                                <div class="verify-checkbox-item">
+                                    <input type="checkbox" id="verify-consecutive-days" class="verify-checkbox" disabled>
+                                    <label for="verify-consecutive-days">連續上班天數</label>
+                                </div>
+                                <div class="verify-checkbox-item">
+                                    <input type="checkbox" id="verify-shift-connection" class="verify-checkbox" disabled>
+                                    <label for="verify-shift-connection">班別銜接</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="verify-schedule-cell">
+                            <textarea id="verifycomment" placeholder="點擊右上角驗證按鈕開始驗證...&#10;自動驗證是否符合以下情況&#10;1. 每日上班人數&#10;2. 連續上班天數&#10;3. 班別銜接"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                
             </div>
 
             <div class="temp-schedule-bottom">
@@ -135,6 +160,9 @@ class TempScheduleMode {
         this.addClickEventListeners();
         // 9. 添加按鈕事件監聽器
         this.addButtonEventListeners();
+        
+        // 10. 初始化驗證 checkbox 狀態
+        this.disableVerificationCheckboxes();
     }
 
     /**
@@ -387,6 +415,14 @@ class TempScheduleMode {
                 await this.saveRequirementsChanges();
             });
         }
+
+        // === 新增：驗證班表按鈕 ===
+        const verifyShiftBtn = this.container.querySelector('.verify-shift-btn');
+        if (verifyShiftBtn) {
+            verifyShiftBtn.addEventListener('click', async () => {
+                await this.runScheduleVerification();
+            });
+        }
     }
 
     /**
@@ -472,7 +508,7 @@ class TempScheduleMode {
      */
     updateCellDisplay(cell, state) {
         // 清除所有可能的樣式類別
-        cell.classList.remove('leave-high', 'leave-low', 'leave-special', 'morning-shift', 'afternoon-shift', 'night-shift');
+        cell.classList.remove('leave-high', 'leave-low', 'leave-special','day-off', 'morning-shift', 'afternoon-shift', 'night-shift');
         
         // 設置文字內容
         cell.textContent = state.text;
@@ -1116,6 +1152,12 @@ class TempScheduleMode {
 
         // 添加選中樣式
         cell.classList.add('selected');
+        
+        // 觸發按鈕的淡入動畫
+        setTimeout(() => {
+            minusBtn.style.animation = 'fade-in 0.3s ease-out forwards';
+            plusBtn.style.animation = 'fade-in 0.3s ease-out forwards';
+        }, 10);
     }
 
     /**
@@ -1128,15 +1170,36 @@ class TempScheduleMode {
         const key = `${employeeName}_${shiftType}`;
         const currentValue = this.currentRequirements.get(key) || 0;
 
-        // 恢復原始 HTML 結構
-        cell.innerHTML = `
-            <div class="requirement-content">
-                <span class="requirement-value">${currentValue}</span>
-            </div>
-        `;
-
-        // 移除選中樣式
-        cell.classList.remove('selected');
+        // 先觸發淡出動畫
+        const minusBtn = cell.querySelector('.requirement-btn-minus');
+        const plusBtn = cell.querySelector('.requirement-btn-plus');
+        
+        if (minusBtn && plusBtn) {
+            // 添加淡出動畫
+            minusBtn.classList.add('fade-out');
+            plusBtn.classList.add('fade-out');
+            
+            // 等待動畫完成後再更新 HTML
+            setTimeout(() => {
+                // 恢復原始 HTML 結構
+                cell.innerHTML = `
+                    <div class="requirement-content">
+                        <span class="requirement-value">${currentValue}</span>
+                    </div>
+                `;
+                
+                // 移除選中樣式
+                cell.classList.remove('selected');
+            }, 200); // 與 CSS 動畫時間一致
+        } else {
+            // 如果沒有按鈕，直接更新
+            cell.innerHTML = `
+                <div class="requirement-content">
+                    <span class="requirement-value">${currentValue}</span>
+                </div>
+            `;
+            cell.classList.remove('selected');
+        }
     }
 
     /**
@@ -1301,6 +1364,140 @@ class TempScheduleMode {
             bsErrorToast.show();
             setTimeout(() => { errorToast.remove(); }, 3000);
         }
+    }
+
+    /**
+     * 執行班表驗證
+     */
+    async runScheduleVerification() {
+        const cycleId = this.cycleData.cycle_id;
+        
+        // 更新驗證狀態
+        this.updateVerificationStatus('verifying', '正在驗證班表...');
+        
+        // 啟用所有 checkbox
+        this.enableVerificationCheckboxes();
+        
+        try {
+            console.log(`開始驗證週期 #${cycleId} 的班表...`);
+            
+            // 模擬驗證過程（後續可替換為實際 API 呼叫）
+            await this.simulateVerificationProcess();
+            
+            // 驗證完成
+            this.updateVerificationStatus('success', '驗證完成！');
+            this.showMessage('班表驗證完成！', 'success');
+            
+        } catch (error) {
+            console.error('班表驗證失敗:', error);
+            this.updateVerificationStatus('error', '驗證失敗');
+            this.showMessage(`班表驗證失敗: ${error.message}`, 'error');
+        }
+    }
+
+    /**
+     * 模擬驗證過程（後續可替換為實際 API 呼叫）
+     */
+    async simulateVerificationProcess() {
+        // 模擬驗證每日上班人數
+        await this.simulateDailyCountVerification();
+        
+        // 模擬驗證連續上班天數
+        await this.simulateConsecutiveDaysVerification();
+        
+        // 模擬驗證班別銜接
+        await this.simulateShiftConnectionVerification();
+    }
+
+    /**
+     * 模擬驗證每日上班人數
+     */
+    async simulateDailyCountVerification() {
+        const checkbox = document.getElementById('verify-daily-count');
+        if (checkbox) {
+            // 模擬驗證過程
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // 隨機設定驗證結果（後續可替換為實際驗證邏輯）
+            const isValid = Math.random() > 0.3; // 70% 機率通過
+            checkbox.checked = isValid;
+            
+            console.log('每日上班人數驗證結果:', isValid ? '通過' : '失敗');
+        }
+    }
+
+    /**
+     * 模擬驗證連續上班天數
+     */
+    async simulateConsecutiveDaysVerification() {
+        const checkbox = document.getElementById('verify-consecutive-days');
+        if (checkbox) {
+            // 模擬驗證過程
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            // 隨機設定驗證結果（後續可替換為實際驗證邏輯）
+            const isValid = Math.random() > 0.2; // 80% 機率通過
+            checkbox.checked = isValid;
+            
+            console.log('連續上班天數驗證結果:', isValid ? '通過' : '失敗');
+        }
+    }
+
+    /**
+     * 模擬驗證班別銜接
+     */
+    async simulateShiftConnectionVerification() {
+        const checkbox = document.getElementById('verify-shift-connection');
+        if (checkbox) {
+            // 模擬驗證過程
+            await new Promise(resolve => setTimeout(resolve, 1200));
+            
+            // 隨機設定驗證結果（後續可替換為實際驗證邏輯）
+            const isValid = Math.random() > 0.1; // 90% 機率通過
+            checkbox.checked = isValid;
+            
+            console.log('班別銜接驗證結果:', isValid ? '通過' : '失敗');
+        }
+    }
+
+    /**
+     * 更新驗證狀態
+     * @param {string} status - 狀態類型 ('verifying', 'success', 'error')
+     * @param {string} message - 狀態訊息
+     */
+    updateVerificationStatus(status, message) {
+        const statusElement = this.container.querySelector('.verify-status');
+        const statusTextElement = this.container.querySelector('.verify-status-text');
+        
+        if (statusElement && statusTextElement) {
+            // 移除所有狀態類別
+            statusElement.classList.remove('verifying', 'success', 'error');
+            
+            // 添加新的狀態類別
+            statusElement.classList.add(status);
+            statusTextElement.textContent = message;
+        }
+    }
+
+    /**
+     * 啟用驗證 checkbox
+     */
+    enableVerificationCheckboxes() {
+        const checkboxes = this.container.querySelectorAll('.verify-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.disabled = false;
+        });
+    }
+
+    /**
+     * 禁用驗證 checkbox
+     */
+    disableVerificationCheckboxes() {
+        const checkboxes = this.container.querySelectorAll('.verify-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.disabled = true;
+            checkbox.checked = false;
+        });
     }
 }
 
