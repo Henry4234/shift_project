@@ -673,6 +673,53 @@ class APIServer():
                 self.logger.error(f'清除週期休假資料時發生錯誤：{str(err)}')
                 return jsonify({'error': '清除休假資料失敗'}), 500
 
+        # === 新增：驗證班表 ===
+        @self.app.route('/api/verify-schedule', methods=['POST'])
+        def verify_schedule():
+            """
+            驗證班表是否符合各種限制條件
+            - 請求格式: {
+                "cycle_id": 1,
+                "schedule_data": {
+                    "schedule": {"員工名": ["A", "B", "C", "O", ...]},
+                    "dates": ["2025-01-01", "2025-01-02", ...]
+                }
+            }
+            - 回傳: {
+                "daily_staffing_passed": bool,
+                "daily_staffing_details": [str],
+                "continuous_work_passed": bool,
+                "continuous_work_details": [str],
+                "shift_connection_passed": bool,
+                "shift_connection_details": [str]
+            }
+            """
+            try:
+                data = request.get_json()
+                cycle_id = data.get('cycle_id')
+                schedule_data = data.get('schedule_data')
+                
+                if not cycle_id:
+                    return jsonify({'error': '缺少 cycle_id 參數'}), 400
+                
+                if not schedule_data:
+                    return jsonify({'error': '缺少 schedule_data 參數'}), 400
+                
+                self.logger.info(f'開始驗證週期 #{cycle_id} 的班表...')
+                self.logger.info(f'班表資料: {schedule_data}')
+                
+                # 呼叫驗證模組
+                from verify_shift_2 import verify_schedule_data
+                verification_result = verify_schedule_data(schedule_data)
+                
+                self.logger.info(f'驗證結果: {verification_result}')
+                
+                return jsonify(verification_result)
+                
+            except Exception as err:
+                self.logger.error(f'驗證班表時發生錯誤：{str(err)}')
+                return jsonify({'error': '驗證班表失敗'}), 500
+
         # === 新增：更新員工需求 ===
         @self.app.route('/api/update-employee-requirements', methods=['POST'])
         def update_employee_requirements():
