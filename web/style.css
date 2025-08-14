@@ -28,7 +28,9 @@
   --bg-schedule-eveing:#fff3e0;
   --bg-schedule-night:#e3f2fd;
   --bg-schedule-off:#eae6e6;
-
+  --bg-table-selected: #e6f3ff;
+  --border-selected:#007bff;
+  --schedule-verify-checkbox: #e3f2fd;
 
 }
 body {
@@ -59,6 +61,9 @@ body.dark {
   --bg-schedule-eveing:#d45500;
   --bg-schedule-night:#336699;
   --bg-schedule-off: #3b3b3b;
+  --bg-table-selected: #5B6271;
+  --border-selected: #b0c4d6;
+  --schedule-verify-checkbox: #30577d;
 }
 
 /* 加載動畫 */
@@ -512,10 +517,10 @@ body.dark {
 
 /* 確保內容與外框一起動畫 */
 .preference-box * {
-  animation: fade-in 0.4s;
+  animation: preference-fade-in 0.4s;
 }
 
-@keyframes fade-in {
+@keyframes preference-fade-in {
   0% {
       opacity: 0;
   }
@@ -548,12 +553,17 @@ body.dark {
   }
 
   .employee-requirements-table {
-      font-size: 12px;
+      font-size: 11px;
   }
 
   .employee-requirements-table th,
   .employee-requirements-table td {
-      padding: 4px 6px;
+      padding: 3px 4px;
+  }
+  
+  .actual-shift-value,
+  .requirement-value {
+      font-size: 12px;
   }
 }
 
@@ -643,7 +653,10 @@ body.dark {
     align-items: center;
     margin-bottom: 15px;
 }
-
+.verify-action {
+  display: flex;
+  gap: 12px;
+}
 .verify-schedule-header h3, .schedule-require-header h3{
     margin: 0;
     color: var(--black-color);
@@ -651,26 +664,25 @@ body.dark {
     font-weight: 600;
 }
 
-.verify-schedule-header .verify-shift-btn {
-    background: var(--green-color);
-    color: var(--white-color);
-    border: none;
-    border-radius: 6px;
-    padding: 10px 20px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+.verify-schedule-header button {
+  background: var(--green-color);
+  color: var(--white-color);
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
 
-.verify-schedule-header .verify-shift-btn:hover {
-    background: #4a6b5f;
+.verify-schedule-header button:hover {
+  background: #4a6b5f;
 }
-
 .verify-schedule textarea{
   width: 100%;
-  min-height: 120px;
+  min-height: 130px;
   padding: 12px;
   border: 1px solid var(--grey-color);
   border-radius: 6px;
@@ -681,6 +693,91 @@ body.dark {
   resize: vertical;
   margin-bottom: 15px;
 }
+.verify-schedule-content {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.verify-schedule-row {
+  display: table-row;
+}
+
+.verify-schedule-cell {
+  display: table-cell;
+  vertical-align: top;
+  padding: 0 15px;
+}
+
+.verify-schedule-cell:first-child {
+  width: 30%;
+}
+
+.verify-schedule-cell:last-child {
+  width: 70%;
+  border-left: 1px solid;
+}
+
+
+.verify-options h4 {
+  color: var(--black-color);
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.verify-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.verify-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: var(--schedule-verify-checkbox);
+  transition: background-color 0.2s ease;
+}
+
+.verify-checkbox-item:hover {
+  background-color: #e9ecef;
+}
+.verify-checkbox-item label:hover {
+  color: #333;
+}
+
+.verify-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--blue-color);
+}
+
+.verify-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.verify-checkbox-item label {
+  color: var(--black-color);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  flex: 1;
+  margin: 0;
+  transition: color 0.2s ease;
+}
+
+.verify-checkbox-item:has(.verify-checkbox:disabled) label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 
 /* 暫存班表底部區域容器 */
 .temp-schedule-bottom {
@@ -775,6 +872,8 @@ body.dark {
     border-collapse: collapse;
     width: 100%; /* 改為100%以適應容器 */
     color: var(--black-color); /* 符合夜間模式 */
+    margin-top: 10px;
+    table-layout: fixed; /* 固定表格佈局，防止欄位寬度變化 */
 }
 
 .employee-requirements-table th,
@@ -784,6 +883,8 @@ body.dark {
     text-align: center;
     font-size: 15px;
     color: var(--black-color); /* 符合夜間模式 */
+    overflow: hidden; /* 防止內容溢出 */
+    white-space: nowrap; /* 防止文字換行 */
 }
 
 .employee-requirements-table th {
@@ -795,6 +896,7 @@ body.dark {
     white-space: normal;
     font-size: 15px;
     padding: 6px 8px;
+    min-width: 70px;
     color: var(--black-color); /* 符合夜間模式 */
 }
 
@@ -802,9 +904,199 @@ body.dark {
 .employee-requirements-table th:first-child {
     background: var(--table-td-color);
     font-weight: 500;
-    min-width: 90px; /* 與上方employees-table相符 */
+    min-width: 20px; /* 與上方employees-table相符 */
+    width: 15%; /* 員工姓名欄位固定寬度 */
 }
 
+/* 需求儲存格固定寬度 */
+.employee-requirements-table td:not(:first-child) {
+    width: 14.28%; /* 7個欄位平均分配 (100% / 7) */
+}
+
+/* 實際班別儲存格樣式 */
+.actual-shift-cell {
+    background-color: var(--white-color) !important;
+    border: 1px solid var(--grey-color) !important;
+    cursor: default;
+    transition: background-color 0.2s ease;
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+
+.actual-shift-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    width: 100%;
+    position: relative;
+}
+
+.actual-shift-value {
+    min-width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+    color: var(--grey-color-light);
+}
+
+.requirement-cell {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  position: relative;
+  width: 100%; /* 確保儲存格佔滿整個 td */
+  height: 100%; /* 確保儲存格佔滿整個 td */
+}
+
+.requirement-cell:hover {
+  background-color: var(--bg-table-selected);
+}
+
+.requirement-cell.selected {
+  background-color: var(--bg-table-selected);
+  border: 2px solid var(--border-selected);
+}
+
+.requirement-content {
+  color: var(--black-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 24px;
+  width: 100%; /* 確保內容區域佔滿整個儲存格 */
+  position: relative; /* 為動畫定位 */
+
+}
+
+.requirement-value {
+  font-weight: bold;
+  min-width: 20px;
+  text-align: center;
+  flex-shrink: 0; /* 防止數值被壓縮 */
+}
+
+/* +/- 按鈕基礎樣式 */
+.requirement-btn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  color: #333;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0; /* 防止按鈕被壓縮 */
+  opacity: 0; /* 初始狀態為透明 */
+  transform: scale(0.8); /* 初始狀態稍微縮小 */
+  animation: fade-in 0.3s ease-out forwards; /* 淡入動畫 */
+}
+
+/* 淡入動畫 - 專門用於按鈕 */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 淡出動畫 - 專門用於按鈕 */
+@keyframes fade-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+/* 淡出狀態 */
+.requirement-btn.fade-out {
+  animation: fade-out 0.2s ease-in forwards;
+}
+
+.requirement-btn:hover {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.requirement-btn:active {
+  transform: scale(0.95);
+}
+
+.requirement-btn-minus {
+  background-color: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+
+.requirement-btn-minus:hover {
+  background-color: #c82333;
+  border-color: #c82333;
+}
+
+.requirement-btn-plus {
+  background-color: #28a745;
+  color: white;
+  border-color: #28a745;
+}
+
+.requirement-btn-plus:hover {
+  background-color: #218838;
+  border-color: #218838;
+}
+
+/* 更新按鈕樣式 */
+.update-require-btn {
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: var(--black-color);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.update-require-btn:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.update-require-btn:disabled {
+  background-color: var(--grey-color);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+  .requirement-content {
+      gap: 4px;
+  }
+  
+  .requirement-btn {
+      width: 20px;
+      height: 20px;
+      font-size: 12px;
+  }
+  
+  .requirement-value {
+      min-width: 16px;
+      font-size: 14px;
+  }
+}
 
 /* === 人員模式專用樣式 === */
 /* 人員班表外框動畫 */
@@ -938,12 +1230,17 @@ body.dark {
   border-collapse: collapse;
   width: 100%;
   min-width: 900px;
+  table-layout: fixed; /* 固定表格佈局 */
+  overflow: hidden;
 }
 .employees-table th, .employees-table td {
   border: 1px solid #e0e0e0;
+  color: var(--grey-color);
   padding: 6px 8px;
   text-align: center;
   font-size: 15px;
+  height: 40px; /* 設定基本儲存格高度 */
+  vertical-align: middle;
 }
 .employees-table th {
   background: var(--table-th-color);
@@ -953,8 +1250,9 @@ body.dark {
   text-align: center;
   line-height: 1.2;
   white-space: normal;
-  font-size: 15px;
+  font-size: 12px;
   padding: 6px 8px;
+  height: 50px; /* 標題列高度 */
 }
 .employees-table th br {
   display: block;
@@ -966,11 +1264,14 @@ body.dark {
   font-size: 12px;
   margin-top: 2px;
 }
-.employees-table td:first-child, .employees-table th:first-child{
+.employees-table th:first-child{
   background: var(--table-td-color);
   color: var(--black-color);
+  font-size: 15px;
   font-weight: 500;
   min-width: 90px;
+  width: 120px; /* 固定員工姓名欄位寬度 */
+  
 }
 .employees-table-outer {
   overflow-x: auto;
@@ -988,9 +1289,11 @@ body.dark {
 /* sticky 員工姓名欄位 */
 .employees-table .sticky-col {
   position: sticky;
+  font-weight: 500;
+  color: var(--black-color);
   left: 0;
   z-index: 2;
-  background: #e3f2fd;
+  background: var(--table-td-color);
   box-shadow: 2px 0 4px -2px #b0bec5;
 }
 
@@ -1090,6 +1393,43 @@ nav.content.fadeout {
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
+/* 兩列式佈局樣式 */
+.shift-main-cell {
+  height: 30px; /* 主要班別儲存格高度 */
+  border-bottom: 1px solid #e0e0e0;
+  padding: 4px 8px;
+  vertical-align: middle;
+}
+
+.shift-sub-cell {
+  height: 10px; /* 子班別儲存格高度 */
+  font-size: 11px; /* 較小的字體 */
+  padding: 1px 4px; /* 較小的內距 */
+  vertical-align: middle;
+  line-height: 1;
+}
+
+/* 員工姓名儲存格樣式 */
+.employee-name-cell {
+  vertical-align: middle;
+  text-align: center;
+  font-weight: 500;
+  background: var(--table-td-color);
+  color: var(--black-color);
+  height: 40px; /* 總高度 = 30px + 10px */
+}
+
+
+/* 子班別行樣式 */
+.shift-subtype-row {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.shift-subtype-row td {
+  height: 10px; /* 子班別行儲存格高度 */
+  padding: 1px 4px;
+}
+
 /* 早班樣式 */
 .morning-shift {
   background: var(--bg-schedule-day) !important;
@@ -1138,6 +1478,14 @@ nav.content.fadeout {
 }
 
 .leave-special {
+  background-color: #9c27b0 !important; /* 紫色底 */
+  color: white !important; /* 白色字體 */
+  font-weight: bold;
+  text-align: center;
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+.leave-auto {
   background-color: #9c27b0 !important; /* 紫色底 */
   color: white !important; /* 白色字體 */
   font-weight: bold;

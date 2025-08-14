@@ -673,6 +673,133 @@ class APIServer():
                 self.logger.error(f'清除週期休假資料時發生錯誤：{str(err)}')
                 return jsonify({'error': '清除休假資料失敗'}), 500
 
+        # === 新增：驗證班表 ===
+        @self.app.route('/api/verify-schedule', methods=['POST'])
+        def verify_schedule():
+            """
+            驗證班表是否符合各種限制條件
+            - 請求格式: {
+                "cycle_id": 1,
+                "schedule_data": {
+                    "schedule": {"員工名": ["A", "B", "C", "O", ...]},
+                    "dates": ["2025-01-01", "2025-01-02", ...]
+                }
+            }
+            - 回傳: {
+                "daily_staffing_passed": bool,
+                "daily_staffing_details": [str],
+                "continuous_work_passed": bool,
+                "continuous_work_details": [str],
+                "shift_connection_passed": bool,
+                "shift_connection_details": [str]
+            }
+            """
+            try:
+                data = request.get_json()
+                cycle_id = data.get('cycle_id')
+                schedule_data = data.get('schedule_data')
+                
+                if not cycle_id:
+                    return jsonify({'error': '缺少 cycle_id 參數'}), 400
+                
+                if not schedule_data:
+                    return jsonify({'error': '缺少 schedule_data 參數'}), 400
+                
+                self.logger.info(f'開始驗證週期 #{cycle_id} 的班表...')
+                self.logger.info(f'班表資料: {schedule_data}')
+                
+                # 呼叫驗證模組
+                from verify_shift_2 import verify_schedule_data
+                verification_result = verify_schedule_data(schedule_data)
+                
+                self.logger.info(f'驗證結果: {verification_result}')
+                
+                return jsonify(verification_result)
+                
+            except Exception as err:
+                self.logger.error(f'驗證班表時發生錯誤：{str(err)}')
+                return jsonify({'error': '驗證班表失敗'}), 500
+
+        # === 新增：更新員工需求 ===
+        @self.app.route('/api/update-employee-requirements', methods=['POST'])
+        def update_employee_requirements():
+            """
+            更新指定週期的員工班別需求
+            - 請求格式: {
+                "cycle_id": 1,
+                "changes": [
+                    {
+                        "employee_name": "張小明",
+                        "shift_type": "A",
+                        "required_days": 5
+                    }
+                ]
+            }
+            - 回傳: {"status": "success", "count": 3}
+            """
+            try:
+                data = request.get_json()
+                cycle_id = data.get('cycle_id')
+                changes = data.get('changes', [])
+                
+                if not cycle_id:
+                    return jsonify({'error': '缺少 cycle_id 參數'}), 400
+                
+                if not changes:
+                    return jsonify({'error': '缺少變更資料'}), 400
+                
+                self.logger.info(f'開始更新週期 #{cycle_id} 的員工需求...')
+                self.logger.info(f'變更數量: {len(changes)}')
+                
+                updated_count = 0
+                
+                for change in changes:
+                    employee_name = change.get('employee_name')
+                    shift_type = change.get('shift_type')
+                    required_days = change.get('required_days')
+                    
+                    if not all([employee_name, shift_type, required_days is not None]):
+                        self.logger.warning(f'跳過無效的變更資料: {change}')
+                        continue
+                    
+                    # 根據員工姓名查詢 employee_id
+                    employee_response = self.supabase_client.table('employees') \
+                        .select('id') \
+                        .eq('name', employee_name) \
+                        .execute()
+                    
+                    if not employee_response.data:
+                        self.logger.warning(f'找不到員工: {employee_name}')
+                        continue
+                    
+                    employee_id = employee_response.data[0]['id']
+                    
+                    # 更新 schedule_cycle_members 表格中的需求資料
+                    response = self.supabase_client.table('schedule_cycle_members') \
+                        .update({'required_days': required_days}) \
+                        .eq('cycle_id', int(cycle_id)) \
+                        .eq('employee_id', employee_id) \
+                        .eq('shift_type', shift_type) \
+                        .execute()
+                    
+                    if response.data:
+                        updated_count += 1
+                        self.logger.info(f'成功更新員工 {employee_name} 的 {shift_type} 需求為 {required_days}')
+                    else:
+                        self.logger.warning(f'無法更新員工 {employee_name} 的 {shift_type} 需求')
+                
+                self.logger.info(f'成功更新 {updated_count} 筆需求資料')
+                
+                return jsonify({
+                    'status': 'success',
+                    'count': updated_count,
+                    'message': f'成功更新 {updated_count} 筆需求資料'
+                })
+                
+            except Exception as err:
+                self.logger.error(f'更新員工需求時發生錯誤：{str(err)}')
+                return jsonify({'error': '更新員工需求失敗'}), 500
+
     def run(self):
         """啟動 Flask 應用"""
         self.app.run(host=self.host, port=self.port, debug=self.debug)

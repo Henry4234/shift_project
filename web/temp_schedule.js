@@ -27,7 +27,8 @@ class TempScheduleMode {
             { text: 'C', class: 'night-shift', weight: 3 }, // 晚班
             { text: 'O', class: 'leave-high', weight: 4 }, // 紅色底休假
             { text: 'O', class: 'leave-low', weight: 5 }, // 藍色底休假
-            { text: '特', class: 'leave-special', weight: 6 } // 特休
+            { text: '特', class: 'leave-special', weight: 6 }, // 特休
+            { text: 'O', class: 'day-off', weight: 7 }, //自動排班的O
         ];
         
         // 儲存每個員工每天的休假狀態
@@ -35,6 +36,16 @@ class TempScheduleMode {
         
         // 標記是否已經執行過自動排班
         this.hasAutoScheduled = false;
+        
+        // === 新增：員工班別需求管理 ===
+        // 儲存原始需求資料（用於比較是否有變更）
+        this.originalRequirements = new Map(); // 格式: Map<"employeeName_shiftType", number>
+        // 儲存當前需求資料
+        this.currentRequirements = new Map(); // 格式: Map<"employeeName_shiftType", number>
+        // 標記是否有需求變更
+        this.hasRequirementsChanged = false;
+        // 當前選中的需求儲存格
+        this.selectedRequirementCell = null;
     }
 
     /**
@@ -82,9 +93,36 @@ class TempScheduleMode {
             <div class="verify-schedule">
                 <div class="verify-schedule-header">
                     <h3>驗證排班</h3>
-                    <button type="button" class="verify-shift-btn" onclick="">驗證班表</button>
+                    <div class="verify-action">
+                        <button type="button" class="verify-shift-btn" onclick="">驗證班表</button>
+                        <button type="button" class="shift-subtype-btn" onclick="">工作內容安排</button>
+                    </div>
                 </div>
-                <textarea id="verifycomment" placeholder="點擊右上角驗證按鈕開始驗證...&#10;自動驗證是否符合以下情況&#10;1. 每日上班人數&#10;2. 連續上班天數&#10;3. 班別銜接"></textarea>
+                <div class="verify-schedule-content">
+                    <div class="verify-schedule-row">
+                        <div class="verify-schedule-cell">
+                            <div class="verify-checkbox-group">
+                                <div class="verify-checkbox-item">
+                                    <input type="checkbox" id="verify-daily-count" class="verify-checkbox" disabled>
+                                    <label for="verify-daily-count">每日上班人數</label>
+                                </div>
+                                <div class="verify-checkbox-item">
+                                    <input type="checkbox" id="verify-consecutive-days" class="verify-checkbox" disabled>
+                                    <label for="verify-consecutive-days">連續上班天數</label>
+                                </div>
+                                <div class="verify-checkbox-item">
+                                    <input type="checkbox" id="verify-shift-connection" class="verify-checkbox" disabled>
+                                    <label for="verify-shift-connection">班別銜接</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="verify-schedule-cell">
+                            <textarea id="verifycomment" placeholder="點擊右上角驗證按鈕開始驗證...&#10;自動驗證是否符合以下情況&#10;1. 每日上班人數&#10;2. 連續上班天數&#10;3. 班別銜接"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                
             </div>
 
             <div class="temp-schedule-bottom">
@@ -125,6 +163,9 @@ class TempScheduleMode {
         this.addClickEventListeners();
         // 9. 添加按鈕事件監聽器
         this.addButtonEventListeners();
+        
+        // 10. 初始化驗證 checkbox 狀態
+        this.disableVerificationCheckboxes();
     }
 
     /**
@@ -253,8 +294,11 @@ class TempScheduleMode {
             <tr>
                 <th>員工姓名</th>
                 <th>白班</th>
+                <th>實際白班</th>
                 <th>小夜班</th>
+                <th>實際小夜</th>
                 <th>大夜班</th>
+                <th>實際大夜</th>
             </tr>
         `;
         reqTable.appendChild(reqThead);
@@ -265,12 +309,58 @@ class TempScheduleMode {
             const a = members.find(m => m.snapshot_name === name && m.shift_type === 'A');
             const b = members.find(m => m.snapshot_name === name && m.shift_type === 'B');
             const c = members.find(m => m.snapshot_name === name && m.shift_type === 'C');
+            
+            // 儲存原始需求資料
+            const aValue = a ? a.required_days : 0;
+            const bValue = b ? b.required_days : 0;
+            const cValue = c ? c.required_days : 0;
+            
+            this.originalRequirements.set(`${name}_A`, aValue);
+            this.originalRequirements.set(`${name}_B`, bValue);
+            this.originalRequirements.set(`${name}_C`, cValue);
+            
+            this.currentRequirements.set(`${name}_A`, aValue);
+            this.currentRequirements.set(`${name}_B`, bValue);
+            this.currentRequirements.set(`${name}_C`, cValue);
+            
+            // 計算實際班別統計（初始為0，後續會更新）
+            const actualA = 0;
+            const actualB = 0;
+            const actualC = 0;
+            
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${name}</td>
-                <td>${a ? a.required_days : 0}</td>
-                <td>${b ? b.required_days : 0}</td>
-                <td>${c ? c.required_days : 0}</td>
+                <td class="requirement-cell" data-employee="${name}" data-shift="A">
+                    <div class="requirement-content">
+                        <span class="requirement-value">${aValue}</span>
+                    </div>
+                </td>
+                <td class="actual-shift-cell" data-employee="${name}" data-shift="A">
+                    <div class="actual-shift-content">
+                        <span class="actual-shift-value">${actualA}</span>
+                    </div>
+                </td>
+                <td class="requirement-cell" data-employee="${name}" data-shift="B">
+                    <div class="requirement-content">
+                        <span class="requirement-value">${bValue}</span>
+                    </div>
+                </td>
+                <td class="actual-shift-cell" data-employee="${name}" data-shift="B">
+                    <div class="actual-shift-content">
+                        <span class="actual-shift-value">${actualB}</span>
+                    </div>
+                </td>
+                <td class="requirement-cell" data-employee="${name}" data-shift="C">
+                    <div class="requirement-content">
+                        <span class="requirement-value">${cValue}</span>
+                    </div>
+                </td>
+                <td class="actual-shift-cell" data-employee="${name}" data-shift="C">
+                    <div class="actual-shift-content">
+                        <span class="actual-shift-value">${actualC}</span>
+                    </div>
+                </td>
             `;
             reqTbody.appendChild(row);
         });
@@ -280,6 +370,12 @@ class TempScheduleMode {
         if (reqContainer) {
             reqContainer.appendChild(reqTable);
         }
+        
+        // 添加需求表格的點擊事件監聽器
+        this.addRequirementTableEventListeners();
+        
+        // 更新實際班別統計
+        this.updateActualShiftCounts();
     }
     
     /**
@@ -338,6 +434,24 @@ class TempScheduleMode {
                 console.log('儲存休假資料結果:', result);
             });
         }
+
+        // === 新增：上班天數更新按鈕 ===
+        const updateRequireBtn = this.container.querySelector('.update-require-btn');
+        if (updateRequireBtn) {
+            // 初始狀態設為 disabled
+            updateRequireBtn.disabled = true;
+            updateRequireBtn.addEventListener('click', async () => {
+                await this.saveRequirementsChanges();
+            });
+        }
+
+        // === 新增：驗證班表按鈕 ===
+        const verifyShiftBtn = this.container.querySelector('.verify-shift-btn');
+        if (verifyShiftBtn) {
+            verifyShiftBtn.addEventListener('click', async () => {
+                await this.runScheduleVerification();
+            });
+        }
     }
 
     /**
@@ -385,6 +499,9 @@ class TempScheduleMode {
         // 更新視覺顯示
         this.updateCellDisplay(cell, nextState);
         
+        // 更新實際班別統計
+        this.updateActualShiftCounts();
+        
         console.log(`員工 ${employeeName} 在 ${date} 的休假狀態已更新為: ${nextState.text} (權重: ${nextState.weight})`);
     }
 
@@ -413,6 +530,9 @@ class TempScheduleMode {
         // 更新視覺顯示
         this.updateCellDisplay(cell, nextState);
         
+        // 更新實際班別統計
+        this.updateActualShiftCounts();
+        
         console.log(`員工 ${employeeName} 在 ${date} 的班別狀態已更新為: ${nextState.text} (權重: ${nextState.weight})`);
     }
 
@@ -423,7 +543,7 @@ class TempScheduleMode {
      */
     updateCellDisplay(cell, state) {
         // 清除所有可能的樣式類別
-        cell.classList.remove('leave-high', 'leave-low', 'leave-special', 'morning-shift', 'afternoon-shift', 'night-shift');
+        cell.classList.remove('leave-high', 'leave-low', 'leave-special','day-off', 'morning-shift', 'afternoon-shift', 'night-shift');
         
         // 設置文字內容
         cell.textContent = state.text;
@@ -699,6 +819,9 @@ class TempScheduleMode {
             
             console.log(`成功載入 ${leavesData.length} 筆休假資料`);
             
+            // 更新實際班別統計
+            this.updateActualShiftCounts();
+            
         } catch (error) {
             console.error('載入休假資料時發生錯誤:', error);
         }
@@ -776,6 +899,9 @@ class TempScheduleMode {
             cell.classList.remove('leave-high', 'leave-low', 'leave-special');
         });
         
+        // 更新實際班別統計
+        this.updateActualShiftCounts();
+        
         console.log('已清除所有休假標記');
     }
 
@@ -816,11 +942,14 @@ class TempScheduleMode {
                 // 排班成功，更新表格內容
                 this.updateScheduleTable(result.data);
                 
-                // 重新載入已儲存的休假資料，確保休假安排正確
-                await this.loadSavedLeaveData();
-                
-                // 標記已執行自動排班
-                this.hasAutoScheduled = true;
+                        // 重新載入已儲存的休假資料，確保休假安排正確
+        await this.loadSavedLeaveData();
+        
+        // 更新實際班別統計
+        this.updateActualShiftCounts();
+        
+        // 標記已執行自動排班
+        this.hasAutoScheduled = true;
                 
                 this.showMessage('自動排班成功！', 'success');
             } else {
@@ -979,6 +1108,9 @@ class TempScheduleMode {
         // 重新添加點擊事件監聽器
         this.addClickEventListeners();
         
+        // 更新實際班別統計
+        this.updateActualShiftCounts();
+        
         console.log('表格內容已更新');
     }
 
@@ -989,6 +1121,618 @@ class TempScheduleMode {
             const loadingRow = tbody.querySelector('.loading-row');
             if (loadingRow) loadingRow.remove();
         }
+    }
+
+    /**
+     * 添加需求表格的點擊事件監聽器
+     */
+    addRequirementTableEventListeners() {
+        const requirementCells = this.container.querySelectorAll('.requirement-cell');
+        requirementCells.forEach(cell => {
+            cell.addEventListener('click', (event) => {
+                this.handleRequirementCellClick(event);
+            });
+        });
+    }
+
+    /**
+     * 更新實際班別統計數據
+     */
+    updateActualShiftCounts() {
+        const table = this.container.querySelector('.employees-table');
+        if (!table) {
+            console.error('找不到班表表格');
+            return;
+        }
+
+        const tbody = table.querySelector('tbody');
+        if (!tbody) {
+            console.error('找不到班表表格內容');
+            return;
+        }
+
+        // 統計每個員工的實際班別數量
+        const actualCounts = {};
+        const rows = tbody.querySelectorAll('tr');
+        
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length > 1) {
+                const employeeName = cells[0].textContent.trim();
+                actualCounts[employeeName] = { A: 0, B: 0, C: 0 };
+                
+                // 從第二個儲存格開始統計班別
+                for (let i = 1; i < cells.length; i++) {
+                    const cell = cells[i];
+                    
+                    // 根據儲存格的樣式類別判斷班別
+                    if (cell.classList.contains('morning-shift')) {
+                        actualCounts[employeeName].A++;
+                    } else if (cell.classList.contains('afternoon-shift')) {
+                        actualCounts[employeeName].B++;
+                    } else if (cell.classList.contains('night-shift')) {
+                        actualCounts[employeeName].C++;
+                    }
+                    // 休假類型不計入統計
+                }
+            }
+        });
+
+        // 更新需求表格中的實際班別數據
+        const reqTable = this.container.querySelector('.employee-requirements-table');
+        if (reqTable) {
+            const reqRows = reqTable.querySelectorAll('tbody tr');
+            reqRows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 7) { // 確保有足夠的欄位
+                    const employeeName = cells[0].textContent.trim();
+                    const employeeCounts = actualCounts[employeeName] || { A: 0, B: 0, C: 0 };
+                    
+                    // 更新實際白班 (第2欄)
+                    const actualACell = cells[2];
+                    if (actualACell && actualACell.classList.contains('actual-shift-cell')) {
+                        const valueSpan = actualACell.querySelector('.actual-shift-value');
+                        if (valueSpan) {
+                            valueSpan.textContent = employeeCounts.A;
+                        }
+                    }
+                    
+                    // 更新實際小夜班 (第4欄)
+                    const actualBCell = cells[4];
+                    if (actualBCell && actualBCell.classList.contains('actual-shift-cell')) {
+                        const valueSpan = actualBCell.querySelector('.actual-shift-value');
+                        if (valueSpan) {
+                            valueSpan.textContent = employeeCounts.B;
+                        }
+                    }
+                    
+                    // 更新實際大夜班 (第6欄)
+                    const actualCCell = cells[6];
+                    if (actualCCell && actualCCell.classList.contains('actual-shift-cell')) {
+                        const valueSpan = actualCCell.querySelector('.actual-shift-value');
+                        if (valueSpan) {
+                            valueSpan.textContent = employeeCounts.C;
+                        }
+                    }
+                }
+            });
+        }
+
+        console.log('實際班別統計已更新:', actualCounts);
+    }
+
+    /**
+     * 處理需求表格的點擊事件
+     * @param {Event} event - 點擊事件物件
+     */
+    handleRequirementCellClick(event) {
+        const cell = event.target.closest('.requirement-cell');
+        if (!cell) return;
+        
+        const employeeName = cell.dataset.employee;
+        const shiftType = cell.dataset.shift;
+        const key = `${employeeName}_${shiftType}`;
+
+        // 如果已經有選中的儲存格，先清除之前的 +/- 按鈕
+        if (this.selectedRequirementCell && this.selectedRequirementCell !== cell) {
+            this.clearRequirementCellButtons(this.selectedRequirementCell);
+        }
+
+        // 如果點擊的是同一個儲存格，切換 +/- 按鈕的顯示
+        if (this.selectedRequirementCell === cell) {
+            this.clearRequirementCellButtons(cell);
+            this.selectedRequirementCell = null;
+            return;
+        }
+
+        // 為當前儲存格添加 +/- 按鈕
+        this.addRequirementCellButtons(cell);
+        this.selectedRequirementCell = cell;
+    }
+
+    /**
+     * 為需求儲存格添加 +/- 按鈕
+     * @param {HTMLElement} cell - 需求儲存格元素
+     */
+    addRequirementCellButtons(cell) {
+        const employeeName = cell.dataset.employee;
+        const shiftType = cell.dataset.shift;
+        const key = `${employeeName}_${shiftType}`;
+        const currentValue = this.currentRequirements.get(key) || 0;
+
+        // 更新儲存格的 HTML 結構
+        cell.innerHTML = `
+            <div class="requirement-content">
+                <button type="button" class="requirement-btn requirement-btn-minus" data-action="decrease">-</button>
+                <span class="requirement-value">${currentValue}</span>
+                <button type="button" class="requirement-btn requirement-btn-plus" data-action="increase">+</button>
+            </div>
+        `;
+
+        // 添加按鈕事件監聽器
+        const minusBtn = cell.querySelector('.requirement-btn-minus');
+        const plusBtn = cell.querySelector('.requirement-btn-plus');
+
+        minusBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.updateRequirementValue(cell, -1);
+        });
+
+        plusBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.updateRequirementValue(cell, 1);
+        });
+
+        // 添加選中樣式
+        cell.classList.add('selected');
+        
+        // 觸發按鈕的淡入動畫
+        setTimeout(() => {
+            minusBtn.style.animation = 'fade-in 0.3s ease-out forwards';
+            plusBtn.style.animation = 'fade-in 0.3s ease-out forwards';
+        }, 10);
+    }
+
+    /**
+     * 清除需求儲存格的 +/- 按鈕
+     * @param {HTMLElement} cell - 需求儲存格元素
+     */
+    clearRequirementCellButtons(cell) {
+        const employeeName = cell.dataset.employee;
+        const shiftType = cell.dataset.shift;
+        const key = `${employeeName}_${shiftType}`;
+        const currentValue = this.currentRequirements.get(key) || 0;
+
+        // 先觸發淡出動畫
+        const minusBtn = cell.querySelector('.requirement-btn-minus');
+        const plusBtn = cell.querySelector('.requirement-btn-plus');
+        
+        if (minusBtn && plusBtn) {
+            // 添加淡出動畫
+            minusBtn.classList.add('fade-out');
+            plusBtn.classList.add('fade-out');
+            
+            // 等待動畫完成後再更新 HTML
+            setTimeout(() => {
+                // 恢復原始 HTML 結構
+                cell.innerHTML = `
+                    <div class="requirement-content">
+                        <span class="requirement-value">${currentValue}</span>
+                    </div>
+                `;
+                
+                // 移除選中樣式
+                cell.classList.remove('selected');
+            }, 200); // 與 CSS 動畫時間一致
+        } else {
+            // 如果沒有按鈕，直接更新
+            cell.innerHTML = `
+                <div class="requirement-content">
+                    <span class="requirement-value">${currentValue}</span>
+                </div>
+            `;
+            cell.classList.remove('selected');
+        }
+    }
+
+    /**
+     * 更新需求值
+     * @param {HTMLElement} cell - 需求儲存格元素
+     * @param {number} delta - 增減值
+     */
+    updateRequirementValue(cell, delta) {
+        const employeeName = cell.dataset.employee;
+        const shiftType = cell.dataset.shift;
+        const key = `${employeeName}_${shiftType}`;
+        const currentValue = this.currentRequirements.get(key) || 0;
+
+        // 計算新值（限制在 0-30 範圍內）
+        let newValue = currentValue + delta;
+        newValue = Math.max(0, Math.min(30, newValue));
+
+        // 更新儲存的值
+        this.currentRequirements.set(key, newValue);
+
+        // 更新視覺顯示
+        const valueSpan = cell.querySelector('.requirement-value');
+        if (valueSpan) {
+            valueSpan.textContent = newValue;
+        }
+
+        // 檢查是否有變更
+        this.checkRequirementsChanged();
+        this.updateRequirementButtonState();
+
+        console.log(`員工 ${employeeName} 的 ${shiftType} 需求已更新為: ${newValue}`);
+    }
+
+    /**
+     * 更新需求按鈕狀態
+     */
+    updateRequirementButtonState() {
+        const updateRequireBtn = this.container.querySelector('.update-require-btn');
+        if (updateRequireBtn) {
+            updateRequireBtn.disabled = !this.hasRequirementsChanged;
+        }
+    }
+
+    /**
+     * 檢查是否有需求變更
+     */
+    checkRequirementsChanged() {
+        let hasChanges = false;
+        this.originalRequirements.forEach((originalValue, key) => {
+            const currentValue = this.currentRequirements.get(key);
+            if (originalValue !== currentValue) {
+                hasChanges = true;
+                return;
+            }
+        });
+        this.hasRequirementsChanged = hasChanges;
+        return hasChanges;
+    }
+
+    /**
+     * 儲存需求變更到後端 API
+     */
+    async saveRequirementsChanges() {
+        const cycleId = this.cycleData.cycle_id;
+        const changes = [];
+        this.currentRequirements.forEach((value, key) => {
+            const originalValue = this.originalRequirements.get(key);
+            if (value !== originalValue) {
+                const [employeeName, shiftType] = key.split('_');
+                changes.push({
+                    cycle_id: cycleId,
+                    employee_name: employeeName,
+                    shift_type: shiftType,
+                    required_days: value
+                });
+            }
+        });
+
+        if (changes.length === 0) {
+            this.showMessage('沒有需求變更，不需儲存。', 'info');
+            return;
+        }
+
+        // Toast loading
+        const toastContainer = document.querySelector('.toast-container');
+        let loadingToast = document.createElement('div');
+        loadingToast.className = 'toast';
+        loadingToast.innerHTML = `
+            <div class="toast-header">
+                <strong class="me-auto">系統訊息</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">正在儲存需求變更...</div>
+        `;
+        toastContainer.appendChild(loadingToast);
+        let bsLoadingToast = new bootstrap.Toast(loadingToast);
+        bsLoadingToast.show();
+
+        try {
+            const response = await fetch('/api/update-employee-requirements', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    cycle_id: cycleId,
+                    changes: changes
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || '儲存需求變更失敗');
+            }
+
+            const result = await response.json();
+            console.log('需求變更儲存成功:', result);
+
+            // 移除 loading toast
+            bsLoadingToast.hide();
+            loadingToast.remove();
+
+            // 顯示成功訊息 toast
+            let resultToast = document.createElement('div');
+            resultToast.className = 'toast';
+            resultToast.innerHTML = `
+                <div class="toast-header">
+                    <strong class="me-auto">系統訊息</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">需求變更已儲存！</div>
+            `;
+            toastContainer.appendChild(resultToast);
+            let bsResultToast = new bootstrap.Toast(resultToast);
+            bsResultToast.show();
+            setTimeout(() => { resultToast.remove(); }, 3000);
+
+            // 重新載入原始需求資料，以便下次比較
+            await this.loadSavedLeaveData(); // 重新載入休假資料，因為需求變更也會影響休假安排
+            this.originalRequirements.clear();
+            this.currentRequirements.forEach((value, key) => {
+                const [employeeName, shiftType] = key.split('_');
+                this.originalRequirements.set(key, value);
+            });
+            this.hasRequirementsChanged = false;
+            this.showMessage('需求變更已儲存！', 'success');
+
+        } catch (error) {
+            bsLoadingToast.hide();
+            loadingToast.remove();
+            let errorToast = document.createElement('div');
+            errorToast.className = 'toast';
+            errorToast.innerHTML = `
+                <div class="toast-header">
+                    <strong class="me-auto">錯誤訊息</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">儲存失敗：${error.message}</div>
+            `;
+            toastContainer.appendChild(errorToast);
+            let bsErrorToast = new bootstrap.Toast(errorToast);
+            bsErrorToast.show();
+            setTimeout(() => { errorToast.remove(); }, 3000);
+        }
+    }
+
+    /**
+     * 執行班表驗證
+     */
+    async runScheduleVerification() {
+        const cycleId = this.cycleData.cycle_id;
+        
+        // 更新驗證狀態
+        this.updateVerificationStatus('verifying', '正在驗證班表...');
+        
+        // 啟用所有 checkbox
+        this.enableVerificationCheckboxes();
+        
+        try {
+            console.log(`開始驗證週期 #${cycleId} 的班表...`);
+            
+            // 從 employees-table 中提取班表資料
+            const scheduleData = this.extractScheduleDataFromTable();
+            
+            if (!scheduleData) {
+                throw new Error('無法提取班表資料');
+            }
+            
+            console.log('提取的班表資料:', scheduleData);
+            
+            // 呼叫後端 API 進行驗證
+            const response = await fetch('/api/verify-schedule', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    cycle_id: cycleId,
+                    schedule_data: scheduleData
+                })
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || '驗證請求失敗');
+            }
+            
+            const result = await response.json();
+            console.log('驗證結果:', result);
+            
+            // 更新驗證結果
+            this.updateVerificationResults(result);
+            
+            // 驗證完成
+            this.updateVerificationStatus('success', '驗證完成！');
+            this.showMessage('班表驗證完成！', 'success');
+            
+        } catch (error) {
+            console.error('班表驗證失敗:', error);
+            this.updateVerificationStatus('error', '驗證失敗');
+            this.showMessage(`班表驗證失敗: ${error.message}`, 'error');
+        }
+    }
+
+    /**
+     * 從 employees-table 中提取班表資料
+     * @returns {Object} 班表資料格式 {schedule: {員工名: [班別列表]}, dates: [日期列表]}
+     */
+    extractScheduleDataFromTable() {
+        const table = this.container.querySelector('.employees-table');
+        if (!table) {
+            console.error('找不到班表表格');
+            return null;
+        }
+
+        const thead = table.querySelector('thead tr');
+        const tbody = table.querySelector('tbody');
+        
+        if (!thead || !tbody) {
+            console.error('表格結構不完整');
+            return null;
+        }
+
+        // 直接使用週期資料中的日期範圍，而不是從表格標題重建
+        const startDate = new Date(this.cycleData.start_date);
+        const endDate = new Date(this.cycleData.end_date);
+        const dates = [];
+        
+        // 生成日期範圍
+        for (let dt = new Date(startDate); dt <= endDate; dt.setDate(dt.getDate() + 1)) {
+            const dateStr = dt.toISOString().split('T')[0]; // YYYY-MM-DD 格式
+            dates.push(dateStr);
+        }
+
+        // 提取員工班別資料
+        const schedule = {};
+        const rows = tbody.querySelectorAll('tr');
+        
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length > 1) {
+                const employeeName = cells[0].textContent.trim();
+                const shifts = [];
+                
+                // 從第二個儲存格開始提取班別資料
+                for (let i = 1; i < cells.length; i++) {
+                    const cell = cells[i];
+                    const cellText = cell.textContent.trim();
+                    
+                    // 根據儲存格的樣式類別判斷班別
+                    let shift = 'O'; // 預設為休假
+                    
+                    if (cell.classList.contains('morning-shift')) {
+                        shift = 'A';
+                    } else if (cell.classList.contains('afternoon-shift')) {
+                        shift = 'B';
+                    } else if (cell.classList.contains('night-shift')) {
+                        shift = 'C';
+                    } else if (cell.classList.contains('leave-high') || 
+                              cell.classList.contains('leave-low') || 
+                              cell.classList.contains('leave-special')) {
+                        shift = 'O'; // 各種休假類型都視為休假
+                    } else if (cell.classList.contains('day-off')) {
+                        shift = 'O';
+                    }
+                    
+                    shifts.push(shift);
+                }
+                
+                schedule[employeeName] = shifts;
+            }
+        });
+
+        return {
+            schedule: schedule,
+            dates: dates
+        };
+    }
+
+    /**
+     * 更新驗證結果到介面
+     * @param {Object} result - 驗證結果
+     */
+    updateVerificationResults(result) {
+        // 更新 checkbox 狀態
+        const dailyCountCheckbox = document.getElementById('verify-daily-count');
+        const consecutiveDaysCheckbox = document.getElementById('verify-consecutive-days');
+        const shiftConnectionCheckbox = document.getElementById('verify-shift-connection');
+        
+        if (dailyCountCheckbox) {
+            dailyCountCheckbox.checked = result.daily_staffing_passed;
+        }
+        if (consecutiveDaysCheckbox) {
+            consecutiveDaysCheckbox.checked = result.continuous_work_passed;
+        }
+        if (shiftConnectionCheckbox) {
+            shiftConnectionCheckbox.checked = result.shift_connection_passed;
+        }
+        
+        // 更新驗證註解
+        const verifyComment = document.getElementById('verifycomment');
+        if (verifyComment) {
+            let commentText = '班表驗證結果：\n\n';
+            
+            // 每日上班人數驗證
+            commentText += `1. 每日上班人數: ${result.daily_staffing_passed ? '✓ 通過' : '✗ 未通過'}\n`;
+            if (!result.daily_staffing_passed && result.daily_staffing_details) {
+                commentText += `   問題詳情:\n`;
+                result.daily_staffing_details.forEach(detail => {
+                    commentText += `   - ${detail}\n`;
+                });
+            }
+            commentText += '\n';
+            
+            // 連續上班天數驗證
+            commentText += `2. 連續上班天數: ${result.continuous_work_passed ? '✓ 通過' : '✗ 未通過'}\n`;
+            if (!result.continuous_work_passed && result.continuous_work_details) {
+                commentText += `   問題詳情:\n`;
+                result.continuous_work_details.forEach(detail => {
+                    commentText += `   - ${detail}\n`;
+                });
+            }
+            commentText += '\n';
+            
+            // 班別銜接驗證
+            commentText += `3. 班別銜接: ${result.shift_connection_passed ? '✓ 通過' : '✗ 未通過'}\n`;
+            if (!result.shift_connection_passed && result.shift_connection_details) {
+                commentText += `   問題詳情:\n`;
+                result.shift_connection_details.forEach(detail => {
+                    commentText += `   - ${detail}\n`;
+                });
+            }
+            commentText += '\n';
+            
+            // 總結
+            const allPassed = result.daily_staffing_passed && result.continuous_work_passed && result.shift_connection_passed;
+            commentText += `整體驗證結果: ${allPassed ? '✓ 全部通過' : '✗ 需要修正'}`;
+            
+            verifyComment.value = commentText;
+        }
+    }
+
+    /**
+     * 更新驗證狀態
+     * @param {string} status - 狀態類型 ('verifying', 'success', 'error')
+     * @param {string} message - 狀態訊息
+     */
+    updateVerificationStatus(status, message) {
+        const statusElement = this.container.querySelector('.verify-status');
+        const statusTextElement = this.container.querySelector('.verify-status-text');
+        
+        if (statusElement && statusTextElement) {
+            // 移除所有狀態類別
+            statusElement.classList.remove('verifying', 'success', 'error');
+            
+            // 添加新的狀態類別
+            statusElement.classList.add(status);
+            statusTextElement.textContent = message;
+        }
+    }
+
+    /**
+     * 啟用驗證 checkbox
+     */
+    enableVerificationCheckboxes() {
+        const checkboxes = this.container.querySelectorAll('.verify-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.disabled = false;
+        });
+    }
+
+    /**
+     * 禁用驗證 checkbox
+     */
+    disableVerificationCheckboxes() {
+        const checkboxes = this.container.querySelectorAll('.verify-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.disabled = true;
+            checkbox.checked = false;
+        });
     }
 }
 

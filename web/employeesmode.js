@@ -114,11 +114,14 @@ class EmployeesMode {
         const scheduleMap = new Map();
         schedules.forEach(s => {
             const workDate = s.work_date.split('T')[0]; // 確保只取 yyyy-mm-dd
-            scheduleMap.set(`${s.employee_id}-${workDate}`, s.shift_type);
+            scheduleMap.set(`${s.employee_id}-${workDate}`, {
+                shift_type: s.shift_type,
+                shift_subtype: s.shift_subtype || '' // 新增 shift_subtype 欄位
+            });
         });
 
         // 清空現有內容
-        thead.innerHTML = '<th>員工姓名</th>';
+        thead.innerHTML = '<th rowspan="2">員工姓名</th>'; // 員工姓名欄位跨越兩列
         tbody.innerHTML = '';
         
         // 獲取當前月份的天數
@@ -134,51 +137,85 @@ class EmployeesMode {
         const month = monthSelect.value; // 0-11
         const daysInMonth = new Date(year, parseInt(month) + 1, 0).getDate();
         
-        // 生成日期標題
+        // 生成日期標題 - 第一列：日期
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(year, month, day);
             const dayOfWeek = ['日', '一', '二', '三', '四', '五', '六'][date.getDay()];
             const th = document.createElement('th');
-            th.textContent = `${day}日(${dayOfWeek})`;
+            th.innerHTML = `${parseInt(month, 10) + 1}/${day}<br>(${dayOfWeek})`;
             th.className = date.getDay() === 0 || date.getDay() === 6 ? 'weekend' : '';
             thead.appendChild(th);
         }
         
         // 使用載入的員工資料生成員工行
         this.employees.forEach(employee => {
-            const row = document.createElement('tr');
+            // 為每個員工創建兩列：第一列顯示 shift_type，第二列顯示 shift_subtype
+            const mainRow = document.createElement('tr');
+            const subRow = document.createElement('tr');
+            subRow.className = 'shift-subtype-row';
             
-            // 員工姓名欄
+            // 員工姓名欄 - 跨越兩列
             const nameCell = document.createElement('td');
             nameCell.textContent = employee.name;
-            row.appendChild(nameCell);
+            nameCell.rowSpan = 2; // 跨越兩列
+            nameCell.className = 'employee-name-cell';
+            mainRow.appendChild(nameCell);
             
             // 生成每天的班表欄位
             for (let day = 1; day <= daysInMonth; day++) {
-                const cell = document.createElement('td');
-                cell.className = 'shift-cell';
-                cell.setAttribute('data-employee', employee.id);
                 const dateStr = `${year}-${String(parseInt(month) + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                cell.setAttribute('data-date', dateStr);
+                const scheduleData = scheduleMap.get(`${employee.id}-${dateStr}`);
                 
-                // 從 map 獲取班表，而不是隨機生成
-                const shiftType = scheduleMap.get(`${employee.id}-${dateStr}`);
-                const shiftInfo = this.shiftTypeMap[shiftType];
-
-                if (shiftInfo) {
-                    cell.textContent = shiftInfo.text;
-                    cell.classList.add(shiftInfo.class);
-                } else {
-                    cell.textContent = '';
+                // 檢查是否為週末
+                const date = new Date(year, month, day);
+                const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                
+                // 第一列：shift_type 儲存格
+                const mainCell = document.createElement('td');
+                mainCell.className = 'shift-cell shift-main-cell';
+                mainCell.setAttribute('data-employee', employee.id);
+                mainCell.setAttribute('data-date', dateStr);
+                
+                if (scheduleData && scheduleData.shift_type) {
+                    const shiftInfo = this.shiftTypeMap[scheduleData.shift_type];
+                    if (shiftInfo) {
+                        mainCell.textContent = shiftInfo.text;
+                        mainCell.classList.add(shiftInfo.class);
+                    }
                 }
                 
-                // 添加點擊事件（可編輯班表）
-                cell.addEventListener('click', () => this.editShift(cell));
+                // 如果是週末，加上 weekend 樣式
+                if (isWeekend) {
+                    mainCell.classList.add('weekend');
+                }
                 
-                row.appendChild(cell);
+                mainRow.appendChild(mainCell);
+                
+                // 第二列：shift_subtype 儲存格
+                const subCell = document.createElement('td');
+                subCell.className = 'shift-cell shift-sub-cell';
+                subCell.setAttribute('data-employee', employee.id);
+                subCell.setAttribute('data-date', dateStr);
+                
+                if (scheduleData && scheduleData.shift_subtype) {
+                    subCell.textContent = scheduleData.shift_subtype;
+                    // 繼承上方儲存格的樣式類別
+                    const shiftInfo = this.shiftTypeMap[scheduleData.shift_type];
+                    if (shiftInfo) {
+                        subCell.classList.add(shiftInfo.class);
+                    }
+                }
+                
+                // 如果是週末，加上 weekend 樣式
+                if (isWeekend) {
+                    subCell.classList.add('weekend');
+                }
+                
+                subRow.appendChild(subCell);
             }
             
-            tbody.appendChild(row);
+            tbody.appendChild(mainRow);
+            tbody.appendChild(subRow);
         });
     }
     
@@ -262,27 +299,6 @@ class EmployeesMode {
         searchBtn.addEventListener('click', () => this.fetchAndRenderSchedules());
     }
     
-    // 編輯班表
-    editShift(cell) {
-        const shifts = ['', ...Object.values(this.shiftTypeMap).map(s => s.text)];
-        const currentShift = cell.textContent;
-        const currentIndex = shifts.indexOf(currentShift);
-        const nextIndex = (currentIndex + 1) % shifts.length;
-        const nextShift = shifts[nextIndex];
-        
-        // 移除舊的樣式類別
-        Object.values(this.shiftTypeMap).forEach(s => cell.classList.remove(s.class));
-        
-        // 設定新的班別和樣式
-        cell.textContent = nextShift;
-        const newShiftInfo = Object.values(this.shiftTypeMap).find(s => s.text === nextShift);
-        if (newShiftInfo) {
-            cell.classList.add(newShiftInfo.class);
-        }
-        
-        // 這裡可以添加保存到資料庫的邏輯
-        console.log(`員工 ${cell.getAttribute('data-employee')} 在 ${cell.getAttribute('data-date')} 的班別改為: ${nextShift}`);
-    }
     
     // 更新員工資料（當全域變數更新時調用）
     updateEmployeesData() {
