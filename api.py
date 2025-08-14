@@ -800,6 +800,111 @@ class APIServer():
                 self.logger.error(f'更新員工需求時發生錯誤：{str(err)}')
                 return jsonify({'error': '更新員工需求失敗'}), 500
 
+        # === 新增：班別類型管理 API ===
+        @self.app.route('/api/shift-types', methods=['GET'])
+        def get_shift_types():
+            """獲取所有班別類型資料"""
+            try:
+                self.logger.info('開始從 Supabase 獲取班別類型資料...')
+                
+                response = self.supabase_client.table('shift_type').select('*').order('id').execute()
+                shift_types = response.data
+                
+                self.logger.info(f'從 Supabase 獲取到的班別類型資料：{shift_types}')
+                return jsonify(shift_types)
+            except Exception as err:
+                self.logger.error(f'取得班別類型資料時發生錯誤：{str(err)}')
+                return jsonify({'error': '無法載入班別類型資料'}), 500
+
+        @self.app.route('/api/shift-types', methods=['POST'])
+        def add_shift_type():
+            """新增班別類型"""
+            try:
+                data = request.get_json()
+                shift_name = data.get('shift_name')
+                shift_subname = data.get('shift_subname')
+                shift_group = data.get('shift_group')
+                start_time = data.get('start_time')
+                end_time = data.get('end_time')
+
+                # 驗證必填欄位
+                if not all([shift_name, shift_subname, start_time, end_time]):
+                    return jsonify({'error': '請填寫所有必填欄位'}), 400
+
+                self.logger.info('開始新增班別類型...')
+                self.logger.info(f'新增資料：{data}')
+
+                response = self.supabase_client.table('shift_type').insert({
+                    'shift_name': shift_name.strip(),
+                    'shift_subname': shift_subname.strip(),
+                    'shift_group': shift_group.strip() if shift_group else None,
+                    'start_time': start_time,
+                    'end_time': end_time
+                }).execute()
+                
+                if not response.data:
+                    raise Exception("無法新增班別類型")
+                
+                shift_type = response.data[0]
+                self.logger.info(f'新增班別類型成功：{shift_type}')
+                return jsonify(shift_type)
+            except Exception as err:
+                self.logger.error(f'新增班別類型時發生錯誤：{str(err)}')
+                return jsonify({'error': '無法新增班別類型'}), 500
+
+        @self.app.route('/api/shift-types/<int:shift_id>', methods=['PUT'])
+        def update_shift_type(shift_id):
+            """更新班別類型"""
+            try:
+                data = request.get_json()
+                shift_name = data.get('shift_name')
+                shift_subname = data.get('shift_subname')
+                shift_group = data.get('shift_group')
+                start_time = data.get('start_time')
+                end_time = data.get('end_time')
+
+                # 驗證必填欄位
+                if not all([shift_name, shift_subname, start_time, end_time]):
+                    return jsonify({'error': '請填寫所有必填欄位'}), 400
+
+                self.logger.info(f'開始更新班別類型 ID: {shift_id}...')
+                self.logger.info(f'更新資料：{data}')
+
+                response = self.supabase_client.table('shift_type').update({
+                    'shift_name': shift_name.strip(),
+                    'shift_subname': shift_subname.strip(),
+                    'shift_group': shift_group.strip() if shift_group else None,
+                    'start_time': start_time,
+                    'end_time': end_time
+                }).eq('id', shift_id).execute()
+                
+                if not response.data:
+                    return jsonify({'error': '找不到指定的班別類型'}), 404
+                
+                shift_type = response.data[0]
+                self.logger.info(f'更新班別類型成功：{shift_type}')
+                return jsonify(shift_type)
+            except Exception as err:
+                self.logger.error(f'更新班別類型時發生錯誤：{str(err)}')
+                return jsonify({'error': '無法更新班別類型'}), 500
+
+        @self.app.route('/api/shift-types/<int:shift_id>', methods=['DELETE'])
+        def delete_shift_type(shift_id):
+            """刪除班別類型"""
+            try:
+                self.logger.info(f'開始刪除班別類型 ID: {shift_id}...')
+
+                response = self.supabase_client.table('shift_type').delete().eq('id', shift_id).execute()
+                
+                if not response.data:
+                    return jsonify({'error': '找不到指定的班別類型'}), 404
+                
+                self.logger.info(f'刪除班別類型成功：ID {shift_id}')
+                return jsonify({'status': 'success', 'message': '班別類型已刪除'})
+            except Exception as err:
+                self.logger.error(f'刪除班別類型時發生錯誤：{str(err)}')
+                return jsonify({'error': '無法刪除班別類型'}), 500
+
     def run(self):
         """啟動 Flask 應用"""
         self.app.run(host=self.host, port=self.port, debug=self.debug)

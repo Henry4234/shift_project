@@ -59,6 +59,7 @@
 │   ├── employeesmode.js   # 員工模式功能
 │   ├── swichmode.js       # 模式切換功能
 │   ├── employee_config.js # 員工設定功能
+│   ├── shifttype_config.js # 班別設定功能
 │   ├── sidebar.js         # 側邊欄功能
 │   ├── Dockerfile         # 前端 Docker 配置
 │   └── nginx.conf         # Nginx 配置檔案
@@ -68,6 +69,7 @@
 ├── requirements.txt       # Python 依賴
 ├── Dockerfile            # 後端 Docker 配置
 ├── docker-compose.yml    # Docker Compose 配置
+├── db_shift_type.sql     # 班別類型表格初始化 SQL
 ├── .env.example          # 環境變數範本
 └── README.md            # 本文件
 ```
@@ -80,6 +82,12 @@
 - `GET /api/employee-preferences` - 獲取員工偏好設定
 - `POST /api/employee-preferences/<id>` - 更新員工偏好設定
 - `POST /api/employee-amount/<id>` - 更新員工班別數量
+
+### 班別類型管理
+- `GET /api/shift-types` - 獲取所有班別類型資料
+- `POST /api/shift-types` - 新增班別類型
+- `PUT /api/shift-types/<id>` - 更新班別類型
+- `DELETE /api/shift-types/<id>` - 刪除班別類型
 
 ### 班表管理
 - `GET /api/shift-requirements` - 獲取班表需求
@@ -98,6 +106,15 @@
 2. `shift_requirements` - 班次需求
    - `id`: 序號 (主鍵)
    - `employee_id`: 員工 ID (外鍵)
+
+3. `shift_type` - 班別類型定義
+   - `id`: 序號 (主鍵)
+   - `shift_name`: 班別名稱 (例如：早班、中班、夜班)
+   - `shift_subname`: 班別副名稱 (例如：A班、B班、C班)
+   - `shift_group`: 班別分組 (例如：白班、小夜、大夜)
+   - `start_time`: 班別開始時間
+   - `end_time`: 班別結束時間
+   - `created_at`: 建立時間
    - `shift_type`: 班別類型 ('A', 'B', 'C')
    - `required_days`: 需求天數
    - `created_at`: 建立時間
