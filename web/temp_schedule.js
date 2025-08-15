@@ -50,11 +50,10 @@ class TempScheduleMode {
 
     /**
      * 顯示特定週期的暫存班表
-     * @param {object} cycleData - 週期資料，包含 cycle_id, start_date, end_date
+     * @param {object} cycleData - 週期資料，包含 cycle_id, start_date, end_date, shift_group
      */
     async show(cycleData) {
         this.cycleData = cycleData;
-        
         // 1. 渲染基本結構 (標題、副標題、表格容器)
         this.container.innerHTML = `
             <div class="temp-schedule-mode">
@@ -62,6 +61,7 @@ class TempScheduleMode {
                     <div>
                         <h2>週期 #${this.cycleData.cycle_id}</h2>
                         <p>日期區間: ${this.cycleData.start_date} ~ ${this.cycleData.end_date}</p>
+                        <p>班別群組: ${this.cycleData.shift_group}</p>
                     </div>
                     <div class="header-actions">
                         <button type="button" class="btn-save-leaves">儲存休假資料</button>    

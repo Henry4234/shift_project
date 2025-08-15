@@ -62,7 +62,9 @@ class ModeSwitcher {
                     cycle_id: draftButton.dataset.cycleId,
                     start_date: draftButton.dataset.startDate,
                     end_date: draftButton.dataset.endDate,
+                    shift_group: draftButton.dataset.shiftGroup,
                 };
+                console.log(draftButton.dataset)
                 this.switchToTempScheduleMode(cycleData);
             }
         });

@@ -36,6 +36,12 @@ window.addEventListener('DOMContentLoaded', () => {
                                         <label class="form-label">排班區間天數</label>
                                         <div id="scheduleDays">0 天</div>
                                     </div>
+                                    <div class="date-settings-cell shift-select">
+                                        <label class="form-label">選擇班別群組</label>
+                                        <div id="ShiftListGroup" class="list-group">
+                                            <!-- 班別列表將動態生成於此 -->
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -93,6 +99,8 @@ window.addEventListener('DOMContentLoaded', () => {
             document.getElementById('startScheduleForm').reset();
             // 設定員工選擇列表並更新人數
             setupEmployeeSelection();
+            // 設定班別群組選擇列表
+            setupShiftGroupSelection();
             document.getElementById('scheduleDays').textContent = '0 天';
             startScheduleModal.show();
         }
@@ -198,6 +206,45 @@ window.addEventListener('DOMContentLoaded', () => {
         updateEmployeeCount();
     }
 
+    // 設定班別群組選擇列表
+    async function setupShiftGroupSelection() {
+        const listGroup = document.getElementById('ShiftListGroup');
+        
+        try {
+            // 從 API 獲取班別群組名稱
+            const response = await fetch('/api/shift-group-names');
+            const groupNames = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(groupNames.error || '無法載入班別群組');
+            }
+            
+            listGroup.innerHTML = ''; // 清空舊列表
+
+            if (groupNames.length === 0) {
+                listGroup.innerHTML = '<div class="list-group-item">沒有可選擇的班別群組。</div>';
+                return;
+            }
+
+            // 建立班別群組選項
+            groupNames.forEach((groupName, index) => {
+                const item = document.createElement('div');
+                item.className = 'list-group-item';
+                item.innerHTML = `
+                    <div class="form-check">
+                        <input class="form-check-input shift-group-checkbox" type="radio" name="shiftGroup" value="${groupName}" id="shift-group-${index}" ${index === 0 ? 'checked' : ''}>
+                        <label class="form-check-label" for="shift-group-${index}">${groupName}</label>
+                    </div>
+                `;
+                listGroup.appendChild(item);
+            });
+
+        } catch (error) {
+            console.error('載入班別群組時發生錯誤:', error);
+            listGroup.innerHTML = '<div class="list-group-item text-danger">載入班別群組失敗</div>';
+        }
+    }
+
     // 監聽員工參數設定按鈕，跳轉到員工設定面板
     document.getElementById('employeeConfigBtn').addEventListener('click', () => {
         if (window.employeeConfigManager) {
@@ -212,16 +259,28 @@ window.addEventListener('DOMContentLoaded', () => {
         const endDate = document.getElementById('scheduleEndDate').value;
         const selectedIds = Array.from(document.querySelectorAll('#employeeListGroup .employee-checkbox:checked'))
             .map(cb => parseInt(cb.value, 10));
+        const selectedShiftGroup = document.querySelector('input[name="shiftGroup"]:checked')?.value;
+        
         if (!startDate || !endDate || selectedIds.length === 0) {
             alert('請選擇日期與員工');
             return;
         }
+        
+        if (!selectedShiftGroup) {
+            alert('請選擇班別群組');
+            return;
+        }
+        
         try {
             // 1. 建立 cycle
             const resp1 = await fetch('/api/schedule-cycles', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ start_date: startDate, end_date: endDate })
+                body: JSON.stringify({ 
+                    start_date: startDate, 
+                    end_date: endDate,
+                    shift_group: selectedShiftGroup
+                })
             });
             const data1 = await resp1.json();
             if (!resp1.ok) throw new Error(data1.error || '建立週期失敗');
