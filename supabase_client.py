@@ -97,7 +97,7 @@ def fetch_schedule_cycle(cycle_id: int):
         response = (
             supabase
             .from_('schedule_cycles')
-            .select('cycle_id, start_date, end_date, status, cycle_comment')
+            .select('cycle_id, start_date, end_date, status, shift_group, cycle_comment')
             .eq('cycle_id', cycle_id)
             .execute()
         )
@@ -108,3 +108,7 @@ def fetch_schedule_cycle(cycle_id: int):
     except Exception as e:
         print(f"Error fetching schedule cycle: {e}")
         return None 
+    
+def fetch_shift_group(shift_name: vars):
+    """根據shift_group_name_調取該班別群組的每週上班狀態"""
+    return None
