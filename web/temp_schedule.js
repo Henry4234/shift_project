@@ -46,6 +46,16 @@ class TempScheduleMode {
         this.hasRequirementsChanged = false;
         // 當前選中的需求儲存格
         this.selectedRequirementCell = null;
+        
+        // === 新增：時間軸流程狀態管理 ===
+        this.timelineSteps = [
+            { id: 'create-cycle', name: '建立週期', status: 'completed' },
+            { id: 'set-leaves', name: '預/畫假', status: 'current' },
+            { id: 'auto-schedule', name: '自動排班', status: 'pending' },
+            { id: 'verify-schedule', name: '驗證排班', status: 'pending' },
+            { id: 'add-subtype', name: '安排工作內容', status: 'pending' },
+            { id: 'complete', name: '完成', status: 'pending' }
+        ];
     }
 
     /**
@@ -56,6 +66,9 @@ class TempScheduleMode {
         this.cycleData = cycleData;
         // 1. 渲染基本結構 (標題、副標題、表格容器)
         this.container.innerHTML = `
+            <div class="temp-schedule-timeline">
+                ${this.renderTimeline()}
+            </div>
             <div class="temp-schedule-mode">
                 <div class="temp-schedule-header">
                     <div>
@@ -140,6 +153,7 @@ class TempScheduleMode {
                 </div>
             </div>
         `;
+        
         // 1.5 載入備註
         await this.loadComment();
         // 2. 先獲取此週期的成員
@@ -166,6 +180,9 @@ class TempScheduleMode {
         
         // 10. 初始化驗證 checkbox 狀態
         this.disableVerificationCheckboxes();
+        
+        // 11. 初始化時間軸狀態
+        this.initializeTimeline();
     }
 
     /**
@@ -736,6 +753,10 @@ class TempScheduleMode {
             setTimeout(() => {
                 resultToast.remove();
             }, 3000);
+            
+            // 更新時間軸狀態 - 休假資料已儲存
+            this.updateTimelineStep('set-leaves', 'completed');
+            
             return result;
             
         } catch (error) {
@@ -869,6 +890,12 @@ class TempScheduleMode {
             // 清除前端顯示
             this.clearAllLeaves();
             
+            // 更新時間軸狀態 - 清除休假後回到預/畫假階段
+            this.updateTimelineStep('set-leaves', 'current');
+            this.updateTimelineStep('auto-schedule', 'pending');
+            this.updateTimelineStep('verify-schedule', 'pending');
+            this.updateTimelineStep('complete', 'pending');
+            
             // 顯示成功訊息
             if (result.status === 'success') {
                 alert(`成功清除 ${result.count} 筆休假資料！`);
@@ -901,6 +928,12 @@ class TempScheduleMode {
         
         // 更新實際班別統計
         this.updateActualShiftCounts();
+        
+        // 更新時間軸狀態 - 清除休假後回到預/畫假階段
+        this.updateTimelineStep('set-leaves', 'current');
+        this.updateTimelineStep('auto-schedule', 'pending');
+        this.updateTimelineStep('verify-schedule', 'pending');
+        this.updateTimelineStep('complete', 'pending');
         
         console.log('已清除所有休假標記');
     }
@@ -942,14 +975,19 @@ class TempScheduleMode {
                 // 排班成功，更新表格內容
                 this.updateScheduleTable(result.data);
                 
-                        // 重新載入已儲存的休假資料，確保休假安排正確
-        await this.loadSavedLeaveData();
-        
-        // 更新實際班別統計
-        this.updateActualShiftCounts();
-        
-        // 標記已執行自動排班
-        this.hasAutoScheduled = true;
+                // 重新載入已儲存的休假資料，確保休假安排正確
+                await this.loadSavedLeaveData();
+                
+                // 更新實際班別統計
+                this.updateActualShiftCounts();
+                
+                // 標記已執行自動排班
+                this.hasAutoScheduled = true;
+                
+                // 更新時間軸狀態
+                this.updateTimelineStep('set-leaves', 'completed');
+                this.updateTimelineStep('auto-schedule', 'completed');
+                this.updateTimelineStep('verify-schedule', 'current');
                 
                 this.showMessage('自動排班成功！', 'success');
             } else {
@@ -1548,7 +1586,19 @@ class TempScheduleMode {
             
             // 驗證完成
             this.updateVerificationStatus('success', '驗證完成！');
-            this.showMessage('班表驗證完成！', 'success');
+            
+            // 檢查所有驗證項目是否都通過
+            const allVerificationsPassed = this.checkAllVerificationsPassed(result);
+            
+            if (allVerificationsPassed) {
+                // 所有驗證都通過，更新時間軸狀態
+                this.updateTimelineStep('verify-schedule', 'completed');
+                this.updateTimelineStep('add-subtype', 'current');
+                this.showMessage('班表驗證完成！所有項目均通過！', 'success');
+            } else {
+                // 有驗證項目未通過，不更新時間軸狀態
+                this.showMessage('班表驗證完成！但仍有項目需要修正。', 'info');
+            }
             
         } catch (error) {
             console.error('班表驗證失敗:', error);
@@ -1651,7 +1701,9 @@ class TempScheduleMode {
         if (shiftConnectionCheckbox) {
             shiftConnectionCheckbox.checked = result.shift_connection_passed;
         }
-        
+
+        this.disableVerificationCheckboxes();
+
         // 更新驗證註解
         const verifyComment = document.getElementById('verifycomment');
         if (verifyComment) {
@@ -1731,8 +1783,120 @@ class TempScheduleMode {
         const checkboxes = this.container.querySelectorAll('.verify-checkbox');
         checkboxes.forEach(checkbox => {
             checkbox.disabled = true;
-            checkbox.checked = false;
+            // checkbox.checked = false;
         });
+    }
+
+    /**
+     * 渲染時間軸流程
+     * @returns {string} HTML 字串
+     */
+    renderTimeline() {
+        return `
+            <div class="timeline-header">
+                <h3>暫存班表流程</h3>
+            </div>
+            <div class="timeline-steps">
+                ${this.timelineSteps.map((step, index) => `
+                    <div class="timeline-step ${step.status}" data-step="${step.id}">
+                        <div class="step-icon">
+                            <i class="bx ${this.getStepIcon(step.status)}"></i>
+                        </div>
+                        <div class="step-label">${step.name}</div>
+                    </div>
+                    ${index < this.timelineSteps.length - 1 ? '<div class="timeline-arrow"><i class="bx bx-chevron-right"></i></div>' : ''}
+                `).join('')}
+            </div>
+        `;
+    }
+
+    /**
+     * 根據步驟狀態獲取對應的圖示
+     * @param {string} status - 步驟狀態
+     * @returns {string} 圖示類別名稱
+     */
+    getStepIcon(status) {
+        switch (status) {
+            case 'completed':
+                return 'bx-check-circle';
+            case 'current':
+                return 'bx-time';
+            case 'pending':
+                return 'bx-circle';
+            default:
+                return 'bx-circle';
+        }
+    }
+
+    /**
+     * 初始化時間軸狀態
+     */
+    initializeTimeline() {
+        // 根據當前狀態設定時間軸
+        this.updateTimelineStep('create-cycle', 'completed');
+        this.updateTimelineStep('set-leaves', 'current');
+        this.updateTimelineStep('auto-schedule', 'pending');
+        this.updateTimelineStep('verify-schedule', 'pending');
+        this.updateTimelineStep('add-subtype','pending');
+        this.updateTimelineStep('complete', 'pending');
+    }
+
+    /**
+     * 更新時間軸步驟狀態
+     * @param {string} stepId - 步驟ID
+     * @param {string} status - 新狀態
+     */
+    updateTimelineStep(stepId, status) {
+        const step = this.timelineSteps.find(s => s.id === stepId);
+        if (step) {
+            step.status = status;
+            this.renderTimelineStep(stepId, status);
+        }
+    }
+
+    /**
+     * 渲染時間軸步驟
+     * @param {string} stepId - 步驟ID
+     * @param {string} status - 步驟狀態
+     */
+    renderTimelineStep(stepId, status) {
+        const stepElement = this.container.querySelector(`[data-step="${stepId}"]`);
+        if (stepElement) {
+            // 移除所有狀態類別
+            stepElement.classList.remove('completed', 'current', 'pending');
+            // 添加新狀態類別
+            stepElement.classList.add(status);
+            
+            // 更新圖示
+            const iconElement = stepElement.querySelector('.step-icon i');
+            if (iconElement) {
+                iconElement.className = `bx ${this.getStepIcon(status)}`;
+            }
+        }
+    }
+
+    /**
+     * 檢查所有驗證項目是否都通過
+     * @param {Object} result - 驗證結果
+     * @returns {boolean} 是否所有驗證都通過
+     */
+    checkAllVerificationsPassed(result) {
+        // 檢查三個主要驗證項目是否都通過
+        return result.daily_staffing_passed && 
+               result.continuous_work_passed && 
+               result.shift_connection_passed;
+    }
+
+    /**
+     * 更新整個時間軸狀態
+     */
+    updateTimelineStatus() {
+        // 根據當前進度更新時間軸
+        if (this.hasAutoScheduled) {
+            this.updateTimelineStep('set-leaves', 'completed');
+            this.updateTimelineStep('auto-schedule', 'completed');
+            this.updateTimelineStep('verify-schedule', 'current');
+        }
     }
 }
 

@@ -32,6 +32,7 @@
   --border-selected:#007bff;
   --schedule-verify-checkbox: #e3f2fd;
   --group-weekend: #fce4ec;
+  --timeline-current-color: #fff;
 }
 body {
   background-color: #e7f2fd;
@@ -65,6 +66,7 @@ body.dark {
   --border-selected: #b0c4d6;
   --schedule-verify-checkbox: #30577d;
   --group-weekend: #4f3636;
+  --timeline-current-color: #007bff;
 }
 
 /* 加載動畫 */
@@ -431,7 +433,7 @@ body.dark {
 .content {
     /* width: 530px; */
     position: relative; 
-    top: 90px;
+    top: 50px;
     right: 0;
     height: calc(100% - 90px);
     margin-left: 260px;              /* 260px = sidebar 展開寬度 */
@@ -634,6 +636,148 @@ body.dark {
 .temp-schedule-header .header-actions button:hover {
     background: var(--blue-color);
 }
+
+/* === 時間軸流程樣式 === */
+.temp-schedule-timeline {
+    background: var(--cycle-bg-color);
+    border-radius: 12px;
+    box-shadow: 0 4px 24px 0 rgba(0,0,0,0.13);
+    padding: 24px;
+    margin-bottom: 15px;
+    animation: fadeInTable 0.4s;
+}
+
+.timeline-header {
+    text-align: center;
+    margin-bottom: 2px;
+}
+
+.timeline-header h3 {
+    color: var(--black-color);
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 10px;
+}
+
+.timeline-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.timeline-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 12px;
+    border-radius: 8px;
+    min-width: 100px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.timeline-step .step-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    transition: all 0.3s ease;
+}
+
+.timeline-step .step-label {
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    color: var(--black-color);
+    white-space: nowrap;
+}
+
+/* 步驟狀態樣式 */
+.timeline-step.completed .step-icon {
+    background-color: #28a745;
+    color: white;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.timeline-step.current .step-icon {
+    background-color: var(--blue-color);
+    color: var(--timeline-current-color);
+    box-shadow: 0 2px 8px rgba(64, 112, 244, 0.3);
+    animation: pulse 2s infinite;
+}
+
+.timeline-step.pending .step-icon {
+    background-color: var(--grey-color-light);
+    color: var(--white-color);
+    opacity: 0.6;
+}
+
+/* 箭頭樣式 */
+.timeline-arrow {
+    display: flex;
+    align-items: center;
+    color: var(--grey-color);
+    font-size: 40px;
+    margin: 0 4px;
+    transition: color 0.3s ease;
+}
+
+.timeline-step.completed + .timeline-arrow {
+    color: #28a745;
+}
+
+.timeline-step.current + .timeline-arrow {
+    color: var(--blue-color);
+}
+
+/* 脈衝動畫 */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 2px 8px rgba(64, 112, 244, 0.3);
+    }
+    50% {
+        box-shadow: 0 2px 16px rgba(64, 112, 244, 0.6);
+    }
+    100% {
+        box-shadow: 0 2px 8px rgba(64, 112, 244, 0.3);
+    }
+}
+
+/* 響應式設計 */
+@media screen and (max-width: 768px) {
+    .timeline-steps {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .timeline-arrow {
+        transform: rotate(90deg);
+        margin: 8px 0;
+    }
+    
+    .timeline-step {
+        min-width: 120px;
+        padding: 12px 8px;
+    }
+    
+    .timeline-step .step-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+    
+    .timeline-step .step-label {
+        font-size: 12px;
+    }
+}
+
 .temp-schedule-mode, .verify-schedule {
     box-shadow: 0 4px 24px 0 rgba(0,0,0,0.13);
     border-radius: 12px;
