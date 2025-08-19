@@ -43,9 +43,11 @@ from supabase_client import (
     fetch_shift_requirements,
     fetch_employee_preferences,
     fetch_temp_offdays,
-    fetch_schedule_cycle
+    fetch_schedule_cycle,
+    fetch_shift_group
 )
 from verify_shift import verify_shift_assignment
+from collections import defaultdict
 
 # ===================== 第一階段：休假分配 =====================
 class OffdayPlanner:
@@ -72,11 +74,20 @@ class OffdayPlanner:
         self.shift_req_data = fetch_shift_requirements(self.cycle_id)
         self.offdays_raw = fetch_temp_offdays(self.cycle_id)
         self.prefs_raw = fetch_employee_preferences()
+        self.shift_group_raw = fetch_shift_group(self.cycle_id)
         self.emp_names = [e['name'] for e in self.employees_data]
         self.E = len(self.emp_names)
         self.emp_idx = {name: i for i, name in enumerate(self.emp_names)}
 
         # 需求、休假、偏好
+        #星期幾要上幾天的dict
+        #格式:{int(星期):int(天數)} =>星期使用星期一:0表示
+        self.shift_group_days={}
+        for weekday_num, shifts_amount in self.shift_group_raw.items():
+            counter = 0
+            for shiftsitem in shifts_amount:
+                counter+=shiftsitem['amount']
+            self.shift_group_days[weekday_num] = counter
         #每個員工的上班總天數
         #格式:{str(員工):int(天數)}
         self.total_days_req = {
@@ -117,7 +128,8 @@ class OffdayPlanner:
         # 2. 硬限制:每日需求(每日上班人數)
         for d, date_str in enumerate(self.dates):
             dt = datetime.strptime(date_str, '%Y-%m-%d')
-            required = 6 if dt.weekday() <= 4 else (4 if dt.weekday() == 5 else 3)
+            # required = 6 if dt.weekday() <= 4 else (4 if dt.weekday() == 5 else 3)
+            required = self.shift_group_days[dt.weekday()]
             self.model.Add(sum(self.x[e, d] for e in range(self.E)) >= required)
         # 3. 硬限制:員工每月上班天數加總
         for name in self.emp_names:
@@ -217,12 +229,13 @@ class OffdayPlanner:
 # ===================== 第二階段：班別分配 =====================
 
 class ShiftAssignmentSolver:
-    def __init__(self, first_stage_result, shift_requirements, offdays_raw, dates=None):
+    def __init__(self, first_stage_result, shift_requirements, offdays_raw, shift_group, dates=None):
         """
         first_stage_result: dict, 來自第一階段的 result['schedule']，格式 {員工: [0/1, ...]}
-        shift_requirements: dict, 來自 simulate_shiftrequirements.json
-        offdays_raw: dict, 來自 simulate_offdays.json
+        shift_requirements: dict, 來自第一階段的shift_req_data
+        offdays_raw: dict, 來自第一階段的offdays_raw
         dates: list, 日期字串清單（可選，若有則用於藍O判斷）
+        shift_group:dict, 來自第一階段的shift_group_raw
         """
         self.model = cp_model.CpModel()
         self.employees = list(first_stage_result.keys())
@@ -230,13 +243,22 @@ class ShiftAssignmentSolver:
         self.shifts = ['A', 'B', 'C']
         self.shift_requirements = shift_requirements
         self.offdays_raw = offdays_raw
+        self.shift_group_raw = shift_group
+        self.shift_group_convert = {"day":"A","evening":"B","night":"C"}
         self.dates = dates if dates is not None else [str(i) for i in range(self.D)]
+        
         # print(self.employees)
         # print(self.D)
         # print(self.shift_requirements)
         # 取得藍O日期
         self.blue_off = {name: set(item['date'] for item in offdays_raw.get(name, []) if item['type'] == '藍O') for name in self.employees}
-
+        #整理shift_group_raw
+        self.shift_group={}
+        for weekday,shifts in self.shift_group_raw.items():
+            counter = defaultdict(int)
+            for value in shifts:
+                counter[value["shift_group"]] += value["amount"]
+            self.shift_group[weekday] = dict((self.shift_group_convert[key], value) for (key, value) in counter.items())
         # 只針對 W 的日子建立班別決策變數
         self.x = {}  # (e, d, s): BoolVar
         for e, name in enumerate(self.employees):
@@ -262,12 +284,13 @@ class ShiftAssignmentSolver:
             weekday = dt.weekday()  # Monday = 0, Sunday = 6
             
             # 根據星期幾設定每日班別需求
-            if weekday <= 4:  # 週一到週五
-                daily_req = {'A': 3, 'B': 2, 'C': 1}
-            elif weekday == 5:  # 週六
-                daily_req = {'A': 2, 'B': 1, 'C': 1}
-            else:  # 週日
-                daily_req = {'A': 1, 'B': 1, 'C': 1}
+            daily_req = self.shift_group[weekday]
+            # if weekday <= 4:  # 週一到週五
+            #     daily_req = {'A': 3, 'B': 2, 'C': 1}
+            # elif weekday == 5:  # 週六
+            #     daily_req = {'A': 2, 'B': 1, 'C': 1}
+            # else:  # 週日
+            #     daily_req = {'A': 1, 'B': 1, 'C': 1}
             # 加入每日班別需求限制（懲罰不足的情況）
             for s in self.shifts:
                 # if daily_req[s] > 0:
@@ -397,13 +420,15 @@ def run_auto_scheduling(cycle_id):
         current_retry = 0
         shift_requirements = planner.shift_req_data
         offdays_raw = planner.offdays_raw
-        
+        shift_group = planner.shift_group_raw
+
         while current_retry < max_retries:
             # 建立第二階段求解器
             shift_solver = ShiftAssignmentSolver(
                 first_stage_result['schedule'], 
                 shift_requirements, 
-                offdays_raw, 
+                offdays_raw,
+                shift_group, 
                 dates=planner.dates
             )
             shift_solver.add_constraints()
@@ -510,6 +535,7 @@ def debug_auto_scheduling(cycle_id):
         current_retry = 0
         shift_requirements = planner.shift_req_data
         offdays_raw = planner.offdays_raw
+        shift_group = planner.shift_group_raw
         
         while current_retry < max_retries:
             print(f"\n--- 第二階段第 {current_retry + 1} 次嘗試 ---")
@@ -518,6 +544,7 @@ def debug_auto_scheduling(cycle_id):
                 first_stage_result['schedule'], 
                 shift_requirements, 
                 offdays_raw, 
+                shift_group,
                 dates=planner.dates
             )
             shift_solver.add_constraints()

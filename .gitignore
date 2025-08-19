@@ -3,3 +3,4 @@ weiran_aitech/
 .DS_store
 schedule_result.json
 test_jsondata.py
+test_api.py
