@@ -2080,7 +2080,9 @@ nav.content.fadeout {
 }
 
 /* 夜間模式適配 */
-body.dark #startScheduleModal .modal-content,body.dark #shiftTypeModal .modal-content {
+body.dark #startScheduleModal .modal-content,
+body.dark #shiftTypeModal .modal-content,
+body.dark #shiftGroupModal .modal-content {
     background-color: var(--white-color);
     color: var(--grey-color);
 }
