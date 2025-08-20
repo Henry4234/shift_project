@@ -679,6 +679,65 @@ class APIServer():
                 self.logger.error(f'清除週期休假資料時發生錯誤：{str(err)}')
                 return jsonify({'error': '清除休假資料失敗'}), 500
 
+        # === 新增：獲取班別群組資訊 ===
+        @self.app.route('/api/schedule-cycle-shift-group', methods=['GET'])
+        def get_schedule_cycle_shift_group():
+            """
+            根據 cycle_id 獲取該週期的班別群組資訊
+            - 查詢參數: cycle_id (int)
+            - 回傳: 重新整理後的班別群組資料
+            """
+            cycle_id = request.args.get('cycle_id')
+            if not cycle_id:
+                return jsonify({'error': '缺少 cycle_id 參數'}), 400
+            
+            try:
+                self.logger.info(f'開始獲取週期 #{cycle_id} 的班別群組資訊...')
+                
+                # 先查詢週期的 shift_group 名稱
+                cycle_response = self.supabase_client.table('schedule_cycles') \
+                    .select('shift_group') \
+                    .eq('cycle_id', int(cycle_id)) \
+                    .single() \
+                    .execute()
+                
+                if not cycle_response.data:
+                    return jsonify({'error': '找不到指定的週期'}), 404
+                
+                shift_group_name = cycle_response.data['shift_group']
+                
+                # 查詢該班別群組的詳細資訊
+                response = self.supabase_client.table('shift_group') \
+                    .select('group_name, weekday, shift_type(shift_name, shift_subname, shift_group), amount') \
+                    .eq('group_name', shift_group_name) \
+                    .execute()
+                
+                if not response.data:
+                    return jsonify({'error': '找不到班別群組資料'}), 404
+                
+                # 重新整理資料格式
+                shift_group_data = {}
+                for row in response.data:
+                    weekday = row['weekday']
+                    shift_info = row['shift_type']
+                    
+                    if weekday not in shift_group_data:
+                        shift_group_data[weekday] = []
+                    
+                    shift_group_data[weekday].append({
+                        'shift_name': shift_info['shift_name'],
+                        'shift_subname': shift_info['shift_subname'],
+                        'shift_group': shift_info['shift_group'],
+                        'amount': row['amount']
+                    })
+                
+                self.logger.info(f'成功獲取週期 #{cycle_id} 的班別群組資料')
+                return jsonify(shift_group_data)
+                
+            except Exception as err:
+                self.logger.error(f'獲取班別群組資訊時發生錯誤：{str(err)}')
+                return jsonify({'error': '獲取班別群組資訊失敗'}), 500
+
         # === 新增：驗證班表 ===
         @self.app.route('/api/verify-schedule', methods=['POST'])
         def verify_schedule():
