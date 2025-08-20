@@ -1376,7 +1376,6 @@ body.dark {
   width: 100%;
   min-width: 900px;
   table-layout: fixed; /* 固定表格佈局 */
-  overflow: hidden;
 }
 .employees-table th, .employees-table td {
   border: 1px solid #e0e0e0;
@@ -1410,9 +1409,12 @@ body.dark {
   font-size: 12px;
   margin-top: 2px;
 }
-.employees-table th:first-child{
+.employees-table th:first-child, .employees-table td:first-child{
   background: var(--table-td-color);
   color: var(--black-color);
+  position: sticky;
+  left: 0;
+  z-index: 2;
   font-size: 15px;
   font-weight: 500;
   min-width: 90px;
