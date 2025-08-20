@@ -1385,6 +1385,7 @@ body.dark {
   text-align: center;
   font-size: 15px;
   height: 40px; /* 設定基本儲存格高度 */
+  width: 40px;
   vertical-align: middle;
 }
 .employees-table th {
