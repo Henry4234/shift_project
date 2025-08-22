@@ -46,22 +46,39 @@ class TempScheduleMode {
         this.hasRequirementsChanged = false;
         // 當前選中的需求儲存格
         this.selectedRequirementCell = null;
+        
+        // === 新增：工作內容安排模式 ===
+        this.shiftGroupData = null; // 儲存班別群組資料
+        this.isSubtypeMode = false; // 標記是否處於工作內容安排模式
+        
+        // === 新增：時間軸流程狀態管理 ===
+        this.timelineSteps = [
+            { id: 'create-cycle', name: '建立週期', status: 'completed' },
+            { id: 'set-leaves', name: '預/畫假', status: 'current' },
+            { id: 'auto-schedule', name: '自動排班', status: 'pending' },
+            { id: 'verify-schedule', name: '驗證排班', status: 'pending' },
+            { id: 'add-subtype', name: '安排工作內容', status: 'pending' },
+            { id: 'complete', name: '完成', status: 'pending' }
+        ];
     }
 
     /**
      * 顯示特定週期的暫存班表
-     * @param {object} cycleData - 週期資料，包含 cycle_id, start_date, end_date
+     * @param {object} cycleData - 週期資料，包含 cycle_id, start_date, end_date, shift_group
      */
     async show(cycleData) {
         this.cycleData = cycleData;
-        
         // 1. 渲染基本結構 (標題、副標題、表格容器)
         this.container.innerHTML = `
+            <div class="temp-schedule-timeline">
+                ${this.renderTimeline()}
+            </div>
             <div class="temp-schedule-mode">
                 <div class="temp-schedule-header">
                     <div>
                         <h2>週期 #${this.cycleData.cycle_id}</h2>
                         <p>日期區間: ${this.cycleData.start_date} ~ ${this.cycleData.end_date}</p>
+                        <p>班別群組: ${this.cycleData.shift_group}</p>
                     </div>
                     <div class="header-actions">
                         <button type="button" class="btn-save-leaves">儲存休假資料</button>    
@@ -140,6 +157,7 @@ class TempScheduleMode {
                 </div>
             </div>
         `;
+        
         // 1.5 載入備註
         await this.loadComment();
         // 2. 先獲取此週期的成員
@@ -166,6 +184,9 @@ class TempScheduleMode {
         
         // 10. 初始化驗證 checkbox 狀態
         this.disableVerificationCheckboxes();
+        
+        // 11. 初始化時間軸狀態
+        this.initializeTimeline();
     }
 
     /**
@@ -405,6 +426,17 @@ class TempScheduleMode {
             });
         });
     }
+    /**
+     * 移除點擊事件監聽器到所有 shift-cell
+     */
+    removeClickEventListeners() {
+        const shiftCells = this.container.querySelectorAll('.shift-cell');
+        shiftCells.forEach(cell => {
+            cell.removeEventListener('click', (event) => {
+                this.handleShiftCellClick(event);
+            });
+        });
+    }
 
     /**
      * 添加按鈕事件監聽器
@@ -450,6 +482,14 @@ class TempScheduleMode {
         if (verifyShiftBtn) {
             verifyShiftBtn.addEventListener('click', async () => {
                 await this.runScheduleVerification();
+            });
+        }
+
+        // === 新增：工作內容安排按鈕 ===
+        const shiftSubtypeBtn = this.container.querySelector('.shift-subtype-btn');
+        if (shiftSubtypeBtn) {
+            shiftSubtypeBtn.addEventListener('click', async () => {
+                await this.AddSubtypeMode();
             });
         }
     }
@@ -736,6 +776,10 @@ class TempScheduleMode {
             setTimeout(() => {
                 resultToast.remove();
             }, 3000);
+            
+            // 更新時間軸狀態 - 休假資料已儲存
+            this.updateTimelineStep('set-leaves', 'completed');
+            
             return result;
             
         } catch (error) {
@@ -869,6 +913,12 @@ class TempScheduleMode {
             // 清除前端顯示
             this.clearAllLeaves();
             
+            // 更新時間軸狀態 - 清除休假後回到預/畫假階段
+            this.updateTimelineStep('set-leaves', 'current');
+            this.updateTimelineStep('auto-schedule', 'pending');
+            this.updateTimelineStep('verify-schedule', 'pending');
+            this.updateTimelineStep('complete', 'pending');
+            
             // 顯示成功訊息
             if (result.status === 'success') {
                 alert(`成功清除 ${result.count} 筆休假資料！`);
@@ -901,6 +951,12 @@ class TempScheduleMode {
         
         // 更新實際班別統計
         this.updateActualShiftCounts();
+        
+        // 更新時間軸狀態 - 清除休假後回到預/畫假階段
+        this.updateTimelineStep('set-leaves', 'current');
+        this.updateTimelineStep('auto-schedule', 'pending');
+        this.updateTimelineStep('verify-schedule', 'pending');
+        this.updateTimelineStep('complete', 'pending');
         
         console.log('已清除所有休假標記');
     }
@@ -942,14 +998,19 @@ class TempScheduleMode {
                 // 排班成功，更新表格內容
                 this.updateScheduleTable(result.data);
                 
-                        // 重新載入已儲存的休假資料，確保休假安排正確
-        await this.loadSavedLeaveData();
-        
-        // 更新實際班別統計
-        this.updateActualShiftCounts();
-        
-        // 標記已執行自動排班
-        this.hasAutoScheduled = true;
+                // 重新載入已儲存的休假資料，確保休假安排正確
+                await this.loadSavedLeaveData();
+                
+                // 更新實際班別統計
+                this.updateActualShiftCounts();
+                
+                // 標記已執行自動排班
+                this.hasAutoScheduled = true;
+                
+                // 更新時間軸狀態
+                this.updateTimelineStep('set-leaves', 'completed');
+                this.updateTimelineStep('auto-schedule', 'completed');
+                this.updateTimelineStep('verify-schedule', 'current');
                 
                 this.showMessage('自動排班成功！', 'success');
             } else {
@@ -1548,7 +1609,19 @@ class TempScheduleMode {
             
             // 驗證完成
             this.updateVerificationStatus('success', '驗證完成！');
-            this.showMessage('班表驗證完成！', 'success');
+            
+            // 檢查所有驗證項目是否都通過
+            const allVerificationsPassed = this.checkAllVerificationsPassed(result);
+            
+            if (allVerificationsPassed) {
+                // 所有驗證都通過，更新時間軸狀態
+                this.updateTimelineStep('verify-schedule', 'completed');
+                this.updateTimelineStep('add-subtype', 'current');
+                this.showMessage('班表驗證完成！所有項目均通過！', 'success');
+            } else {
+                // 有驗證項目未通過，不更新時間軸狀態
+                this.showMessage('班表驗證完成！但仍有項目需要修正。', 'info');
+            }
             
         } catch (error) {
             console.error('班表驗證失敗:', error);
@@ -1651,7 +1724,9 @@ class TempScheduleMode {
         if (shiftConnectionCheckbox) {
             shiftConnectionCheckbox.checked = result.shift_connection_passed;
         }
-        
+
+        this.disableVerificationCheckboxes();
+
         // 更新驗證註解
         const verifyComment = document.getElementById('verifycomment');
         if (verifyComment) {
@@ -1731,8 +1806,666 @@ class TempScheduleMode {
         const checkboxes = this.container.querySelectorAll('.verify-checkbox');
         checkboxes.forEach(checkbox => {
             checkbox.disabled = true;
-            checkbox.checked = false;
+            // checkbox.checked = false;
         });
+    }
+
+    /**
+     * 渲染時間軸流程
+     * @returns {string} HTML 字串
+     */
+    renderTimeline() {
+        return `
+            <div class="timeline-header">
+                <h3>暫存班表流程</h3>
+            </div>
+            <div class="timeline-steps">
+                ${this.timelineSteps.map((step, index) => `
+                    <div class="timeline-step ${step.status}" data-step="${step.id}">
+                        <div class="step-icon">
+                            <i class="bx ${this.getStepIcon(step.status)}"></i>
+                        </div>
+                        <div class="step-label">${step.name}</div>
+                    </div>
+                    ${index < this.timelineSteps.length - 1 ? '<div class="timeline-arrow"><i class="bx bx-chevron-right"></i></div>' : ''}
+                `).join('')}
+            </div>
+        `;
+    }
+
+    /**
+     * 根據步驟狀態獲取對應的圖示
+     * @param {string} status - 步驟狀態
+     * @returns {string} 圖示類別名稱
+     */
+    getStepIcon(status) {
+        switch (status) {
+            case 'completed':
+                return 'bx-check-circle';
+            case 'current':
+                return 'bx-time';
+            case 'pending':
+                return 'bx-circle';
+            default:
+                return 'bx-circle';
+        }
+    }
+
+    /**
+     * 初始化時間軸狀態
+     */
+    initializeTimeline() {
+        // 根據當前狀態設定時間軸
+        this.updateTimelineStep('create-cycle', 'completed');
+        this.updateTimelineStep('set-leaves', 'current');
+        this.updateTimelineStep('auto-schedule', 'pending');
+        this.updateTimelineStep('verify-schedule', 'pending');
+        this.updateTimelineStep('add-subtype','pending');
+        this.updateTimelineStep('complete', 'pending');
+    }
+
+    /**
+     * 更新時間軸步驟狀態
+     * @param {string} stepId - 步驟ID
+     * @param {string} status - 新狀態
+     */
+    updateTimelineStep(stepId, status) {
+        const step = this.timelineSteps.find(s => s.id === stepId);
+        if (step) {
+            step.status = status;
+            this.renderTimelineStep(stepId, status);
+        }
+    }
+
+    /**
+     * 渲染時間軸步驟
+     * @param {string} stepId - 步驟ID
+     * @param {string} status - 步驟狀態
+     */
+    renderTimelineStep(stepId, status) {
+        const stepElement = this.container.querySelector(`[data-step="${stepId}"]`);
+        if (stepElement) {
+            // 移除所有狀態類別
+            stepElement.classList.remove('completed', 'current', 'pending');
+            // 添加新狀態類別
+            stepElement.classList.add(status);
+            
+            // 更新圖示
+            const iconElement = stepElement.querySelector('.step-icon i');
+            if (iconElement) {
+                iconElement.className = `bx ${this.getStepIcon(status)}`;
+            }
+        }
+    }
+
+    /**
+     * 檢查所有驗證項目是否都通過
+     * @param {Object} result - 驗證結果
+     * @returns {boolean} 是否所有驗證都通過
+     */
+    checkAllVerificationsPassed(result) {
+        // 檢查三個主要驗證項目是否都通過
+        return result.daily_staffing_passed && 
+               result.continuous_work_passed && 
+               result.shift_connection_passed;
+    }
+
+    /**
+     * 更新整個時間軸狀態
+     */
+    updateTimelineStatus() {
+        // 根據當前進度更新時間軸
+        if (this.hasAutoScheduled) {
+            this.updateTimelineStep('set-leaves', 'completed');
+            this.updateTimelineStep('auto-schedule', 'completed');
+            this.updateTimelineStep('verify-schedule', 'current');
+        }
+    }
+
+    /**
+     * 更新subtype到employees-table
+     * @param {Object} result - 驗證結果
+     */
+    /**
+     * 進入工作內容安排模式
+     */
+    async AddSubtypeMode() {
+        try {
+            this.showMessage('正在載入班別群組資料...', 'info');
+            
+            // 從 API 獲取班別群組資料
+            const response = await fetch(`/api/schedule-cycle-shift-group?cycle_id=${this.cycleData.cycle_id}`);
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP 錯誤! 狀態: ${response.status}`);
+            }
+            
+            this.shiftGroupData = await response.json();
+            console.log('成功獲取班別群組資料:', this.shiftGroupData);
+            
+            // 重置已使用的班別記錄
+            this.resetUsedShifts();
+            
+            // 更新現有的 employees-table 結構
+            this.updateEmployeesTableForSubtypeMode();
+            this.isSubtypeMode = true;
+            
+            // 添加切換回正常模式的按鈕
+            //this.addNormalModeToggleButton();
+            // 鎖定employees-table點擊功能
+            this.removeClickEventListeners();
+            // 更新時間軸狀態
+            this.updateTimelineStep('verify-schedule', 'completed');
+            // this.addTimelineStep('work-content', '工作內容安排', 'current');
+            
+            this.showMessage('已進入工作內容安排模式', 'success');
+            
+        } catch (error) {
+            console.error('進入工作內容安排模式時發生錯誤:', error);
+            this.showMessage(`無法載入班別群組資料: ${error.message}`, 'error');
+        }
+    }
+
+    /**
+     * 重置已使用的班別記錄
+     */
+    resetUsedShifts() {
+        if (this.usedShifts) {
+            this.usedShifts.clear();
+        }
+        this.usedShifts = new Map();
+    }
+
+    /**
+     * 更新 employees-table 為工作內容安排模式
+     */
+    updateEmployeesTableForSubtypeMode() {
+        const table = this.container.querySelector('.employees-table');
+        if (!table) {
+            console.error('找不到員工班表元素');
+            return;
+        }
+
+        // 驗證 API 資料格式
+        if (!this.shiftGroupData || typeof this.shiftGroupData !== 'object') {
+            console.error('班別群組資料格式錯誤');
+            this.showMessage('班別群組資料格式錯誤', 'error');
+            return;
+        }
+
+        // 檢查是否有必要的資料
+        const hasValidData = Object.keys(this.shiftGroupData).some(key => {
+            const shifts = this.shiftGroupData[key];
+            return Array.isArray(shifts) && shifts.length > 0;
+        });
+
+        if (!hasValidData) {
+            console.error('沒有有效的班別群組資料');
+            this.showMessage('沒有有效的班別群組資料', 'error');
+            return;
+        }
+
+        const thead = table.querySelector('thead tr');
+        const tbody = table.querySelector('tbody');
+
+        // 1. 更新表頭：員工姓名欄位跨越兩列
+        const nameHeader = thead.querySelector('th:first-child');
+        if (nameHeader) {
+            nameHeader.rowSpan = 2;
+        }
+
+                    // 2. 為每個員工行添加子班別行
+        const rows = tbody.querySelectorAll('tr');
+        rows.forEach((row, rowIndex) => {
+            // 為每個員工行創建對應的子班別行
+            const subRow = document.createElement('tr');
+            subRow.className = 'shift-subtype-row';
+            
+            // 跳過已經存在的子班別行
+            if (row.classList.contains('shift-subtype-row')) {
+                return;
+            }
+
+            // 獲取員工姓名儲存格並設置 rowspan=2
+            const nameCell = row.querySelector('td:first-child');
+            if (nameCell) {
+                nameCell.rowSpan = 2;
+                nameCell.classList.add('employee-name-cell');
+            }
+
+            // 為每個班別儲存格創建對應的子班別儲存格
+            const shiftCells = row.querySelectorAll('.shift-cell');
+            shiftCells.forEach((shiftCell, cellIndex) => {
+                const subCell = document.createElement('td');
+                subCell.className = 'shift-sub-cell';
+                subCell.setAttribute('data-date', shiftCell.dataset.date || '');
+                
+                // 如果是週末，加上 weekend 樣式
+                const dateStr = shiftCell.dataset.date;
+                if (dateStr) {
+                    const date = new Date(dateStr);
+                    const weekday = date.getDay();
+                    // 如果是週末，加上 weekend 樣式
+                    if (weekday === 0 || weekday === 6) {
+                        subCell.classList.add('weekend');
+                    }
+                }
+                
+                subRow.appendChild(subCell);
+            });
+            
+            // 在當前行之後插入子班別行
+            row.after(subRow);
+        });
+        
+        // 3. 使用新的子函式重新映射並更新所有班別儲存格內容
+        this.updateAllShiftCellsContent();
+        
+        // 重新綁定點擊事件（因為表格結構已改變）
+        // this.addClickEventListeners();
+        
+        // console.log('已成功更新表格為工作內容安排模式');
+    }
+
+    /**
+     * 更新班別儲存格和子班別儲存格的內容
+     * @param {HTMLElement} shiftCell - 主要班別儲存格
+     * @param {HTMLElement} subCell - 子班別儲存格
+     * @param {number} apiIndex - API 資料的索引
+     */
+    updateShiftCellContent(shiftCell, subCell, apiIndex) {
+        if (!this.shiftGroupData || !this.shiftGroupData[apiIndex]) {
+            console.warn(`找不到索引 ${apiIndex} 的班別群組資料`);
+            return;
+        }
+
+        const shifts = this.shiftGroupData[apiIndex];
+        if (!Array.isArray(shifts) || shifts.length === 0) {
+            console.warn(`索引 ${apiIndex} 的班別資料為空或格式錯誤`);
+            return;
+        }
+
+        const cellText = shiftCell.textContent.trim();
+        console.log(`更新儲存格內容，索引: ${apiIndex}, 班別數量: ${shifts.length}`);
+        
+        // 根據班別類型隨機選擇對應的 shift_group 元素
+        if (shiftCell.classList.contains('morning-shift')) {
+            // 早班：選擇 shift_group="day" 的元素
+            const dayShifts = shifts.filter(s => s.shift_group === 'day');
+            console.log(`早班選項:`, dayShifts);
+            if (dayShifts.length > 0) {
+                // 隨機選擇一個不重複的早班
+                const randomDayShift = this.getRandomUnusedShift(dayShifts, 'day');
+                if (randomDayShift) {
+                    shiftCell.textContent = randomDayShift.shift_name;
+                    subCell.textContent = randomDayShift.shift_subname;
+                    subCell.classList.add('morning-shift');
+                    // console.log(`已選擇早班: ${randomDayShift.shift_name}-${randomDayShift.shift_subname}`);
+                }
+            }
+        } else if (shiftCell.classList.contains('afternoon-shift')) {
+            // 中班：選擇 shift_group="evening" 的元素
+            const eveningShifts = shifts.filter(s => s.shift_group === 'evening');
+            console.log(`中班選項:`, eveningShifts);
+            if (eveningShifts.length > 0) {
+                // 隨機選擇一個不重複的中班
+                const randomEveningShift = this.getRandomUnusedShift(eveningShifts, 'evening');
+                if (randomEveningShift) {
+                    shiftCell.textContent = randomEveningShift.shift_name;
+                    subCell.textContent = randomEveningShift.shift_subname;
+                    subCell.classList.add('afternoon-shift');
+                    // console.log(`已選擇中班: ${randomEveningShift.shift_name}-${randomEveningShift.shift_subname}`);
+                }
+            }
+        } else if (shiftCell.classList.contains('night-shift')) {
+            // 晚班：選擇 shift_group="night" 的元素
+            const nightShifts = shifts.filter(s => s.shift_group === 'night');
+            console.log(`晚班選項:`, nightShifts);
+            if (nightShifts.length > 0) {
+                // 隨機選擇一個不重複的晚班
+                const randomNightShift = this.getRandomUnusedShift(nightShifts, 'night');
+                if (randomNightShift) {
+                    shiftCell.textContent = randomNightShift.shift_name;
+                    subCell.textContent = randomNightShift.shift_subname;
+                    subCell.classList.add('night-shift');
+                    // console.log(`已選擇晚班: ${randomNightShift.shift_name}-${randomNightShift.shift_subname}`);
+                }
+            }
+        } else if (shiftCell.classList.contains('day-off') || 
+                   shiftCell.classList.contains('leave-high') || 
+                   shiftCell.classList.contains('leave-low') || 
+                   shiftCell.classList.contains('leave-special')) {
+            // 休假：保持原有內容，子班別為空
+            subCell.textContent = '';
+            // console.log(`休假儲存格，保持原有內容`);
+        } else {
+            console.log(`未知的班別類型，儲存格內容: ${cellText}`);
+        }
+    }
+
+    /**
+     * 根據日期重新映射並更新所有班別儲存格內容
+     * 這個函式會按日期來組織迴圈，因為 API 資料是按星期來區分的
+     */
+    updateAllShiftCellsContent() {
+        if (!this.shiftGroupData) {
+            console.warn('班別群組資料尚未載入');
+            return;
+        }
+
+        console.log('開始重新映射所有班別儲存格內容...');
+
+        // 獲取所有班別儲存格，按日期分組
+        const allShiftCells = this.container.querySelectorAll('.employees-table tbody tr:not(.shift-subtype-row) .shift-cell');
+        const allSubCells = this.container.querySelectorAll('.employees-table tbody tr.shift-subtype-row .shift-sub-cell');
+
+        if (allShiftCells.length !== allSubCells.length) {
+            console.warn('班別儲存格數量與子班別儲存格數量不匹配');
+            return;
+        }
+
+        // 按日期分組儲存格
+        const cellsByDate = new Map(); // Map<dateStr, {shiftCells: [], subCells: []}>
+
+        // 將儲存格按日期分組
+        allShiftCells.forEach((shiftCell, index) => {
+            const subCell = allSubCells[index];
+            const dateStr = shiftCell.dataset.date;
+
+            if (!dateStr) {
+                console.warn(`班別儲存格 ${index} 缺少 data-date 屬性`);
+                return;
+            }
+
+            if (!cellsByDate.has(dateStr)) {
+                cellsByDate.set(dateStr, { shiftCells: [], subCells: [] });
+            }
+
+            cellsByDate.get(dateStr).shiftCells.push(shiftCell);
+            cellsByDate.get(dateStr).subCells.push(subCell);
+        });
+
+        // 按日期順序處理每個日期的儲存格
+        const sortedDates = Array.from(cellsByDate.keys()).sort();
+        
+        sortedDates.forEach(dateStr => {
+            const dateCells = cellsByDate.get(dateStr);
+            const apiIndex = this.calculateApiIndexFromDate(dateStr);
+            
+            console.log(`處理日期: ${dateStr}, API索引: ${apiIndex}, 儲存格數量: ${dateCells.shiftCells.length}`);
+            
+            // 批次處理該日期的所有儲存格
+            this.updateShiftCellsByDate(dateCells.shiftCells, dateCells.subCells, apiIndex);
+        });
+
+        console.log('所有班別儲存格內容更新完成');
+    }
+
+    /**
+     * 根據日期字串計算 API 索引
+     * @param {string} dateStr - 日期字串 (YYYY-MM-DD 格式)
+     * @returns {number} API 索引 (0=週一, 1=週二, ..., 5=週六, 6=週日)
+     */
+    calculateApiIndexFromDate(dateStr) {
+        const date = new Date(dateStr);
+        const weekday = date.getDay();
+        
+        // 轉換為 API 的索引格式 (0=週一, 6=週日)
+        // JavaScript 的 getDay() 返回 0=週日, 1=週一, ..., 6=週六
+        // API 的索引是 0=週一, 1=週二, ..., 5=週六, 6=週日
+        let apiIndex;
+        if (weekday === 0) { // 週日
+            apiIndex = 6;
+        } else if (weekday === 6) { // 週六
+            apiIndex = 5;
+        } else {
+            apiIndex = weekday - 1; // 週一到週五：1->0, 2->1, 3->2, 4->3, 5->4
+        }
+        
+        return apiIndex;
+    }
+
+    /**
+     * 批次處理某個日期的所有班別儲存格
+     * @param {Array} shiftCells - 該日期的所有班別儲存格
+     * @param {Array} subCells - 該日期的所有子班別儲存格
+     * @param {number} apiIndex - API 資料的索引
+     */
+    updateShiftCellsByDate(shiftCells, subCells, apiIndex) {
+        if (!this.shiftGroupData || !this.shiftGroupData[apiIndex]) {
+            console.warn(`找不到索引 ${apiIndex} 的班別群組資料`);
+            return;
+        }
+
+        const shifts = this.shiftGroupData[apiIndex];
+        if (!Array.isArray(shifts) || shifts.length === 0) {
+            console.warn(`索引 ${apiIndex} 的班別資料為空或格式錯誤`);
+            return;
+        }
+
+        console.log(`批次處理日期，API索引: ${apiIndex}, 班別數量: ${shifts.length}`);
+
+        // 1. 排除休假儲存格，分類 A/B/C 班別
+        const workCells = [];
+        const leaveCells = [];
+
+        shiftCells.forEach((shiftCell, index) => {
+            const subCell = subCells[index];
+            
+            if (shiftCell.classList.contains('day-off') || 
+                shiftCell.classList.contains('leave-high') || 
+                shiftCell.classList.contains('leave-low') || 
+                shiftCell.classList.contains('leave-special')) {
+                // 休假儲存格
+                leaveCells.push({ shiftCell, subCell });
+            } else {
+                // 工作儲存格
+                workCells.push({ shiftCell, subCell });
+            }
+        });
+
+        // 2. 統計 A/B/C 班別數量
+        const shiftCounts = {
+            morning: 0,  // A班
+            afternoon: 0, // B班
+            night: 0      // C班
+        };
+
+        workCells.forEach(({ shiftCell }) => {
+            if (shiftCell.classList.contains('morning-shift')) {
+                shiftCounts.morning++;
+            } else if (shiftCell.classList.contains('afternoon-shift')) {
+                shiftCounts.afternoon++;
+            } else if (shiftCell.classList.contains('night-shift')) {
+                shiftCounts.night++;
+            }
+        });
+
+        console.log(`班別統計 - A班: ${shiftCounts.morning}, B班: ${shiftCounts.afternoon}, C班: ${shiftCounts.night}`);
+
+        // 3. 檢查 API 資料是否足夠
+        const apiShiftCounts = {
+            day: shifts.filter(s => s.shift_group === 'day').length,
+            evening: shifts.filter(s => s.shift_group === 'evening').length,
+            night: shifts.filter(s => s.shift_group === 'night').length
+        };
+
+        console.log(`API資料統計 - day: ${apiShiftCounts.day}, evening: ${apiShiftCounts.evening}, night: ${apiShiftCounts.night}`);
+
+        // 4. 檢查數量是否匹配
+        if (shiftCounts.morning > apiShiftCounts.day) {
+            console.warn(`A班數量 (${shiftCounts.morning}) 超過 API day 群組數量 (${apiShiftCounts.day})`);
+        }
+        if (shiftCounts.afternoon > apiShiftCounts.evening) {
+            console.warn(`B班數量 (${shiftCounts.afternoon}) 超過 API evening 群組數量 (${apiShiftCounts.evening})`);
+        }
+        if (shiftCounts.night > apiShiftCounts.night) {
+            console.warn(`C班數量 (${shiftCounts.night}) 超過 API night 群組數量 (${apiShiftCounts.night})`);
+        }
+
+        // 5. 分配班別
+        this.assignShiftsToCells(workCells, shifts, shiftCounts);
+
+        // 6. 處理休假儲存格
+        leaveCells.forEach(({ subCell }) => {
+            subCell.textContent = '';
+        });
+
+        console.log(`批次處理完成 - 工作儲存格: ${workCells.length}, 休假儲存格: ${leaveCells.length}`);
+    }
+
+    /**
+     * 分配班別到儲存格
+     * @param {Array} workCells - 工作儲存格陣列
+     * @param {Array} shifts - API 班別資料
+     * @param {Object} shiftCounts - 班別數量統計
+     */
+    assignShiftsToCells(workCells, shifts, shiftCounts) {
+        // 按班別類型分組 API 資料
+        const dayShifts = shifts.filter(s => s.shift_group === 'day');
+        const eveningShifts = shifts.filter(s => s.shift_group === 'evening');
+        const nightShifts = shifts.filter(s => s.shift_group === 'night');
+
+        // 按班別類型分組儲存格
+        const morningCells = workCells.filter(({ shiftCell }) => shiftCell.classList.contains('morning-shift'));
+        const afternoonCells = workCells.filter(({ shiftCell }) => shiftCell.classList.contains('afternoon-shift'));
+        const nightCells = workCells.filter(({ shiftCell }) => shiftCell.classList.contains('night-shift'));
+
+        // 分配 A 班
+        this.assignShiftsToCellGroup(morningCells, dayShifts, 'morning-shift');
+
+        // 分配 B 班
+        this.assignShiftsToCellGroup(afternoonCells, eveningShifts, 'afternoon-shift');
+
+        // 分配 C 班
+        this.assignShiftsToCellGroup(nightCells, nightShifts, 'night-shift');
+    }
+
+    /**
+     * 分配班別到特定群組的儲存格
+     * @param {Array} cells - 儲存格陣列
+     * @param {Array} shifts - 班別資料陣列
+     * @param {string} shiftClass - 班別 CSS 類別
+     */
+    assignShiftsToCellGroup(cells, shifts, shiftClass) {
+        if (cells.length === 0 || shifts.length === 0) {
+            return;
+        }
+
+        // 如果儲存格數量等於班別數量，隨機分配
+        if (cells.length === shifts.length) {
+            // 隨機打亂班別順序
+            const shuffledShifts = [...shifts].sort(() => Math.random() - 0.5);
+            
+            cells.forEach(({ shiftCell, subCell }, index) => {
+                const shift = shuffledShifts[index];
+                shiftCell.textContent = shift.shift_name;
+                subCell.textContent = shift.shift_subname;
+                subCell.classList.add(shiftClass);
+            });
+            
+            console.log(`隨機分配 ${shiftClass} 班別完成，數量: ${cells.length}`);
+        } else {
+            // 數量不匹配，使用原有的隨機選擇邏輯
+            cells.forEach(({ shiftCell, subCell }) => {
+                const randomShift = this.getRandomUnusedShift(shifts, shiftClass);
+                if (randomShift) {
+                    shiftCell.textContent = randomShift.shift_name;
+                    subCell.textContent = randomShift.shift_subname;
+                    subCell.classList.add(shiftClass);
+                }
+            });
+            
+            console.log(`使用隨機選擇邏輯分配 ${shiftClass} 班別，數量: ${cells.length}`);
+        }
+    }
+
+    /**
+     * 獲取隨機且不重複的班別
+     * @param {Array} shifts - 班別陣列
+     * @param {string} shiftGroup - 班別群組
+     * @returns {Object|null} 選中的班別物件
+     */
+    getRandomUnusedShift(shifts, shiftGroup) {
+        if (!shifts || shifts.length === 0) {
+            return null;
+        }
+        
+        // 如果沒有追蹤已使用的班別，初始化
+        if (!this.usedShifts) {
+            this.usedShifts = new Map();
+        }
+        
+        // 使用週期 ID 和班別群組作為鍵值，確保每個週期都有獨立的追蹤
+        const cycleId = this.cycleData.cycle_id;
+        const key = `${cycleId}_${shiftGroup}`;
+        
+        // 獲取已使用的班別
+        let usedShifts = this.usedShifts.get(key) || new Set();
+        
+        // 找出未使用的班別
+        const availableShifts = shifts.filter(shift => {
+            const shiftKey = `${shift.shift_name}_${shift.shift_subname}`;
+            return !usedShifts.has(shiftKey);
+        });
+        
+        // 如果沒有可用的班別，重置已使用記錄
+        if (availableShifts.length === 0) {
+            usedShifts.clear();
+            this.usedShifts.set(key, usedShifts);
+            console.log(`重置 ${shiftGroup} 班別的已使用記錄`);
+            return shifts[0]; // 返回第一個班別
+        }
+        
+        // 隨機選擇一個未使用的班別
+        const randomIndex = Math.floor(Math.random() * availableShifts.length);
+        const selectedShift = availableShifts[randomIndex];
+        
+        // 標記為已使用
+        const shiftKey = `${selectedShift.shift_name}_${selectedShift.shift_subname}`;
+        usedShifts.add(shiftKey);
+        this.usedShifts.set(key, usedShifts);
+        
+        console.log(`選擇 ${shiftGroup} 班別: ${shiftKey}, 剩餘可用: ${availableShifts.length - 1}`);
+        
+        return selectedShift;
+    }
+
+    /**
+     * 獲取班別群組對應的 CSS 類別
+     * @param {string} shiftGroup - 班別群組 ('day', 'evening', 'night')
+     * @returns {string} CSS 類別名稱
+     */
+    getShiftClass(shiftGroup) {
+        switch (shiftGroup) {
+            case 'day':
+                return 'morning-shift';
+            case 'evening':
+                return 'afternoon-shift';
+            case 'night':
+                return 'night-shift';
+            default:
+                return 'day-off';
+        }
+    }
+
+    /**
+     * 添加新的時間軸步驟
+     * @param {string} id - 步驟 ID
+     * @param {string} name - 步驟名稱
+     * @param {string} status - 步驟狀態
+     */
+    addTimelineStep(id, name, status = 'pending') {
+        // 檢查步驟是否已存在
+        const existingStep = this.timelineSteps.find(step => step.id === id);
+        if (!existingStep) {
+            this.timelineSteps.push({ id, name, status });
+            this.renderTimeline();
+        } else {
+            // 如果已存在，更新狀態
+            this.updateTimelineStep(id, status);
+        }
     }
 }
 

@@ -328,13 +328,19 @@ class APIServer():
                 data = request.get_json()
                 start_date = data.get('start_date')
                 end_date = data.get('end_date')
+                shift_group = data.get('shift_group')  # 新增：班別群組
                 if not start_date or not end_date:
                     return jsonify({'error': '缺少開始或結束日期'}), 400
-                response = self.supabase_client.table('schedule_cycles').insert({
+                
+                # 準備插入資料
+                insert_data = {
                     'start_date': start_date,
                     'end_date': end_date,
-                    'status': 'draft'
-                }).execute()
+                    'status': 'draft',
+                    'shift_group':shift_group
+                }
+                
+                response = self.supabase_client.table('schedule_cycles').insert(insert_data).execute()
                 if not response.data:
                     raise Exception("無法建立排班週期")
                 cycle = response.data[0]
@@ -673,6 +679,65 @@ class APIServer():
                 self.logger.error(f'清除週期休假資料時發生錯誤：{str(err)}')
                 return jsonify({'error': '清除休假資料失敗'}), 500
 
+        # === 新增：獲取班別群組資訊 ===
+        @self.app.route('/api/schedule-cycle-shift-group', methods=['GET'])
+        def get_schedule_cycle_shift_group():
+            """
+            根據 cycle_id 獲取該週期的班別群組資訊
+            - 查詢參數: cycle_id (int)
+            - 回傳: 重新整理後的班別群組資料
+            """
+            cycle_id = request.args.get('cycle_id')
+            if not cycle_id:
+                return jsonify({'error': '缺少 cycle_id 參數'}), 400
+            
+            try:
+                self.logger.info(f'開始獲取週期 #{cycle_id} 的班別群組資訊...')
+                
+                # 先查詢週期的 shift_group 名稱
+                cycle_response = self.supabase_client.table('schedule_cycles') \
+                    .select('shift_group') \
+                    .eq('cycle_id', int(cycle_id)) \
+                    .single() \
+                    .execute()
+                
+                if not cycle_response.data:
+                    return jsonify({'error': '找不到指定的週期'}), 404
+                
+                shift_group_name = cycle_response.data['shift_group']
+                
+                # 查詢該班別群組的詳細資訊
+                response = self.supabase_client.table('shift_group') \
+                    .select('group_name, weekday, shift_type(shift_name, shift_subname, shift_group), amount') \
+                    .eq('group_name', shift_group_name) \
+                    .execute()
+                
+                if not response.data:
+                    return jsonify({'error': '找不到班別群組資料'}), 404
+                
+                # 重新整理資料格式
+                shift_group_data = {}
+                for row in response.data:
+                    weekday = row['weekday']
+                    shift_info = row['shift_type']
+                    
+                    if weekday not in shift_group_data:
+                        shift_group_data[weekday] = []
+                    
+                    shift_group_data[weekday].append({
+                        'shift_name': shift_info['shift_name'],
+                        'shift_subname': shift_info['shift_subname'],
+                        'shift_group': shift_info['shift_group'],
+                        'amount': row['amount']
+                    })
+                
+                self.logger.info(f'成功獲取週期 #{cycle_id} 的班別群組資料')
+                return jsonify(shift_group_data)
+                
+            except Exception as err:
+                self.logger.error(f'獲取班別群組資訊時發生錯誤：{str(err)}')
+                return jsonify({'error': '獲取班別群組資訊失敗'}), 500
+
         # === 新增：驗證班表 ===
         @self.app.route('/api/verify-schedule', methods=['POST'])
         def verify_schedule():
@@ -799,6 +864,253 @@ class APIServer():
             except Exception as err:
                 self.logger.error(f'更新員工需求時發生錯誤：{str(err)}')
                 return jsonify({'error': '更新員工需求失敗'}), 500
+
+        # === 新增：班別類型管理 API ===
+        @self.app.route('/api/shift-types', methods=['GET'])
+        def get_shift_types():
+            """獲取所有班別類型資料"""
+            try:
+                self.logger.info('開始從 Supabase 獲取班別類型資料...')
+                
+                response = self.supabase_client.table('shift_type').select('*').order('id').execute()
+                shift_types = response.data
+                
+                self.logger.info(f'從 Supabase 獲取到的班別類型資料：{shift_types}')
+                return jsonify(shift_types)
+            except Exception as err:
+                self.logger.error(f'取得班別類型資料時發生錯誤：{str(err)}')
+                return jsonify({'error': '無法載入班別類型資料'}), 500
+
+        @self.app.route('/api/shift-types', methods=['POST'])
+        def add_shift_type():
+            """新增班別類型"""
+            try:
+                data = request.get_json()
+                shift_name = data.get('shift_name')
+                shift_subname = data.get('shift_subname')
+                shift_group = data.get('shift_group')
+                start_time = data.get('start_time')
+                end_time = data.get('end_time')
+
+                # 驗證必填欄位
+                if not all([shift_name, shift_subname, start_time, end_time]):
+                    return jsonify({'error': '請填寫所有必填欄位'}), 400
+
+                self.logger.info('開始新增班別類型...')
+                self.logger.info(f'新增資料：{data}')
+
+                response = self.supabase_client.table('shift_type').insert({
+                    'shift_name': shift_name.strip(),
+                    'shift_subname': shift_subname.strip(),
+                    'shift_group': shift_group.strip() if shift_group else None,
+                    'start_time': start_time,
+                    'end_time': end_time
+                }).execute()
+                
+                if not response.data:
+                    raise Exception("無法新增班別類型")
+                
+                shift_type = response.data[0]
+                self.logger.info(f'新增班別類型成功：{shift_type}')
+                return jsonify(shift_type)
+            except Exception as err:
+                self.logger.error(f'新增班別類型時發生錯誤：{str(err)}')
+                return jsonify({'error': '無法新增班別類型'}), 500
+
+        @self.app.route('/api/shift-types/<int:shift_id>', methods=['PUT'])
+        def update_shift_type(shift_id):
+            """更新班別類型"""
+            try:
+                data = request.get_json()
+                shift_name = data.get('shift_name')
+                shift_subname = data.get('shift_subname')
+                shift_group = data.get('shift_group')
+                start_time = data.get('start_time')
+                end_time = data.get('end_time')
+
+                # 驗證必填欄位
+                if not all([shift_name, shift_subname, start_time, end_time]):
+                    return jsonify({'error': '請填寫所有必填欄位'}), 400
+
+                self.logger.info(f'開始更新班別類型 ID: {shift_id}...')
+                self.logger.info(f'更新資料：{data}')
+
+                response = self.supabase_client.table('shift_type').update({
+                    'shift_name': shift_name.strip(),
+                    'shift_subname': shift_subname.strip(),
+                    'shift_group': shift_group.strip() if shift_group else None,
+                    'start_time': start_time,
+                    'end_time': end_time
+                }).eq('id', shift_id).execute()
+                
+                if not response.data:
+                    return jsonify({'error': '找不到指定的班別類型'}), 404
+                
+                shift_type = response.data[0]
+                self.logger.info(f'更新班別類型成功：{shift_type}')
+                return jsonify(shift_type)
+            except Exception as err:
+                self.logger.error(f'更新班別類型時發生錯誤：{str(err)}')
+                return jsonify({'error': '無法更新班別類型'}), 500
+
+        @self.app.route('/api/shift-types/<int:shift_id>', methods=['DELETE'])
+        def delete_shift_type(shift_id):
+            """刪除班別類型"""
+            try:
+                self.logger.info(f'開始刪除班別類型 ID: {shift_id}...')
+
+                response = self.supabase_client.table('shift_type').delete().eq('id', shift_id).execute()
+                
+                if not response.data:
+                    return jsonify({'error': '找不到指定的班別類型'}), 404
+                
+                self.logger.info(f'刪除班別類型成功：ID {shift_id}')
+                return jsonify({'status': 'success', 'message': '班別類型已刪除'})
+            except Exception as err:
+                self.logger.error(f'刪除班別類型時發生錯誤：{str(err)}')
+                return jsonify({'error': '無法刪除班別類型'}), 500
+
+        # === 新增：班別群組管理 API ===
+        @self.app.route('/api/shift-groups', methods=['GET'])
+        def get_shift_groups():
+            """獲取所有班別群組資料"""
+            try:
+                self.logger.info('開始從 Supabase 獲取班別群組資料...')
+                
+                # 聯結查詢取得班別類型資訊
+                response = self.supabase_client.table('shift_group').select(
+                    '*, shift_type(shift_name, shift_subname)'
+                ).order('group_name').execute()
+                
+                shift_groups = response.data
+                
+                self.logger.info(f'從 Supabase 獲取到的班別群組資料：{shift_groups}')
+                return jsonify(shift_groups)
+            except Exception as err:
+                self.logger.error(f'取得班別群組資料時發生錯誤：{str(err)}')
+                return jsonify({'error': '無法載入班別群組資料'}), 500
+
+        @self.app.route('/api/shift-groups', methods=['POST'])
+        def add_shift_group():
+            """新增班別群組"""
+            try:
+                data = request.get_json()
+                group_name = data.get('group_name')
+                weekday = data.get('weekday')
+                shift_id = data.get('shift_id')
+                amount = data.get('amount')
+
+                # 驗證必填欄位
+                if not all([group_name, weekday is not None, shift_id, amount is not None]):
+                    return jsonify({'error': '請填寫所有必填欄位'}), 400
+
+                # 驗證星期範圍 (0-6)
+                if not (0 <= weekday <= 6):
+                    return jsonify({'error': '星期必須在 0-6 之間'}), 400
+
+                # 驗證人數為正整數
+                if amount < 0:
+                    return jsonify({'error': '上班人數必須大於等於 0'}), 400
+
+                self.logger.info('開始新增班別群組...')
+                self.logger.info(f'新增資料：{data}')
+
+                response = self.supabase_client.table('shift_group').insert({
+                    'group_name': group_name.strip(),
+                    'weekday': weekday,
+                    'shift_id': shift_id,
+                    'amount': amount
+                }).execute()
+                
+                if not response.data:
+                    raise Exception("無法新增班別群組")
+                
+                shift_group = response.data[0]
+                self.logger.info(f'新增班別群組成功：{shift_group}')
+                return jsonify(shift_group)
+            except Exception as err:
+                self.logger.error(f'新增班別群組時發生錯誤：{str(err)}')
+                return jsonify({'error': '無法新增班別群組'}), 500
+
+        @self.app.route('/api/shift-groups/<uuid:group_uuid>', methods=['PUT'])
+        def update_shift_group(group_uuid):
+            """更新班別群組"""
+            try:
+                data = request.get_json()
+                group_name = data.get('group_name')
+                weekday = data.get('weekday')
+                shift_id = data.get('shift_id')
+                amount = data.get('amount')
+
+                # 驗證必填欄位
+                if not all([group_name, weekday is not None, shift_id, amount is not None]):
+                    return jsonify({'error': '請填寫所有必填欄位'}), 400
+
+                # 驗證星期範圍 (0-6)
+                if not (0 <= weekday <= 6):
+                    return jsonify({'error': '星期必須在 0-6 之間'}), 400
+
+                # 驗證人數為正整數
+                if amount < 0:
+                    return jsonify({'error': '上班人數必須大於等於 0'}), 400
+
+                self.logger.info(f'開始更新班別群組 UUID: {group_uuid}...')
+                self.logger.info(f'更新資料：{data}')
+
+                response = self.supabase_client.table('shift_group').update({
+                    'group_name': group_name.strip(),
+                    'weekday': weekday,
+                    'shift_id': shift_id,
+                    'amount': amount
+                }).eq('uuid', str(group_uuid)).execute()
+                
+                if not response.data:
+                    return jsonify({'error': '找不到指定的班別群組'}), 404
+                
+                shift_group = response.data[0]
+                self.logger.info(f'更新班別群組成功：{shift_group}')
+                return jsonify(shift_group)
+            except Exception as err:
+                self.logger.error(f'更新班別群組時發生錯誤：{str(err)}')
+                return jsonify({'error': '無法更新班別群組'}), 500
+
+        @self.app.route('/api/shift-groups/<uuid:group_uuid>', methods=['DELETE'])
+        def delete_shift_group(group_uuid):
+            """刪除班別群組"""
+            try:
+                self.logger.info(f'開始刪除班別群組 UUID: {group_uuid}...')
+
+                response = self.supabase_client.table('shift_group').delete().eq('uuid', str(group_uuid)).execute()
+                
+                if not response.data:
+                    return jsonify({'error': '找不到指定的班別群組'}), 404
+                
+                self.logger.info(f'刪除班別群組成功：UUID {group_uuid}')
+                return jsonify({'status': 'success', 'message': '班別群組已刪除'})
+            except Exception as err:
+                self.logger.error(f'刪除班別群組時發生錯誤：{str(err)}')
+                return jsonify({'error': '無法刪除班別群組'}), 500
+
+        # 新增：獲取班別群組的唯一名稱
+        @self.app.route('/api/shift-group-names', methods=['GET'])
+        def get_shift_group_names():
+            """獲取 shift_group 表格中 group_name 的唯一值"""
+            try:
+                self.logger.info('開始從 Supabase 獲取班別群組名稱...')
+                
+                # 查詢所有不重複的 group_name
+                response = self.supabase_client.table('shift_group').select('group_name').execute()
+                group_names = response.data if response.data else []
+                
+                # 提取唯一的 group_name 值
+                unique_names = list(set([item['group_name'] for item in group_names if item['group_name']]))
+                unique_names.sort()  # 排序
+                
+                self.logger.info(f'從 Supabase 獲取到的班別群組名稱：{unique_names}')
+                return jsonify(unique_names)
+            except Exception as err:
+                self.logger.error(f'取得班別群組名稱時發生錯誤：{str(err)}')
+                return jsonify({'error': '無法載入班別群組名稱'}), 500
 
     def run(self):
         """啟動 Flask 應用"""

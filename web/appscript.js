@@ -145,7 +145,8 @@ window.loadDraftCycles = async function() {
                                 tabindex="0"
                                 data-cycle-id="${c.cycle_id}" 
                                 data-start-date="${c.start_date}" 
-                                data-end-date="${c.end_date}">
+                                data-end-date="${c.end_date}"
+                                data-shift-group="${c.shift_group}">
                             <span class="navlink_icon">
                                 <i class='bx bx-list-ul'></i>
                             </span>

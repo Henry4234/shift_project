@@ -10,7 +10,8 @@ class ModeSwitcher {
         this.modeButtons = {
             calendar: document.querySelector('.mode-calendar'),
             employees: document.querySelector('.mode-employees'),
-            dailyEmployees: document.querySelector('.mode-daily-employees')
+            dailyEmployees: document.querySelector('.mode-daily-employees'),
+            shiftconfig: document.querySelector('.shifttype-config')
         };
         
         this.reinitializeCalendar = reinitializeCalendar;
@@ -46,6 +47,12 @@ class ModeSwitcher {
             this.switchToMode('dailyEmployees');
         });
 
+        // 班別類型設定按鈕點擊事件
+        this.modeButtons.shiftconfig.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.switchToMode('shiftconfig');
+        });
+
         // 使用事件委派來監聽暫存班表按鈕的點擊
         document.body.addEventListener('click', (e) => {
             const draftButton = e.target.closest('.draft-cycle-btn');
@@ -55,7 +62,9 @@ class ModeSwitcher {
                     cycle_id: draftButton.dataset.cycleId,
                     start_date: draftButton.dataset.startDate,
                     end_date: draftButton.dataset.endDate,
+                    shift_group: draftButton.dataset.shiftGroup,
                 };
+                console.log(draftButton.dataset)
                 this.switchToTempScheduleMode(cycleData);
             }
         });
@@ -77,6 +86,9 @@ class ModeSwitcher {
                     break;
                 case 'dailyEmployees':
                     this.showDailyEmployeesMode();
+                    break;
+                case 'shiftconfig':
+                    this.showShiftConfigMode();
                     break;
             }
             
@@ -170,6 +182,28 @@ class ModeSwitcher {
             this.currentMode = `temp-schedule-${cycleData.cycle_id}`;
             this.updateActiveButton(null);
         });
+    }
+
+    showShiftConfigMode() {
+        // 使用 shifttype_config.js 的實例來顯示班別設定
+        if (window.shiftTypeConfigManager) {
+            window.shiftTypeConfigManager.show();
+        } else {
+            console.error('shiftTypeConfigManager 實例不存在');
+            // 備用方案：顯示錯誤訊息
+            this.contentNav.innerHTML = `
+                <div class="shift-config-mode">
+                    <div class="alert alert-danger">
+                        無法載入班別設定模式，請重新整理頁面
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 添加淡入動畫
+        setTimeout(() => {
+            this.contentNav.classList.add('fadein');
+        }, 50);
     }
     
     // 更新活動按鈕狀態

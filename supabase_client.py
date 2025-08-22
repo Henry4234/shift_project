@@ -97,7 +97,7 @@ def fetch_schedule_cycle(cycle_id: int):
         response = (
             supabase
             .from_('schedule_cycles')
-            .select('cycle_id, start_date, end_date, status, cycle_comment')
+            .select('cycle_id, start_date, end_date, status, shift_group, cycle_comment')
             .eq('cycle_id', cycle_id)
             .execute()
         )
@@ -107,4 +107,43 @@ def fetch_schedule_cycle(cycle_id: int):
             return None
     except Exception as e:
         print(f"Error fetching schedule cycle: {e}")
+        return None 
+    
+def fetch_shift_group(cycle_id: int):
+    """根據shift_group_name調取該班別群組的每週上班狀態"""
+    try:
+        # 先查 cycle_id 取得 shift_group 名稱
+        cycle = (
+            supabase
+            .from_("schedule_cycles")
+            .select("shift_group")
+            .eq("cycle_id", cycle_id)   # cycle_id 改成實際的參數
+            .single()
+            .execute()
+        )
+        shift_group_name = cycle.data["shift_group"]
+        response = (
+            supabase
+            .from_('shift_group')
+            .select('group_name, weekday, shift_type(shift_name,shift_subname,shift_group),amount')
+            .eq('group_name', shift_group_name)
+            .execute()
+        )
+        if response.data:
+            # 轉換為程式所需的格式
+            shift_group = {}
+            for row in response.data:
+                weekday = row['weekday']
+                shift_group.setdefault(weekday,[])
+                shift_group[row['weekday']].append({
+                    'shift_name': row['shift_type']['shift_name'],
+                    'shift_subname': row['shift_type']['shift_subname'],
+                    'shift_group': row['shift_type']['shift_group'],
+                    'amount': row['amount']
+                })
+            return shift_group
+        else:
+            return None
+    except Exception as e:
+        print(f"Error fetching shift_group: {e}")
         return None 

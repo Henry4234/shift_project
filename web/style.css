@@ -31,7 +31,8 @@
   --bg-table-selected: #e6f3ff;
   --border-selected:#007bff;
   --schedule-verify-checkbox: #e3f2fd;
-
+  --group-weekend: #fce4ec;
+  --timeline-current-color: #fff;
 }
 body {
   background-color: #e7f2fd;
@@ -58,12 +59,14 @@ body.dark {
   --fc-schedule-night:#e3f2fd;
   --fc-schedule-off:#d0cece;
   --bg-schedule-day:#48765f;
-  --bg-schedule-eveing:#d45500;
+  --bg-schedule-eveing:#b56732eb;
   --bg-schedule-night:#336699;
   --bg-schedule-off: #3b3b3b;
   --bg-table-selected: #5B6271;
   --border-selected: #b0c4d6;
   --schedule-verify-checkbox: #30577d;
+  --group-weekend: #4f3636;
+  --timeline-current-color: #007bff;
 }
 
 /* 加載動畫 */
@@ -430,7 +433,7 @@ body.dark {
 .content {
     /* width: 530px; */
     position: relative; 
-    top: 90px;
+    top: 50px;
     right: 0;
     height: calc(100% - 90px);
     margin-left: 260px;              /* 260px = sidebar 展開寬度 */
@@ -633,6 +636,148 @@ body.dark {
 .temp-schedule-header .header-actions button:hover {
     background: var(--blue-color);
 }
+
+/* === 時間軸流程樣式 === */
+.temp-schedule-timeline {
+    background: var(--cycle-bg-color);
+    border-radius: 12px;
+    box-shadow: 0 4px 24px 0 rgba(0,0,0,0.13);
+    padding: 24px;
+    margin-bottom: 15px;
+    animation: fadeInTable 0.4s;
+}
+
+.timeline-header {
+    text-align: center;
+    margin-bottom: 2px;
+}
+
+.timeline-header h3 {
+    color: var(--black-color);
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 10px;
+}
+
+.timeline-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.timeline-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 12px;
+    border-radius: 8px;
+    min-width: 100px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.timeline-step .step-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    transition: all 0.3s ease;
+}
+
+.timeline-step .step-label {
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    color: var(--black-color);
+    white-space: nowrap;
+}
+
+/* 步驟狀態樣式 */
+.timeline-step.completed .step-icon {
+    background-color: #28a745;
+    color: white;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.timeline-step.current .step-icon {
+    background-color: var(--blue-color);
+    color: var(--timeline-current-color);
+    box-shadow: 0 2px 8px rgba(64, 112, 244, 0.3);
+    animation: pulse 2s infinite;
+}
+
+.timeline-step.pending .step-icon {
+    background-color: var(--grey-color-light);
+    color: var(--white-color);
+    opacity: 0.6;
+}
+
+/* 箭頭樣式 */
+.timeline-arrow {
+    display: flex;
+    align-items: center;
+    color: var(--grey-color);
+    font-size: 40px;
+    margin: 0 4px;
+    transition: color 0.3s ease;
+}
+
+.timeline-step.completed + .timeline-arrow {
+    color: #28a745;
+}
+
+.timeline-step.current + .timeline-arrow {
+    color: var(--blue-color);
+}
+
+/* 脈衝動畫 */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 2px 8px rgba(64, 112, 244, 0.3);
+    }
+    50% {
+        box-shadow: 0 2px 16px rgba(64, 112, 244, 0.6);
+    }
+    100% {
+        box-shadow: 0 2px 8px rgba(64, 112, 244, 0.3);
+    }
+}
+
+/* 響應式設計 */
+@media screen and (max-width: 768px) {
+    .timeline-steps {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .timeline-arrow {
+        transform: rotate(90deg);
+        margin: 8px 0;
+    }
+    
+    .timeline-step {
+        min-width: 120px;
+        padding: 12px 8px;
+    }
+    
+    .timeline-step .step-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+    
+    .timeline-step .step-label {
+        font-size: 12px;
+    }
+}
+
 .temp-schedule-mode, .verify-schedule {
     box-shadow: 0 4px 24px 0 rgba(0,0,0,0.13);
     border-radius: 12px;
@@ -1231,7 +1376,6 @@ body.dark {
   width: 100%;
   min-width: 900px;
   table-layout: fixed; /* 固定表格佈局 */
-  overflow: hidden;
 }
 .employees-table th, .employees-table td {
   border: 1px solid #e0e0e0;
@@ -1240,6 +1384,7 @@ body.dark {
   text-align: center;
   font-size: 15px;
   height: 40px; /* 設定基本儲存格高度 */
+  width: 40px;
   vertical-align: middle;
 }
 .employees-table th {
@@ -1264,9 +1409,12 @@ body.dark {
   font-size: 12px;
   margin-top: 2px;
 }
-.employees-table th:first-child{
+.employees-table th:first-child, .employees-table td:first-child{
   background: var(--table-td-color);
   color: var(--black-color);
+  position: sticky;
+  left: 0;
+  z-index: 2;
   font-size: 15px;
   font-weight: 500;
   min-width: 90px;
@@ -1402,11 +1550,32 @@ nav.content.fadeout {
 }
 
 .shift-sub-cell {
-  height: 10px; /* 子班別儲存格高度 */
+  height: 20px; /* 子班別儲存格高度 */
   font-size: 11px; /* 較小的字體 */
-  padding: 1px 4px; /* 較小的內距 */
+  padding: 2px 6px; /* 調整內距 */
   vertical-align: middle;
-  line-height: 1;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--grey-color);
+  background-color: rgba(255, 255, 255, 0.8);
+  border-top: 1px solid #e0e0e0;
+  position: relative;
+}
+
+/* 子班別儲存格中的班別名稱樣式 */
+.shift-sub-cell.morning-shift {
+  color: var(--fc-schedule-day);
+  font-weight: 500;
+}
+
+.shift-sub-cell.afternoon-shift {
+  color: var(--fc-schedule-eveing);
+  font-weight: 500;
+}
+
+.shift-sub-cell.night-shift {
+  color: var(--fc-schedule-night);
+  font-weight: 500;
 }
 
 /* 員工姓名儲存格樣式 */
@@ -1420,16 +1589,74 @@ nav.content.fadeout {
 }
 
 
+/* 班別子類型樣式 */
+.shift-subtypes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.shift-subtype {
+  font-size: 10px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  text-align: center;
+  font-weight: 500;
+  color: white;
+  background-color: var(--grey-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shift-subtype.morning-shift {
+  background-color: var(--fc-schedule-day);
+}
+
+.shift-subtype.afternoon-shift {
+  background-color: var(--fc-schedule-eveing);
+}
+
+.shift-subtype.night-shift {
+  background-color: var(--fc-schedule-night);
+}
+
+/* 新增：支援 shift-subtypes 的標題樣式 */
+.employees-table th .shift-subtypes {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+}
+
+.employees-table th .shift-subtype {
+  font-size: 9px;
+  padding: 1px 3px;
+  border-radius: 2px;
+  text-align: center;
+  font-weight: 500;
+  color: white;
+  background-color: var(--grey-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
 /* 子班別行樣式 */
 .shift-subtype-row {
   background-color: rgba(255, 255, 255, 0.3);
 }
 
 .shift-subtype-row td {
-  height: 10px; /* 子班別行儲存格高度 */
+  height: 30%; /* 子班別行儲存格高度 */
   padding: 1px 4px;
 }
-
+.shift-subtype-row td:first-child {
+  z-index: 0;
+}
 /* 早班樣式 */
 .morning-shift {
   background: var(--bg-schedule-day) !important;
@@ -1560,6 +1787,174 @@ nav.content.fadeout {
     transition: opacity 0.4s ease;
 }
 
+/* === 班別設定面板樣式 === */
+.shift-config-mode {
+    background: var(--cycle-bg-color);
+    border-radius: 12px;
+    box-shadow: 0 4px 24px 0 rgba(0,0,0,0.13);
+    padding: 24px;
+    margin-top: 15px;
+    animation: fadeInTable 0.4s;
+}
+
+.shift-config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--grey-color-light);
+}
+
+.shift-config-header h3 {
+    margin: 0;
+    color: var(--black-color);
+    font-size: 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.shift-config-header h3 i {
+    color: var(--blue-color);
+    font-size: 24px;
+}
+
+.shift-config-header button {
+    background: var(--blue-color);
+    color: var(--white-color);
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.shift-config-header button:hover {
+    background: #3366cc;
+}
+
+.shift-config-content {
+    position: relative;
+    min-height: 200px;
+}
+
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: var(--grey-color);
+}
+
+.loading-spinner p {
+    margin-top: 16px;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.shift-types-table-container {
+    overflow-x: auto;
+}
+
+.shift-types-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--white-color);
+    border-radius: 8px;
+    overflow: hidden;
+    
+}
+
+.shift-types-table th,
+.shift-types-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--grey-color-light);
+    color: var(--black-color);
+    
+}
+
+.shift-types-table th {
+    background: var(--table-th-color);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--black-color);
+    white-space: nowrap;
+
+}
+
+.shift-types-table td {
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+.shift-types-table tbody tr {
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+}
+
+.shift-types-table tbody tr:hover {
+    background-color: var(--bg-table-selected);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.shift-types-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.shift-types-table .btn {
+    margin-right: 8px;
+    font-size: 12px;
+    padding: 6px 12px;
+    transition: all 0.2s ease;
+}
+
+.shift-types-table .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+.shift-types-table .btn:last-child {
+    margin-right: 0;
+}
+
+
+/* 響應式設計 */
+@media screen and (max-width: 768px) {
+    .shift-config-header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+    }
+    
+    .shift-config-header button {
+        justify-content: center;
+    }
+    
+    .shift-types-table {
+        font-size: 12px;
+    }
+    
+    .shift-types-table th,
+    .shift-types-table td {
+        padding: 8px 12px;
+    }
+    
+    .shift-types-table .btn {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+}
+
 /* === 開始排班彈窗樣式 === */
 
 #startScheduleModal .modal-content {
@@ -1600,7 +1995,7 @@ nav.content.fadeout {
 
 /* 左側日期輸入區域 */
 #startScheduleModal .date-inputs {
-    width: 70%;
+    width: 40%;
     padding-right: 15px;
 }
 
@@ -1627,9 +2022,9 @@ nav.content.fadeout {
     box-shadow: 0 0 0 0.2rem rgba(64, 112, 244, 0.25);
 }
 
-/* 右側天數顯示區域 */
+/* 上二側天數顯示區域 */
 #startScheduleModal .days-display {
-    width: 40%;
+    width: 30%;
     text-align: center;
     border-left: 1px solid var(--grey-color-light);
     padding-left: 15px;
@@ -1667,7 +2062,17 @@ nav.content.fadeout {
     color: var(--grey-color);
     font-weight: 500;
 }
-
+/* 上三側選擇班別 */
+#startScheduleModal .shift-select {
+  width: 30%;
+  text-align: center;
+  border-left: 1px solid var(--grey-color-light);
+  padding-left: 15px;
+}
+#ShiftListGroup .list-group-item {
+  background-color: var(--white-color);
+  font-size: 14px;
+}
 #startScheduleModal .employee-count-section #employeeCount {
     color: var(--green-color);
     font-weight: 600;
@@ -1701,7 +2106,9 @@ nav.content.fadeout {
 }
 
 /* 夜間模式適配 */
-body.dark #startScheduleModal .modal-content {
+body.dark #startScheduleModal .modal-content,
+body.dark #shiftTypeModal .modal-content,
+body.dark #shiftGroupModal .modal-content {
     background-color: var(--white-color);
     color: var(--grey-color);
 }
@@ -1916,5 +2323,465 @@ body.dark .message-close:hover {
     
     .loading-message {
         font-size: 14px;
+    }
+}
+
+/* === 班別群組設定樣式 === */
+.shift-group-config-mode {
+    background: var(--cycle-bg-color);
+    border-radius: 12px;
+    box-shadow: 0 4px 24px 0 rgba(0,0,0,0.13);
+    padding: 24px;
+    margin-top: 20px;
+    animation: fadeInTable 0.4s;
+}
+
+.shift-group-config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--grey-color-light);
+}
+
+.shift-group-config-header h3 {
+    margin: 0;
+    color: var(--black-color);
+    font-size: 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.shift-group-config-header h3 i {
+    color: var(--blue-color);
+    font-size: 24px;
+}
+
+.shift-group-config-header button {
+    background: var(--blue-color);
+    color: var(--white-color);
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.shift-group-config-header button:hover {
+    background: #3366cc;
+}
+
+.shift-group-config-content {
+    position: relative;
+    min-height: 200px;
+}
+
+/* 群組項目樣式 */
+.shift-group-item {
+    background: var(--white-color);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.shift-group-item:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+/* 群組標題樣式 */
+.group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: var(--table-th-color);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid var(--grey-color-light);
+}
+
+.group-header:hover {
+    background: var(--bg-table-selected);
+}
+
+.group-header-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.group-expand-icon {
+    font-size: 20px;
+    color: var(--grey-color);
+    transition: transform 0.3s ease;
+}
+
+.group-name {
+    margin: 0;
+    color: var(--black-color);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.group-count {
+    color: var(--grey-color);
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.group-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.group-actions .btn {
+    font-size: 12px;
+    padding: 6px 12px;
+    transition: all 0.2s ease;
+}
+
+.group-actions .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+/* 群組內容樣式 */
+.group-content {
+    padding: 20px;
+    background: var(--white-color);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+/* 表格滾動容器 */
+.group-details-table-container {
+    overflow-x: auto;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.group-details-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--white-color);
+    border-radius: 6px;
+    overflow: hidden;
+    min-width: 700px; /* 確保表格有最小寬度 */
+}
+
+/* 展開/收合動畫 */
+.group-content.expanding {
+    animation: expandContent 0.3s ease-out;
+}
+
+.group-content.collapsing {
+    animation: collapseContent 0.3s ease-in;
+}
+
+@keyframes expandContent {
+    from {
+        max-height: 0;
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        max-height: 500px;
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes collapseContent {
+    from {
+        max-height: 500px;
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        max-height: 0;
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+
+.group-details-table th,
+.group-details-table td {
+    padding: 12px 16px;
+    text-align: center;
+    border: 1px solid var(--grey-color-light);
+    color: var(--black-color);
+    vertical-align: top;
+}
+
+.group-details-table th {
+    background: var(--table-th-color);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--black-color);
+    white-space: nowrap;
+    position: relative;
+}
+
+.group-details-table th::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--blue-color);
+}
+
+.group-details-table td {
+    font-size: 14px;
+    min-height: 80px;
+    position: relative;
+}
+
+/* 無班別的儲存格樣式 */
+.group-details-table td.no-shift {
+    color: var(--grey-color-light);
+    font-style: italic;
+    background: #f8f9fa;
+}
+
+/* 有班別的儲存格樣式 */
+.group-details-table td.has-shift {
+    background: var(--white-color);
+}
+
+/* 班別項目樣式 */
+.shift-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    margin: 4px 0;
+    background: var(--bg-table-selected);
+    border-radius: 6px;
+    border: 1px solid var(--grey-color-light);
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.shift-item:hover {
+    background: var(--bg-table-selected);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+}
+
+.shift-text {
+    flex: 1;
+    font-weight: 500;
+    color: var(--black-color);
+    text-align: left;
+}
+
+.shift-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.shift-item:hover .shift-actions {
+    opacity: 1;
+}
+
+.shift-actions .btn {
+    padding: 2px 6px;
+    font-size: 18px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.shift-actions .btn:hover {
+    transform: scale(1.1);
+}
+
+/* 人數標示樣式 */
+.shift-text::after {
+    content: attr(data-amount);
+    color: var(--blue-color);
+    font-weight: 600;
+    margin-left: 4px;
+}
+
+/* 週末樣式 */
+.group-details-table th:nth-child(6),
+.group-details-table th:nth-child(7),
+.group-details-table td:nth-child(6),
+.group-details-table td:nth-child(7) {
+    background: var(--group-weekend);
+}
+
+.group-details-table th:nth-child(6)::after,
+.group-details-table th:nth-child(7)::after {
+    background: #ff9b9b;
+}
+
+/* 響應式設計 */
+@media screen and (max-width: 768px) {
+    .shift-group-config-header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+    }
+    
+    .shift-group-config-header button {
+        justify-content: center;
+    }
+    
+    .group-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+    
+    .group-header-content {
+        justify-content: space-between;
+    }
+    
+    .group-actions {
+        justify-content: center;
+    }
+    
+    .group-details-table {
+        font-size: 12px;
+        min-width: 600px; /* 確保在小螢幕上可以水平滾動 */
+    }
+    
+    .group-details-table th,
+    .group-details-table td {
+        padding: 8px 6px;
+        min-width: 80px;
+    }
+    
+    .shift-item {
+        padding: 6px 8px;
+        margin: 2px 0;
+    }
+    
+    .shift-text {
+        font-size: 11px;
+    }
+    
+    .shift-actions .btn {
+        padding: 1px 4px;
+        font-size: 9px;
+    }
+    
+    /* 在小螢幕上顯示操作按鈕 */
+    .shift-actions {
+        opacity: 1;
+    }
+}
+
+/* 超小螢幕適配 */
+@media screen and (max-width: 480px) {
+    .group-details-table {
+        min-width: 500px;
+    }
+    
+    .group-details-table th,
+    .group-details-table td {
+        padding: 6px 4px;
+        min-width: 70px;
+    }
+    
+    .shift-item {
+        flex-direction: column;
+        gap: 4px;
+        text-align: center;
+    }
+    
+    .shift-text {
+        text-align: center;
+        font-size: 10px;
+    }
+}
+
+/* 切換按鈕樣式 */
+.normal-mode-toggle-btn {
+    position: fixed;
+    top: 100px;
+    right: 30px;
+    z-index: 1000;
+    background: var(--blue-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.normal-mode-toggle-btn:hover {
+    background: #3366cc;
+}
+
+/* 夜間模式下的切換按鈕樣式 */
+body.dark .normal-mode-toggle-btn {
+    background: var(--blue-color);
+    color: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+body.dark .normal-mode-toggle-btn:hover {
+    background: #3366cc;
+}
+
+/* 響應式設計支援 */
+@media screen and (max-width: 768px) {
+    .normal-mode-toggle-btn {
+        top: 80px;
+        right: 20px;
+        padding: 8px 16px;
+        font-size: 12px;
+    }
+    
+    .shift-sub-cell {
+        height: 18px;
+        font-size: 10px;
+        padding: 1px 4px;
+    }
+    
+    .shift-subtype-row td {
+        height: 18px;
+        padding: 1px 3px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .normal-mode-toggle-btn {
+        top: 70px;
+        right: 15px;
+        padding: 6px 12px;
+        font-size: 11px;
+    }
+    
+    .shift-sub-cell {
+        height: 16px;
+        font-size: 9px;
+        padding: 1px 2px;
+    }
+    
+    .shift-subtype-row td {
+        height: 16px;
+        padding: 1px 2px;
     }
 }
