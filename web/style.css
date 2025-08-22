@@ -1550,11 +1550,32 @@ nav.content.fadeout {
 }
 
 .shift-sub-cell {
-  height: 10px; /* 子班別儲存格高度 */
+  height: 20px; /* 子班別儲存格高度 */
   font-size: 11px; /* 較小的字體 */
-  padding: 1px 4px; /* 較小的內距 */
+  padding: 2px 6px; /* 調整內距 */
   vertical-align: middle;
-  line-height: 1;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--grey-color);
+  background-color: rgba(255, 255, 255, 0.8);
+  border-top: 1px solid #e0e0e0;
+  position: relative;
+}
+
+/* 子班別儲存格中的班別名稱樣式 */
+.shift-sub-cell.morning-shift {
+  color: var(--fc-schedule-day);
+  font-weight: 500;
+}
+
+.shift-sub-cell.afternoon-shift {
+  color: var(--fc-schedule-eveing);
+  font-weight: 500;
+}
+
+.shift-sub-cell.night-shift {
+  color: var(--fc-schedule-night);
+  font-weight: 500;
 }
 
 /* 員工姓名儲存格樣式 */
@@ -1630,10 +1651,12 @@ nav.content.fadeout {
 }
 
 .shift-subtype-row td {
-  height: 20px; /* 子班別行儲存格高度 */
+  height: 30%; /* 子班別行儲存格高度 */
   padding: 1px 4px;
 }
-
+.shift-subtype-row td:first-child {
+  z-index: 0;
+}
 /* 早班樣式 */
 .morning-shift {
   background: var(--bg-schedule-day) !important;
@@ -2686,5 +2709,79 @@ body.dark .message-close:hover {
     .shift-text {
         text-align: center;
         font-size: 10px;
+    }
+}
+
+/* 切換按鈕樣式 */
+.normal-mode-toggle-btn {
+    position: fixed;
+    top: 100px;
+    right: 30px;
+    z-index: 1000;
+    background: var(--blue-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.normal-mode-toggle-btn:hover {
+    background: #3366cc;
+}
+
+/* 夜間模式下的切換按鈕樣式 */
+body.dark .normal-mode-toggle-btn {
+    background: var(--blue-color);
+    color: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+body.dark .normal-mode-toggle-btn:hover {
+    background: #3366cc;
+}
+
+/* 響應式設計支援 */
+@media screen and (max-width: 768px) {
+    .normal-mode-toggle-btn {
+        top: 80px;
+        right: 20px;
+        padding: 8px 16px;
+        font-size: 12px;
+    }
+    
+    .shift-sub-cell {
+        height: 18px;
+        font-size: 10px;
+        padding: 1px 4px;
+    }
+    
+    .shift-subtype-row td {
+        height: 18px;
+        padding: 1px 3px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .normal-mode-toggle-btn {
+        top: 70px;
+        right: 15px;
+        padding: 6px 12px;
+        font-size: 11px;
+    }
+    
+    .shift-sub-cell {
+        height: 16px;
+        font-size: 9px;
+        padding: 1px 2px;
+    }
+    
+    .shift-subtype-row td {
+        height: 16px;
+        padding: 1px 2px;
     }
 }

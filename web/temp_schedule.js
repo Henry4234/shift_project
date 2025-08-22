@@ -426,6 +426,17 @@ class TempScheduleMode {
             });
         });
     }
+    /**
+     * 移除點擊事件監聽器到所有 shift-cell
+     */
+    removeClickEventListeners() {
+        const shiftCells = this.container.querySelectorAll('.shift-cell');
+        shiftCells.forEach(cell => {
+            cell.removeEventListener('click', (event) => {
+                this.handleShiftCellClick(event);
+            });
+        });
+    }
 
     /**
      * 添加按鈕事件監聽器
@@ -478,7 +489,7 @@ class TempScheduleMode {
         const shiftSubtypeBtn = this.container.querySelector('.shift-subtype-btn');
         if (shiftSubtypeBtn) {
             shiftSubtypeBtn.addEventListener('click', async () => {
-                await this.toggleSubtypeMode();
+                await this.AddSubtypeMode();
             });
         }
     }
@@ -1912,30 +1923,13 @@ class TempScheduleMode {
     }
 
     /**
-     * 切換工作內容安排模式
+     * 更新subtype到employees-table
+     * @param {Object} result - 驗證結果
      */
-    async toggleSubtypeMode() {
-        try {
-            if (this.isSubtypeMode) {
-                // 從工作內容安排模式切換回正常模式
-                await this.renderNormalScheduleTable();
-                this.isSubtypeMode = false;
-                this.updateTimelineStep('verify-schedule', 'current');
-                this.showMessage('已切換回正常排班表檢視', 'success');
-            } else {
-                // 進入工作內容安排模式
-                await this.enterSubtypeMode();
-            }
-        } catch (error) {
-            console.error('切換工作內容安排模式時發生錯誤:', error);
-            this.showMessage('切換模式失敗，請稍後再試', 'error');
-        }
-    }
-
     /**
      * 進入工作內容安排模式
      */
-    async enterSubtypeMode() {
+    async AddSubtypeMode() {
         try {
             this.showMessage('正在載入班別群組資料...', 'info');
             
@@ -1950,13 +1944,20 @@ class TempScheduleMode {
             this.shiftGroupData = await response.json();
             console.log('成功獲取班別群組資料:', this.shiftGroupData);
             
-            // 渲染工作內容安排表格
-            this.renderSubtypeScheduleTable();
+            // 重置已使用的班別記錄
+            this.resetUsedShifts();
+            
+            // 更新現有的 employees-table 結構
+            this.updateEmployeesTableForSubtypeMode();
             this.isSubtypeMode = true;
             
+            // 添加切換回正常模式的按鈕
+            //this.addNormalModeToggleButton();
+            // 鎖定employees-table點擊功能
+            this.removeClickEventListeners();
             // 更新時間軸狀態
             this.updateTimelineStep('verify-schedule', 'completed');
-            this.addTimelineStep('work-content', '工作內容安排', 'current');
+            // this.addTimelineStep('work-content', '工作內容安排', 'current');
             
             this.showMessage('已進入工作內容安排模式', 'success');
             
@@ -1967,193 +1968,468 @@ class TempScheduleMode {
     }
 
     /**
-     * 渲染工作內容安排表格（使用 rowspan=2 的結構）
+     * 重置已使用的班別記錄
      */
-    renderSubtypeScheduleTable() {
-        const table = document.querySelector('.employees-table');
+    resetUsedShifts() {
+        if (this.usedShifts) {
+            this.usedShifts.clear();
+        }
+        this.usedShifts = new Map();
+    }
+
+    /**
+     * 更新 employees-table 為工作內容安排模式
+     */
+    updateEmployeesTableForSubtypeMode() {
+        const table = this.container.querySelector('.employees-table');
         if (!table) {
             console.error('找不到員工班表元素');
+            return;
+        }
+
+        // 驗證 API 資料格式
+        if (!this.shiftGroupData || typeof this.shiftGroupData !== 'object') {
+            console.error('班別群組資料格式錯誤');
+            this.showMessage('班別群組資料格式錯誤', 'error');
+            return;
+        }
+
+        // 檢查是否有必要的資料
+        const hasValidData = Object.keys(this.shiftGroupData).some(key => {
+            const shifts = this.shiftGroupData[key];
+            return Array.isArray(shifts) && shifts.length > 0;
+        });
+
+        if (!hasValidData) {
+            console.error('沒有有效的班別群組資料');
+            this.showMessage('沒有有效的班別群組資料', 'error');
             return;
         }
 
         const thead = table.querySelector('thead tr');
         const tbody = table.querySelector('tbody');
 
-        // 清空現有內容
-        thead.innerHTML = '<th rowspan="2">員工姓名</th>'; // 員工姓名欄位跨越兩列
-        tbody.innerHTML = '';
-
-        // 生成日期標題
-        for (let i = 0; i < 7; i++) {
-            const date = new Date(this.cycleData.start_date);
-            date.setDate(date.getDate() + i);
-            
-            const dayOfWeek = ['日', '一', '二', '三', '四', '五', '六'][date.getDay()];
-            const month = date.getMonth() + 1;
-            const day = date.getDate();
-            
-            const th = document.createElement('th');
-            th.innerHTML = `${month}/${day}<br>(${dayOfWeek})`;
-            th.className = date.getDay() === 0 || date.getDay() === 6 ? 'weekend' : '';
-            
-            // 添加班別子類型標題
-            if (this.shiftGroupData && this.shiftGroupData[i]) {
-                const shifts = this.shiftGroupData[i];
-                const dayShifts = shifts.filter(s => s.shift_group === 'day');
-                const eveningShifts = shifts.filter(s => s.shift_group === 'evening');
-                const nightShifts = shifts.filter(s => s.shift_group === 'night');
-                
-                const shiftSubtypes = document.createElement('div');
-                shiftSubtypes.className = 'shift-subtypes';
-                
-                if (dayShifts.length > 0) {
-                    const dayDiv = document.createElement('div');
-                    dayDiv.className = 'shift-subtype morning-shift';
-                    dayDiv.textContent = 'A班';
-                    shiftSubtypes.appendChild(dayDiv);
-                }
-                
-                if (eveningShifts.length > 0) {
-                    const eveningDiv = document.createElement('div');
-                    eveningDiv.className = 'shift-subtype afternoon-shift';
-                    eveningDiv.textContent = 'B班';
-                    shiftSubtypes.appendChild(eveningDiv);
-                }
-                
-                if (nightShifts.length > 0) {
-                    const nightDiv = document.createElement('div');
-                    nightDiv.className = 'shift-subtype night-shift';
-                    nightDiv.textContent = 'C班';
-                    shiftSubtypes.appendChild(nightDiv);
-                }
-                
-                th.appendChild(shiftSubtypes);
-            }
-            
-            thead.appendChild(th);
+        // 1. 更新表頭：員工姓名欄位跨越兩列
+        const nameHeader = thead.querySelector('th:first-child');
+        if (nameHeader) {
+            nameHeader.rowSpan = 2;
         }
 
-        // 獲取員工姓名
-        let uniqueNames = [];
-        if (this.cycleData && this.cycleData.members) {
-            uniqueNames = this.cycleData.members.map(member => member.name);
-        }
-
-        // 為每個員工創建兩列：第一列顯示主要班別，第二列顯示子班別
-        uniqueNames.forEach(employeeName => {
-            const mainRow = document.createElement('tr');
+                    // 2. 為每個員工行添加子班別行
+        const rows = tbody.querySelectorAll('tr');
+        rows.forEach((row, rowIndex) => {
+            // 為每個員工行創建對應的子班別行
             const subRow = document.createElement('tr');
             subRow.className = 'shift-subtype-row';
             
-            // 員工姓名欄 - 跨越兩列（使用 rowspan=2）
-            const nameCell = document.createElement('td');
-            nameCell.textContent = employeeName;
-            nameCell.rowSpan = 2; // 跨越兩列
-            nameCell.className = 'employee-name-cell';
-            mainRow.appendChild(nameCell);
-            
-            // 生成每天的班表欄位
-            for (let i = 0; i < 7; i++) {
-                const date = new Date(this.cycleData.start_date);
-                date.setDate(date.getDate() + i);
-                
-                // 檢查是否為週末
-                const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-                
-                // 第一列：主要班別儲存格
-                const mainCell = document.createElement('td');
-                mainCell.className = 'shift-main-cell';
-                
-                // 根據 shiftGroupData 決定主要班別
-                if (this.shiftGroupData && this.shiftGroupData[i]) {
-                    const shifts = this.shiftGroupData[i];
-                    const dayShifts = shifts.filter(s => s.shift_group === 'day');
-                    const eveningShifts = shifts.filter(s => s.shift_group === 'evening');
-                    const nightShifts = shifts.filter(s => s.shift_group === 'night');
-                    
-                    if (dayShifts.length > 0) {
-                        mainCell.textContent = 'A';
-                        mainCell.classList.add('morning-shift');
-                    } else if (eveningShifts.length > 0) {
-                        mainCell.textContent = 'B';
-                        mainCell.classList.add('afternoon-shift');
-                    } else if (nightShifts.length > 0) {
-                        mainCell.textContent = 'C';
-                        mainCell.classList.add('night-shift');
-                    } else {
-                        mainCell.textContent = 'O';
-                        mainCell.classList.add('day-off');
-                    }
-                } else {
-                    mainCell.textContent = 'O';
-                    mainCell.classList.add('day-off');
-                }
-                
-                // 如果是週末，加上 weekend 樣式
-                if (isWeekend) {
-                    mainCell.classList.add('weekend');
-                }
-                
-                mainRow.appendChild(mainCell);
-                
-                // 第二列：子班別儲存格
+            // 跳過已經存在的子班別行
+            if (row.classList.contains('shift-subtype-row')) {
+                return;
+            }
+
+            // 獲取員工姓名儲存格並設置 rowspan=2
+            const nameCell = row.querySelector('td:first-child');
+            if (nameCell) {
+                nameCell.rowSpan = 2;
+                nameCell.classList.add('employee-name-cell');
+            }
+
+            // 為每個班別儲存格創建對應的子班別儲存格
+            const shiftCells = row.querySelectorAll('.shift-cell');
+            shiftCells.forEach((shiftCell, cellIndex) => {
                 const subCell = document.createElement('td');
                 subCell.className = 'shift-sub-cell';
-                
-                // 根據 shiftGroupData 顯示子班別
-                if (this.shiftGroupData && this.shiftGroupData[i]) {
-                    const shifts = this.shiftGroupData[i];
-                    const shiftSubtypes = shifts.map(s => `${s.shift_name}-${s.shift_subname}`).join(', ');
-                    subCell.textContent = shiftSubtypes;
-                    
-                    // 繼承上方儲存格的樣式類別
-                    if (mainCell.classList.contains('morning-shift')) {
-                        subCell.classList.add('morning-shift');
-                    } else if (mainCell.classList.contains('afternoon-shift')) {
-                        subCell.classList.add('afternoon-shift');
-                    } else if (mainCell.classList.contains('night-shift')) {
-                        subCell.classList.add('night-shift');
-                    }
-                } else {
-                    subCell.textContent = '';
-                }
+                subCell.setAttribute('data-date', shiftCell.dataset.date || '');
                 
                 // 如果是週末，加上 weekend 樣式
-                if (isWeekend) {
-                    subCell.classList.add('weekend');
+                const dateStr = shiftCell.dataset.date;
+                if (dateStr) {
+                    const date = new Date(dateStr);
+                    const weekday = date.getDay();
+                    // 如果是週末，加上 weekend 樣式
+                    if (weekday === 0 || weekday === 6) {
+                        subCell.classList.add('weekend');
+                    }
                 }
                 
                 subRow.appendChild(subCell);
-            }
+            });
             
-            tbody.appendChild(mainRow);
-            tbody.appendChild(subRow);
+            // 在當前行之後插入子班別行
+            row.after(subRow);
         });
+        
+        // 3. 使用新的子函式重新映射並更新所有班別儲存格內容
+        this.updateAllShiftCellsContent();
+        
+        // 重新綁定點擊事件（因為表格結構已改變）
+        // this.addClickEventListeners();
+        
+        // console.log('已成功更新表格為工作內容安排模式');
     }
 
     /**
-     * 渲染正常排班表格
+     * 更新班別儲存格和子班別儲存格的內容
+     * @param {HTMLElement} shiftCell - 主要班別儲存格
+     * @param {HTMLElement} subCell - 子班別儲存格
+     * @param {number} apiIndex - API 資料的索引
      */
-    async renderNormalScheduleTable() {
-        try {
-            // 重新獲取週期成員資料
-            await this.fetchCycleMembers();
-            
-            // 重新生成標準排班表格
-            this.generateEmployeesTable();
-            
-            // 重新載入已儲存的休假資料
-            await this.loadSavedLeaveData();
-            
-            // 更新班別統計
-            this.updateActualShiftCounts();
-            
-            console.log('已切換回正常排班表檢視');
-            
-        } catch (error) {
-            console.error('渲染正常排班表格時發生錯誤:', error);
-            throw error;
+    updateShiftCellContent(shiftCell, subCell, apiIndex) {
+        if (!this.shiftGroupData || !this.shiftGroupData[apiIndex]) {
+            console.warn(`找不到索引 ${apiIndex} 的班別群組資料`);
+            return;
         }
+
+        const shifts = this.shiftGroupData[apiIndex];
+        if (!Array.isArray(shifts) || shifts.length === 0) {
+            console.warn(`索引 ${apiIndex} 的班別資料為空或格式錯誤`);
+            return;
+        }
+
+        const cellText = shiftCell.textContent.trim();
+        console.log(`更新儲存格內容，索引: ${apiIndex}, 班別數量: ${shifts.length}`);
+        
+        // 根據班別類型隨機選擇對應的 shift_group 元素
+        if (shiftCell.classList.contains('morning-shift')) {
+            // 早班：選擇 shift_group="day" 的元素
+            const dayShifts = shifts.filter(s => s.shift_group === 'day');
+            console.log(`早班選項:`, dayShifts);
+            if (dayShifts.length > 0) {
+                // 隨機選擇一個不重複的早班
+                const randomDayShift = this.getRandomUnusedShift(dayShifts, 'day');
+                if (randomDayShift) {
+                    shiftCell.textContent = randomDayShift.shift_name;
+                    subCell.textContent = randomDayShift.shift_subname;
+                    subCell.classList.add('morning-shift');
+                    // console.log(`已選擇早班: ${randomDayShift.shift_name}-${randomDayShift.shift_subname}`);
+                }
+            }
+        } else if (shiftCell.classList.contains('afternoon-shift')) {
+            // 中班：選擇 shift_group="evening" 的元素
+            const eveningShifts = shifts.filter(s => s.shift_group === 'evening');
+            console.log(`中班選項:`, eveningShifts);
+            if (eveningShifts.length > 0) {
+                // 隨機選擇一個不重複的中班
+                const randomEveningShift = this.getRandomUnusedShift(eveningShifts, 'evening');
+                if (randomEveningShift) {
+                    shiftCell.textContent = randomEveningShift.shift_name;
+                    subCell.textContent = randomEveningShift.shift_subname;
+                    subCell.classList.add('afternoon-shift');
+                    // console.log(`已選擇中班: ${randomEveningShift.shift_name}-${randomEveningShift.shift_subname}`);
+                }
+            }
+        } else if (shiftCell.classList.contains('night-shift')) {
+            // 晚班：選擇 shift_group="night" 的元素
+            const nightShifts = shifts.filter(s => s.shift_group === 'night');
+            console.log(`晚班選項:`, nightShifts);
+            if (nightShifts.length > 0) {
+                // 隨機選擇一個不重複的晚班
+                const randomNightShift = this.getRandomUnusedShift(nightShifts, 'night');
+                if (randomNightShift) {
+                    shiftCell.textContent = randomNightShift.shift_name;
+                    subCell.textContent = randomNightShift.shift_subname;
+                    subCell.classList.add('night-shift');
+                    // console.log(`已選擇晚班: ${randomNightShift.shift_name}-${randomNightShift.shift_subname}`);
+                }
+            }
+        } else if (shiftCell.classList.contains('day-off') || 
+                   shiftCell.classList.contains('leave-high') || 
+                   shiftCell.classList.contains('leave-low') || 
+                   shiftCell.classList.contains('leave-special')) {
+            // 休假：保持原有內容，子班別為空
+            subCell.textContent = '';
+            // console.log(`休假儲存格，保持原有內容`);
+        } else {
+            console.log(`未知的班別類型，儲存格內容: ${cellText}`);
+        }
+    }
+
+    /**
+     * 根據日期重新映射並更新所有班別儲存格內容
+     * 這個函式會按日期來組織迴圈，因為 API 資料是按星期來區分的
+     */
+    updateAllShiftCellsContent() {
+        if (!this.shiftGroupData) {
+            console.warn('班別群組資料尚未載入');
+            return;
+        }
+
+        console.log('開始重新映射所有班別儲存格內容...');
+
+        // 獲取所有班別儲存格，按日期分組
+        const allShiftCells = this.container.querySelectorAll('.employees-table tbody tr:not(.shift-subtype-row) .shift-cell');
+        const allSubCells = this.container.querySelectorAll('.employees-table tbody tr.shift-subtype-row .shift-sub-cell');
+
+        if (allShiftCells.length !== allSubCells.length) {
+            console.warn('班別儲存格數量與子班別儲存格數量不匹配');
+            return;
+        }
+
+        // 按日期分組儲存格
+        const cellsByDate = new Map(); // Map<dateStr, {shiftCells: [], subCells: []}>
+
+        // 將儲存格按日期分組
+        allShiftCells.forEach((shiftCell, index) => {
+            const subCell = allSubCells[index];
+            const dateStr = shiftCell.dataset.date;
+
+            if (!dateStr) {
+                console.warn(`班別儲存格 ${index} 缺少 data-date 屬性`);
+                return;
+            }
+
+            if (!cellsByDate.has(dateStr)) {
+                cellsByDate.set(dateStr, { shiftCells: [], subCells: [] });
+            }
+
+            cellsByDate.get(dateStr).shiftCells.push(shiftCell);
+            cellsByDate.get(dateStr).subCells.push(subCell);
+        });
+
+        // 按日期順序處理每個日期的儲存格
+        const sortedDates = Array.from(cellsByDate.keys()).sort();
+        
+        sortedDates.forEach(dateStr => {
+            const dateCells = cellsByDate.get(dateStr);
+            const apiIndex = this.calculateApiIndexFromDate(dateStr);
+            
+            console.log(`處理日期: ${dateStr}, API索引: ${apiIndex}, 儲存格數量: ${dateCells.shiftCells.length}`);
+            
+            // 批次處理該日期的所有儲存格
+            this.updateShiftCellsByDate(dateCells.shiftCells, dateCells.subCells, apiIndex);
+        });
+
+        console.log('所有班別儲存格內容更新完成');
+    }
+
+    /**
+     * 根據日期字串計算 API 索引
+     * @param {string} dateStr - 日期字串 (YYYY-MM-DD 格式)
+     * @returns {number} API 索引 (0=週一, 1=週二, ..., 5=週六, 6=週日)
+     */
+    calculateApiIndexFromDate(dateStr) {
+        const date = new Date(dateStr);
+        const weekday = date.getDay();
+        
+        // 轉換為 API 的索引格式 (0=週一, 6=週日)
+        // JavaScript 的 getDay() 返回 0=週日, 1=週一, ..., 6=週六
+        // API 的索引是 0=週一, 1=週二, ..., 5=週六, 6=週日
+        let apiIndex;
+        if (weekday === 0) { // 週日
+            apiIndex = 6;
+        } else if (weekday === 6) { // 週六
+            apiIndex = 5;
+        } else {
+            apiIndex = weekday - 1; // 週一到週五：1->0, 2->1, 3->2, 4->3, 5->4
+        }
+        
+        return apiIndex;
+    }
+
+    /**
+     * 批次處理某個日期的所有班別儲存格
+     * @param {Array} shiftCells - 該日期的所有班別儲存格
+     * @param {Array} subCells - 該日期的所有子班別儲存格
+     * @param {number} apiIndex - API 資料的索引
+     */
+    updateShiftCellsByDate(shiftCells, subCells, apiIndex) {
+        if (!this.shiftGroupData || !this.shiftGroupData[apiIndex]) {
+            console.warn(`找不到索引 ${apiIndex} 的班別群組資料`);
+            return;
+        }
+
+        const shifts = this.shiftGroupData[apiIndex];
+        if (!Array.isArray(shifts) || shifts.length === 0) {
+            console.warn(`索引 ${apiIndex} 的班別資料為空或格式錯誤`);
+            return;
+        }
+
+        console.log(`批次處理日期，API索引: ${apiIndex}, 班別數量: ${shifts.length}`);
+
+        // 1. 排除休假儲存格，分類 A/B/C 班別
+        const workCells = [];
+        const leaveCells = [];
+
+        shiftCells.forEach((shiftCell, index) => {
+            const subCell = subCells[index];
+            
+            if (shiftCell.classList.contains('day-off') || 
+                shiftCell.classList.contains('leave-high') || 
+                shiftCell.classList.contains('leave-low') || 
+                shiftCell.classList.contains('leave-special')) {
+                // 休假儲存格
+                leaveCells.push({ shiftCell, subCell });
+            } else {
+                // 工作儲存格
+                workCells.push({ shiftCell, subCell });
+            }
+        });
+
+        // 2. 統計 A/B/C 班別數量
+        const shiftCounts = {
+            morning: 0,  // A班
+            afternoon: 0, // B班
+            night: 0      // C班
+        };
+
+        workCells.forEach(({ shiftCell }) => {
+            if (shiftCell.classList.contains('morning-shift')) {
+                shiftCounts.morning++;
+            } else if (shiftCell.classList.contains('afternoon-shift')) {
+                shiftCounts.afternoon++;
+            } else if (shiftCell.classList.contains('night-shift')) {
+                shiftCounts.night++;
+            }
+        });
+
+        console.log(`班別統計 - A班: ${shiftCounts.morning}, B班: ${shiftCounts.afternoon}, C班: ${shiftCounts.night}`);
+
+        // 3. 檢查 API 資料是否足夠
+        const apiShiftCounts = {
+            day: shifts.filter(s => s.shift_group === 'day').length,
+            evening: shifts.filter(s => s.shift_group === 'evening').length,
+            night: shifts.filter(s => s.shift_group === 'night').length
+        };
+
+        console.log(`API資料統計 - day: ${apiShiftCounts.day}, evening: ${apiShiftCounts.evening}, night: ${apiShiftCounts.night}`);
+
+        // 4. 檢查數量是否匹配
+        if (shiftCounts.morning > apiShiftCounts.day) {
+            console.warn(`A班數量 (${shiftCounts.morning}) 超過 API day 群組數量 (${apiShiftCounts.day})`);
+        }
+        if (shiftCounts.afternoon > apiShiftCounts.evening) {
+            console.warn(`B班數量 (${shiftCounts.afternoon}) 超過 API evening 群組數量 (${apiShiftCounts.evening})`);
+        }
+        if (shiftCounts.night > apiShiftCounts.night) {
+            console.warn(`C班數量 (${shiftCounts.night}) 超過 API night 群組數量 (${apiShiftCounts.night})`);
+        }
+
+        // 5. 分配班別
+        this.assignShiftsToCells(workCells, shifts, shiftCounts);
+
+        // 6. 處理休假儲存格
+        leaveCells.forEach(({ subCell }) => {
+            subCell.textContent = '';
+        });
+
+        console.log(`批次處理完成 - 工作儲存格: ${workCells.length}, 休假儲存格: ${leaveCells.length}`);
+    }
+
+    /**
+     * 分配班別到儲存格
+     * @param {Array} workCells - 工作儲存格陣列
+     * @param {Array} shifts - API 班別資料
+     * @param {Object} shiftCounts - 班別數量統計
+     */
+    assignShiftsToCells(workCells, shifts, shiftCounts) {
+        // 按班別類型分組 API 資料
+        const dayShifts = shifts.filter(s => s.shift_group === 'day');
+        const eveningShifts = shifts.filter(s => s.shift_group === 'evening');
+        const nightShifts = shifts.filter(s => s.shift_group === 'night');
+
+        // 按班別類型分組儲存格
+        const morningCells = workCells.filter(({ shiftCell }) => shiftCell.classList.contains('morning-shift'));
+        const afternoonCells = workCells.filter(({ shiftCell }) => shiftCell.classList.contains('afternoon-shift'));
+        const nightCells = workCells.filter(({ shiftCell }) => shiftCell.classList.contains('night-shift'));
+
+        // 分配 A 班
+        this.assignShiftsToCellGroup(morningCells, dayShifts, 'morning-shift');
+
+        // 分配 B 班
+        this.assignShiftsToCellGroup(afternoonCells, eveningShifts, 'afternoon-shift');
+
+        // 分配 C 班
+        this.assignShiftsToCellGroup(nightCells, nightShifts, 'night-shift');
+    }
+
+    /**
+     * 分配班別到特定群組的儲存格
+     * @param {Array} cells - 儲存格陣列
+     * @param {Array} shifts - 班別資料陣列
+     * @param {string} shiftClass - 班別 CSS 類別
+     */
+    assignShiftsToCellGroup(cells, shifts, shiftClass) {
+        if (cells.length === 0 || shifts.length === 0) {
+            return;
+        }
+
+        // 如果儲存格數量等於班別數量，隨機分配
+        if (cells.length === shifts.length) {
+            // 隨機打亂班別順序
+            const shuffledShifts = [...shifts].sort(() => Math.random() - 0.5);
+            
+            cells.forEach(({ shiftCell, subCell }, index) => {
+                const shift = shuffledShifts[index];
+                shiftCell.textContent = shift.shift_name;
+                subCell.textContent = shift.shift_subname;
+                subCell.classList.add(shiftClass);
+            });
+            
+            console.log(`隨機分配 ${shiftClass} 班別完成，數量: ${cells.length}`);
+        } else {
+            // 數量不匹配，使用原有的隨機選擇邏輯
+            cells.forEach(({ shiftCell, subCell }) => {
+                const randomShift = this.getRandomUnusedShift(shifts, shiftClass);
+                if (randomShift) {
+                    shiftCell.textContent = randomShift.shift_name;
+                    subCell.textContent = randomShift.shift_subname;
+                    subCell.classList.add(shiftClass);
+                }
+            });
+            
+            console.log(`使用隨機選擇邏輯分配 ${shiftClass} 班別，數量: ${cells.length}`);
+        }
+    }
+
+    /**
+     * 獲取隨機且不重複的班別
+     * @param {Array} shifts - 班別陣列
+     * @param {string} shiftGroup - 班別群組
+     * @returns {Object|null} 選中的班別物件
+     */
+    getRandomUnusedShift(shifts, shiftGroup) {
+        if (!shifts || shifts.length === 0) {
+            return null;
+        }
+        
+        // 如果沒有追蹤已使用的班別，初始化
+        if (!this.usedShifts) {
+            this.usedShifts = new Map();
+        }
+        
+        // 使用週期 ID 和班別群組作為鍵值，確保每個週期都有獨立的追蹤
+        const cycleId = this.cycleData.cycle_id;
+        const key = `${cycleId}_${shiftGroup}`;
+        
+        // 獲取已使用的班別
+        let usedShifts = this.usedShifts.get(key) || new Set();
+        
+        // 找出未使用的班別
+        const availableShifts = shifts.filter(shift => {
+            const shiftKey = `${shift.shift_name}_${shift.shift_subname}`;
+            return !usedShifts.has(shiftKey);
+        });
+        
+        // 如果沒有可用的班別，重置已使用記錄
+        if (availableShifts.length === 0) {
+            usedShifts.clear();
+            this.usedShifts.set(key, usedShifts);
+            console.log(`重置 ${shiftGroup} 班別的已使用記錄`);
+            return shifts[0]; // 返回第一個班別
+        }
+        
+        // 隨機選擇一個未使用的班別
+        const randomIndex = Math.floor(Math.random() * availableShifts.length);
+        const selectedShift = availableShifts[randomIndex];
+        
+        // 標記為已使用
+        const shiftKey = `${selectedShift.shift_name}_${selectedShift.shift_subname}`;
+        usedShifts.add(shiftKey);
+        this.usedShifts.set(key, usedShifts);
+        
+        console.log(`選擇 ${shiftGroup} 班別: ${shiftKey}, 剩餘可用: ${availableShifts.length - 1}`);
+        
+        return selectedShift;
     }
 
     /**
