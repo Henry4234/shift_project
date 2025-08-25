@@ -478,7 +478,7 @@ class TempScheduleMode {
         const DelCycleBtn = this.container.querySelector('.btn-del-cycle');
         if (DelCycleBtn) {
             DelCycleBtn.addEventListener('click', async () => {
-                // 預留刪除週期功能
+                await this.deleteCycle();
             });
         }
 
@@ -2614,6 +2614,193 @@ class TempScheduleMode {
         } else {
             // 如果已存在，更新狀態
             this.updateTimelineStep(id, status);
+        }
+    }
+
+    /**
+     * 刪除週期功能
+     */
+    async deleteCycle() {
+        const cycleId = this.cycleData.cycle_id;
+        
+        // 1. 顯示 Bootstrap Modal 確認視窗
+        const confirmed = await this.showDeleteConfirmationModal(cycleId);
+        
+        if (!confirmed) {
+            return; // 用戶取消刪除
+        }
+        
+        // 2. 顯示載入狀態
+        this.showLoadingOverlay('正在刪除週期...');
+        
+        try {
+            console.log(`開始刪除週期 #${cycleId}...`);
+            
+            // 3. 呼叫後端 API 刪除週期
+            const response = await fetch(`/api/schedule-cycles/${cycleId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || '刪除週期失敗');
+            }
+            
+            const result = await response.json();
+            console.log('刪除週期成功:', result);
+            
+            // 4. 隱藏載入狀態
+            this.hideLoadingOverlay();
+            
+            // 5. 顯示成功 toast 提示
+            this.showDeleteSuccessToast();
+            
+            // 6. 延遲一下再返回月曆模式，讓用戶看到成功訊息
+            setTimeout(() => {
+                this.returnToCalendarMode();
+            }, 100);
+            
+        } catch (error) {
+            console.error('刪除週期時發生錯誤:', error);
+            this.hideLoadingOverlay();
+            this.showMessage(`刪除週期失敗: ${error.message}`, 'error');
+        }
+    }
+
+    /**
+     * 顯示刪除確認 Modal
+     * @param {number} cycleId - 週期 ID
+     * @returns {Promise<boolean>} 用戶是否確認刪除
+     */
+    showDeleteConfirmationModal(cycleId) {
+        return new Promise((resolve) => {
+            // 創建 Modal HTML
+            const modalHtml = `
+                <div class="modal fade" id="deleteCycleModal" tabindex="-1" aria-labelledby="deleteCycleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="deleteCycleModalLabel">確認刪除週期</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>您確定要刪除週期 #${cycleId} 嗎？</p>
+                                <p class="text-danger">
+                                    <strong>警告：</strong>此操作將永久刪除此週期的所有資料，包括：
+                                </p>
+                                <ul class="text-danger">
+                                    <li>週期基本資訊</li>
+                                    <li>所有休假安排</li>
+                                    <li>員工班別需求</li>
+                                </ul>
+                                <p class="text-danger"><strong>此操作無法復原！</strong></p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">確定刪除</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 添加到頁面
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            const modal = document.getElementById('deleteCycleModal');
+            const confirmBtn = document.getElementById('confirmDeleteBtn');
+            
+            // 創建 Bootstrap Modal 實例
+            const bsModal = new bootstrap.Modal(modal);
+            
+            // 綁定確認按鈕事件
+            confirmBtn.addEventListener('click', () => {
+                bsModal.hide();
+                resolve(true);
+            });
+            
+            // 綁定 Modal 關閉事件
+            modal.addEventListener('hidden.bs.modal', () => {
+                bsModal.hide();
+                resolve(false);
+            });
+            
+            // 顯示 Modal
+            bsModal.show();
+        });
+    }
+
+    /**
+     * 顯示刪除成功 toast 提示
+     */
+    showDeleteSuccessToast() {
+        const toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            // 如果沒有 toast 容器，創建一個
+            const container = document.createElement('div');
+            container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            container.style.zIndex = '1055';
+            document.body.appendChild(container);
+        }
+        
+        const container = document.querySelector('.toast-container');
+        
+        const toastHtml = `
+            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header bg-success text-white">
+                    <i class="bx bx-check-circle me-2"></i>
+                    <strong class="me-auto">刪除成功</strong>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    週期 #${this.cycleData.cycle_id} 已成功刪除！
+                </div>
+            </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', toastHtml);
+        
+        const toastElement = container.lastElementChild;
+        const toast = new bootstrap.Toast(toastElement, {
+            autohide: true,
+            delay: 3000
+        });
+        
+        toast.show();
+        
+        // 自動移除 toast 元素
+        toastElement.addEventListener('hidden.bs.toast', () => {
+            toastElement.remove();
+        });
+    }
+
+    /**
+     * 返回月曆模式
+     */
+    returnToCalendarMode() {
+        // 先重新載入 draft 班表
+        if (window.loadDraftCycles) {
+            window.loadDraftCycles();
+        }
+        
+        // 檢查是否有 modeSwitcher 實例
+        if (window.modeSwitcher) {
+            // 先切換到月曆模式
+            window.modeSwitcher.switchToMode('calendar');
+            
+            // 確保月曆被正確初始化
+            setTimeout(() => {
+                if (window.initCalendar) {
+                    window.initCalendar();
+                }
+            }, 450); // 等待 hideCurrentMode 的動畫完成 (400ms) + 一些緩衝時間
+        } else {
+            // 備用方案：直接重新載入頁面
+            console.warn('找不到 modeSwitcher 實例，重新載入頁面');
+            window.location.reload();
         }
     }
 }
