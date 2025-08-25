@@ -827,7 +827,7 @@ body.dark {
 }
 .verify-schedule textarea{
   width: 100%;
-  min-height: 130px;
+  min-height: 150px;
   padding: 12px;
   border: 1px solid var(--grey-color);
   border-radius: 6px;
@@ -1410,8 +1410,6 @@ body.dark {
   margin-top: 2px;
 }
 .employees-table th:first-child, .employees-table td:first-child{
-  background: var(--table-td-color);
-  color: var(--black-color);
   position: sticky;
   left: 0;
   z-index: 2;
@@ -1423,6 +1421,7 @@ body.dark {
 }
 .employees-table-outer {
   overflow-x: auto;
+  overflow-y: hidden;
 }
 
 /* 週末樣式 */
@@ -1443,6 +1442,11 @@ body.dark {
   z-index: 2;
   background: var(--table-td-color);
   box-shadow: 2px 0 4px -2px #b0bec5;
+  left: 0;
+  z-index: 2;
+  font-size: 15px;
+  min-width: 90px;
+  width: 120px; /* 固定員工姓名欄位寬度 */
 }
 
 /* === 月曆模式切換動畫 === */
@@ -1961,8 +1965,8 @@ nav.content.fadeout {
     background-color: var(--white-color);
     color: var(--grey-color);
 }
-
-#startScheduleModal .modal-header i.bx-play-circle {
+/*新增班別類型的彈窗設定 */
+#startScheduleModal .modal-header i.bx-play-circle , #shiftTypeModal .modal-header i.bx-spreadsheet, #shiftGroupModal .modal-header i.bx-group {
     font-size: 26px;
     margin-right: 5px;
     color: var(--blue-color);
@@ -2177,6 +2181,7 @@ body.dark #startScheduleModal #employeeListGroup .list-group-item {
     color: var(--grey-color);
     border-bottom: 1px solid var(--grey-color-light);
 }
+
 
 /* 載入遮罩樣式 */
 .loading-overlay {

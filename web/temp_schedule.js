@@ -7,7 +7,7 @@ class TempScheduleMode {
         this.shiftTypeMap = {
             'A': { text: 'A', class: 'morning-shift' },
             'B': { text: 'B', class: 'afternoon-shift' },
-            'C': { text: 'C', 'class': 'night-shift' },
+            'C': { text: 'C', class: 'night-shift' },
             'O': { text: 'O', class: 'day-off' }
         };
         
@@ -84,6 +84,7 @@ class TempScheduleMode {
                         <button type="button" class="btn-save-leaves">儲存休假資料</button>    
                         <button type="button" class="btn-auto-schedule">自動排班</button>
                         <button type="button" class="btn-clear-off">清除全部畫假</button>
+                        <button type="button" class="btn-del-cycle">刪除週期</button>
                     </div>
                 </div>
                 <div class="employees-table-outer">
@@ -113,6 +114,7 @@ class TempScheduleMode {
                     <div class="verify-action">
                         <button type="button" class="verify-shift-btn" onclick="">驗證班表</button>
                         <button type="button" class="shift-subtype-btn" onclick="">工作內容安排</button>
+                        <button type="button" class="shift-upload-btn" onclick="">上傳/發佈班表</button>
                     </div>
                 </div>
                 <div class="verify-schedule-content">
@@ -162,6 +164,8 @@ class TempScheduleMode {
         await this.loadComment();
         // 2. 先獲取此週期的成員
         const members = await this.fetchCycleMembers();
+        // 緩存成員資料以供後續上傳時使用 employee_id 對應
+        this.members = members;
         // 3. 產生包含日期和成員的表格
         this.generateScheduleTable(members);
         // 4. 載入已儲存的休假資料（合併原 fetchCycleLeaveStatus）
@@ -187,6 +191,10 @@ class TempScheduleMode {
         
         // 11. 初始化時間軸狀態
         this.initializeTimeline();
+        
+        // 12. disabled之後才會開啟的btn
+        const initDisabledBtn = this.container.querySelectorAll('.shift-subtype-btn, .shift-upload-btn');
+        initDisabledBtn.forEach(el => el.disabled = true);
     }
 
     /**
@@ -466,8 +474,15 @@ class TempScheduleMode {
                 console.log('儲存休假資料結果:', result);
             });
         }
+        // === 刪除週期按鈕 ===
+        const DelCycleBtn = this.container.querySelector('.btn-del-cycle');
+        if (DelCycleBtn) {
+            DelCycleBtn.addEventListener('click', async () => {
+                // 預留刪除週期功能
+            });
+        }
 
-        // === 新增：上班天數更新按鈕 ===
+        // === 上班天數更新按鈕 ===
         const updateRequireBtn = this.container.querySelector('.update-require-btn');
         if (updateRequireBtn) {
             // 初始狀態設為 disabled
@@ -477,7 +492,7 @@ class TempScheduleMode {
             });
         }
 
-        // === 新增：驗證班表按鈕 ===
+        // === 驗證班表按鈕 ===
         const verifyShiftBtn = this.container.querySelector('.verify-shift-btn');
         if (verifyShiftBtn) {
             verifyShiftBtn.addEventListener('click', async () => {
@@ -485,11 +500,19 @@ class TempScheduleMode {
             });
         }
 
-        // === 新增：工作內容安排按鈕 ===
+        // === 工作內容安排按鈕 ===
         const shiftSubtypeBtn = this.container.querySelector('.shift-subtype-btn');
         if (shiftSubtypeBtn) {
             shiftSubtypeBtn.addEventListener('click', async () => {
                 await this.AddSubtypeMode();
+            });
+        }
+
+        // === 上傳/發佈班表 ===
+        const UploadBtn = this.container.querySelector('.shift-upload-btn');
+        if (UploadBtn) {
+            UploadBtn.addEventListener('click', async () => {
+                await this.uploadSchedule();
             });
         }
     }
@@ -1612,12 +1635,15 @@ class TempScheduleMode {
             
             // 檢查所有驗證項目是否都通過
             const allVerificationsPassed = this.checkAllVerificationsPassed(result);
-            
+            const SubtypeBtn = this.container.querySelector('.shift-subtype-btn');
+
             if (allVerificationsPassed) {
                 // 所有驗證都通過，更新時間軸狀態
                 this.updateTimelineStep('verify-schedule', 'completed');
                 this.updateTimelineStep('add-subtype', 'current');
                 this.showMessage('班表驗證完成！所有項目均通過！', 'success');
+                //打開工作內容安排按鈕
+                SubtypeBtn.disabled=false;
             } else {
                 // 有驗證項目未通過，不更新時間軸狀態
                 this.showMessage('班表驗證完成！但仍有項目需要修正。', 'info');
@@ -1662,7 +1688,7 @@ class TempScheduleMode {
 
         // 提取員工班別資料
         const schedule = {};
-        const rows = tbody.querySelectorAll('tr');
+        const rows = tbody.querySelectorAll('tr:not(.shift-subtype-row)');
         
         rows.forEach(row => {
             const cells = row.querySelectorAll('td');
@@ -1923,6 +1949,126 @@ class TempScheduleMode {
     }
 
     /**
+     * 提取整個 employees-table（包含子班別列）的資料
+     * 產出格式：[{ employee_name, employee_id, work_date, shift_type, shift_subtype }]
+     */
+    extractFullScheduleWithSubtype() {
+        const table = this.container.querySelector('.employees-table');
+        if (!table) return [];
+
+        const tbody = table.querySelector('tbody');
+        if (!tbody) return [];
+
+        // 建立姓名對 employee_id 的對照
+        const nameToId = new Map();
+        if (Array.isArray(this.members)) {
+            this.members.forEach(m => {
+                nameToId.set(m.snapshot_name, m.employee_id);
+            });
+        }
+
+        const results = [];
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        for (let i = 0; i < rows.length; i++) {
+            const mainRow = rows[i];
+            if (mainRow.classList.contains('shift-subtype-row')) continue;
+
+            const nameCell = mainRow.querySelector('td:first-child');
+            if (!nameCell) continue;
+            const employeeName = nameCell.textContent.trim();
+            const employeeId = nameToId.get(employeeName) || null;
+
+            // 找到對應的 subtype row（下一列且有 class）
+            let subRow = null;
+            if (i + 1 < rows.length && rows[i + 1].classList.contains('shift-subtype-row')) {
+                subRow = rows[i + 1];
+            }
+
+            const mainCells = mainRow.querySelectorAll('td');
+            const subCells = subRow ? subRow.querySelectorAll('td') : [];
+
+            // 從第二個儲存格開始（第一格是姓名）
+            for (let c = 1; c < mainCells.length; c++) {
+                const shiftCell = mainCells[c];
+                const subCell = subCells[c - 1];
+
+                const dateStr = shiftCell.dataset.date;
+                if (!dateStr) continue;
+
+                // 判斷班別類型 A/B/C/O 以樣式為準
+                let shiftType = 'O';
+                if (shiftCell.classList.contains('morning-shift')) shiftType = 'A';
+                else if (shiftCell.classList.contains('afternoon-shift')) shiftType = 'B';
+                else if (shiftCell.classList.contains('night-shift')) shiftType = 'C';
+                else if (shiftCell.classList.contains('day-off') ||
+                         shiftCell.classList.contains('leave-high') ||
+                         shiftCell.classList.contains('leave-low') ||
+                         shiftCell.classList.contains('leave-special')) shiftType = 'O';
+
+                const shiftSubtype = subCell ? (subCell.textContent || '').trim() : '';
+
+                results.push({
+                    employee_name: employeeName,
+                    employee_id: employeeId,
+                    work_date: dateStr,
+                    shift_type: shiftType,
+                    shift_subtype: shiftSubtype
+                });
+            }
+
+            // 跳過已處理的 subRow
+            if (subRow) i += 1;
+        }
+
+        return results;
+    }
+
+    /**
+     * 上傳/發佈班表到後端
+     */
+    async uploadSchedule() {
+        try {
+            const cycleId = this.cycleData?.cycle_id;
+            if (!cycleId) {
+                this.showMessage('缺少 cycle_id', 'error');
+                return;
+            }
+
+            // 取得完整表格資料
+            const payloadRows = this.extractFullScheduleWithSubtype();
+            if (!payloadRows.length) {
+                this.showMessage('沒有可上傳的班表資料', 'info');
+                return;
+            }
+
+            // 驗證 employee_id 是否齊全
+            const missingId = payloadRows.some(r => !r.employee_id);
+            if (missingId) {
+                this.showMessage('有員工缺少 employee_id 對應，請確認成員資料是否正確載入', 'error');
+                return;
+            }
+
+            // 傳送到後端
+            const resp = await fetch('/api/employee-schedules/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cycle_id: cycleId, rows: payloadRows })
+            });
+
+            if (!resp.ok) {
+                const err = await resp.json().catch(() => ({ error: `HTTP ${resp.status}` }));
+                throw new Error(err.error || `HTTP ${resp.status}`);
+            }
+
+            const result = await resp.json();
+            this.showMessage(`上傳成功！共處理 ${result.count || 0} 筆`, 'success');
+        } catch (e) {
+            console.error('上傳班表失敗:', e);
+            this.showMessage(`上傳失敗：${e.message}`, 'error');
+        }
+    }
+
+    /**
      * 更新subtype到employees-table
      * @param {Object} result - 驗證結果
      */
@@ -1951,16 +2097,15 @@ class TempScheduleMode {
             this.updateEmployeesTableForSubtypeMode();
             this.isSubtypeMode = true;
             
-            // 添加切換回正常模式的按鈕
-            //this.addNormalModeToggleButton();
             // 鎖定employees-table點擊功能
             this.removeClickEventListeners();
             // 更新時間軸狀態
-            this.updateTimelineStep('verify-schedule', 'completed');
-            // this.addTimelineStep('work-content', '工作內容安排', 'current');
+            this.updateTimelineStep('add-subtype', 'completed');
+            this.updateTimelineStep('complete', 'current');
             
-            this.showMessage('已進入工作內容安排模式', 'success');
-            
+            this.showMessage('工作內容安排完成', 'success');
+            const UploadBtn = this.container.querySelector('.shift-upload-btn');
+            UploadBtn.disabled=false;
         } catch (error) {
             console.error('進入工作內容安排模式時發生錯誤:', error);
             this.showMessage(`無法載入班別群組資料: ${error.message}`, 'error');
@@ -2016,13 +2161,17 @@ class TempScheduleMode {
         }
 
                     // 2. 為每個員工行添加子班別行
+        // 先清除既有的子班別行，確保重新建立
+        const existingSubtypeRows = tbody.querySelectorAll('tr.shift-subtype-row');
+        existingSubtypeRows.forEach(r => r.remove());
+
         const rows = tbody.querySelectorAll('tr');
         rows.forEach((row, rowIndex) => {
             // 為每個員工行創建對應的子班別行
             const subRow = document.createElement('tr');
             subRow.className = 'shift-subtype-row';
             
-            // 跳過已經存在的子班別行
+            // 如果遇到子班別行（理論上已被清除），直接跳過
             if (row.classList.contains('shift-subtype-row')) {
                 return;
             }
