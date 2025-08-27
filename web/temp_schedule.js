@@ -2621,6 +2621,7 @@ class TempScheduleMode {
      * 刪除週期功能
      */
      async deleteCycle() {
+       
         const cycleId = this.cycleData.cycle_id;
         
         // 1. 顯示 Bootstrap Modal 確認視窗

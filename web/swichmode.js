@@ -242,4 +242,3 @@ class ModeSwitcher {
 }
 
 // 建立全域實例，方便從其他 script 檔案呼叫
-

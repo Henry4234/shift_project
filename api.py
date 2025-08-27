@@ -410,6 +410,7 @@ class APIServer():
             except Exception as err:
                 self.logger.error(f'建立排班週期時發生錯誤：{str(err)}')
                 return jsonify({'error': '無法建立排班週期'}), 500
+
         # 刪除排班週期
         @self.app.route('/api/schedule-cycles/<int:cycle_id>', methods=['DELETE'])
         def delete_schedule_cycle(cycle_id):
@@ -458,7 +459,7 @@ class APIServer():
             except Exception as err:
                 self.logger.error(f'刪除週期時發生錯誤：{str(err)}')
                 return jsonify({'error': '刪除週期失敗'}), 500
-            
+
         # 新增/更新週期備註
         @self.app.route('/api/schedule-cycles-comment', methods=['POST'])
         def update_cycle_comment():

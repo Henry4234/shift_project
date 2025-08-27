@@ -2800,11 +2800,12 @@ body.dark .normal-mode-toggle-btn:hover {
         height: 16px;
         padding: 1px 2px;
     }
-  
+
 }
 
 /* 刪除確認 Modal 樣式 */
 #deleteCycleModal .modal-content {
+
   border-radius: 15px;
   border: none;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
@@ -2890,6 +2891,7 @@ body.dark .normal-mode-toggle-btn:hover {
   background: transparent;
   color: white;
   font-weight: 500;
+
 }
 
 /* 深色模式支援 */
