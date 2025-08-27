@@ -2616,11 +2616,12 @@ class TempScheduleMode {
             this.updateTimelineStep(id, status);
         }
     }
-
-    /**
+    
+     /**
      * 刪除週期功能
      */
-    async deleteCycle() {
+     async deleteCycle() {
+       
         const cycleId = this.cycleData.cycle_id;
         
         // 1. 顯示 Bootstrap Modal 確認視窗
@@ -2803,6 +2804,7 @@ class TempScheduleMode {
             window.location.reload();
         }
     }
+
 }
 
 // 建立全域實例，方便從其他 script 檔案呼叫
