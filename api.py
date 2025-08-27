@@ -410,7 +410,55 @@ class APIServer():
             except Exception as err:
                 self.logger.error(f'建立排班週期時發生錯誤：{str(err)}')
                 return jsonify({'error': '無法建立排班週期'}), 500
-
+        # 刪除排班週期
+        @self.app.route('/api/schedule-cycles/<int:cycle_id>', methods=['DELETE'])
+        def delete_schedule_cycle(cycle_id):
+            """
+            刪除指定的排班週期及其相關資料
+            - 路徑參數: cycle_id (int)
+            - 回傳: {"status": "success", "message": "週期已刪除"}
+            """
+            try:
+                self.logger.info(f'開始刪除週期 #{cycle_id}...')
+                
+                # 1. 先檢查週期是否存在
+                cycle_response = self.supabase_client.table('schedule_cycles') \
+                    .select('cycle_id') \
+                    .eq('cycle_id', cycle_id) \
+                    .execute()
+                
+                if not cycle_response.data:
+                    return jsonify({'error': '找不到指定的週期'}), 404
+                
+                # 2. 刪除相關的休假資料
+                self.supabase_client.table('schedule_cycle_temp_offdays') \
+                    .delete() \
+                    .eq('cycle_id', cycle_id) \
+                    .execute()
+                
+                # 3. 刪除週期成員資料
+                self.supabase_client.table('schedule_cycle_members') \
+                    .delete() \
+                    .eq('cycle_id', cycle_id) \
+                    .execute()
+                
+                # 4. 刪除週期本身
+                self.supabase_client.table('schedule_cycles') \
+                    .delete() \
+                    .eq('cycle_id', cycle_id) \
+                    .execute()
+                
+                self.logger.info(f'成功刪除週期 #{cycle_id}')
+                
+                return jsonify({
+                    'status': 'success',
+                    'message': f'週期 #{cycle_id} 已成功刪除'
+                })
+                
+            except Exception as err:
+                self.logger.error(f'刪除週期時發生錯誤：{str(err)}')
+                return jsonify({'error': '刪除週期失敗'}), 500
+            
         # 新增/更新週期備註
         @self.app.route('/api/schedule-cycles-comment', methods=['POST'])
         def update_cycle_comment():

@@ -33,6 +33,8 @@
   --schedule-verify-checkbox: #e3f2fd;
   --group-weekend: #fce4ec;
   --timeline-current-color: #fff;
+  --fc-btn-danger: #e71010;
+
 }
 body {
   background-color: #e7f2fd;
@@ -67,6 +69,8 @@ body.dark {
   --schedule-verify-checkbox: #30577d;
   --group-weekend: #4f3636;
   --timeline-current-color: #007bff;
+  --fc-btn-danger: #e86f6f;
+
 }
 
 /* 加載動畫 */
@@ -635,6 +639,13 @@ body.dark {
 }
 .temp-schedule-header .header-actions button:hover {
     background: var(--blue-color);
+}
+
+.btn-del-cycle {
+  background: var(--fc-btn-danger) !important;
+}
+.btn-del-cycle:hover {
+  background: var(--blue-color) !important;
 }
 
 /* === 時間軸流程樣式 === */
@@ -2789,4 +2800,108 @@ body.dark .normal-mode-toggle-btn:hover {
         height: 16px;
         padding: 1px 2px;
     }
+  
+}
+
+/* 刪除確認 Modal 樣式 */
+#deleteCycleModal .modal-content {
+  border-radius: 15px;
+  border: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+#deleteCycleModal .modal-header {
+  background: var(--fc-btn-danger);
+  color: white;
+  border-radius: 15px 15px 0 0;
+  border-bottom: none;
+}
+
+#deleteCycleModal .modal-header .modal-title {
+  font-weight: 600;
+  font-size: 1.2rem;
+  color: var(--white-color);
+}
+
+#deleteCycleModal .modal-body {
+  padding: 1.5rem;
+  font-size: 1rem;
+}
+
+#deleteCycleModal .modal-body .text-danger {
+  color: #dc3545 !important;
+}
+
+#deleteCycleModal .modal-body ul {
+  margin-bottom: 1rem;
+}
+
+#deleteCycleModal .modal-body ul li {
+  margin-bottom: 0.25rem;
+}
+
+#deleteCycleModal .modal-footer {
+  border-top: none;
+  padding: 1rem 1.5rem 1.5rem;
+}
+
+#deleteCycleModal .btn-danger {
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+#deleteCycleModal .btn-danger:hover {
+  background: linear-gradient(135deg, #c82333, #bd2130);
+  box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+}
+
+#deleteCycleModal .btn-secondary {
+  background: linear-gradient(135deg, #6c757d, #5a6268);
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+#deleteCycleModal .btn-secondary:hover {
+  background: linear-gradient(135deg, #5a6268, #495057);
+  box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+}
+
+/* 成功 Toast 樣式 */
+.toast.bg-success {
+  background: linear-gradient(135deg, #28a745, #20c997) !important;
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 5px 20px rgba(40, 167, 69, 0.3);
+}
+
+.toast.bg-success .toast-header {
+  background: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.toast.bg-success .toast-body {
+  background: transparent;
+  color: white;
+  font-weight: 500;
+}
+
+/* 深色模式支援 */
+body.dark #deleteCycleModal .modal-content {
+  background: #2d3748;
+  color: #e2e8f0;
+}
+
+body.dark #deleteCycleModal .modal-header {
+  background: linear-gradient(135deg, #e53e3e, #c53030);
+}
+
+body.dark #deleteCycleModal .modal-body .text-danger {
+  color: #fc8181 !important;
 }
