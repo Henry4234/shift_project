@@ -7,7 +7,7 @@ class TempScheduleMode {
         this.shiftTypeMap = {
             'A': { text: 'A', class: 'morning-shift' },
             'B': { text: 'B', class: 'afternoon-shift' },
-            'C': { text: 'C', 'class': 'night-shift' },
+            'C': { text: 'C', class: 'night-shift' },
             'O': { text: 'O', class: 'day-off' }
         };
         
@@ -84,6 +84,7 @@ class TempScheduleMode {
                         <button type="button" class="btn-save-leaves">儲存休假資料</button>    
                         <button type="button" class="btn-auto-schedule">自動排班</button>
                         <button type="button" class="btn-clear-off">清除全部畫假</button>
+                        <button type="button" class="btn-del-cycle">刪除週期</button>
                     </div>
                 </div>
                 <div class="employees-table-outer">
@@ -113,6 +114,7 @@ class TempScheduleMode {
                     <div class="verify-action">
                         <button type="button" class="verify-shift-btn" onclick="">驗證班表</button>
                         <button type="button" class="shift-subtype-btn" onclick="">工作內容安排</button>
+                        <button type="button" class="shift-upload-btn" onclick="">上傳/發佈班表</button>
                     </div>
                 </div>
                 <div class="verify-schedule-content">
@@ -162,6 +164,8 @@ class TempScheduleMode {
         await this.loadComment();
         // 2. 先獲取此週期的成員
         const members = await this.fetchCycleMembers();
+        // 緩存成員資料以供後續上傳時使用 employee_id 對應
+        this.members = members;
         // 3. 產生包含日期和成員的表格
         this.generateScheduleTable(members);
         // 4. 載入已儲存的休假資料（合併原 fetchCycleLeaveStatus）
@@ -187,6 +191,10 @@ class TempScheduleMode {
         
         // 11. 初始化時間軸狀態
         this.initializeTimeline();
+        
+        // 12. disabled之後才會開啟的btn
+        const initDisabledBtn = this.container.querySelectorAll('.shift-subtype-btn, .shift-upload-btn');
+        initDisabledBtn.forEach(el => el.disabled = true);
     }
 
     /**
@@ -466,8 +474,15 @@ class TempScheduleMode {
                 console.log('儲存休假資料結果:', result);
             });
         }
+        // === 刪除週期按鈕 ===
+        const DelCycleBtn = this.container.querySelector('.btn-del-cycle');
+        if (DelCycleBtn) {
+            DelCycleBtn.addEventListener('click', async () => {
+                await this.deleteCycle();
+            });
+        }
 
-        // === 新增：上班天數更新按鈕 ===
+        // === 上班天數更新按鈕 ===
         const updateRequireBtn = this.container.querySelector('.update-require-btn');
         if (updateRequireBtn) {
             // 初始狀態設為 disabled
@@ -477,7 +492,7 @@ class TempScheduleMode {
             });
         }
 
-        // === 新增：驗證班表按鈕 ===
+        // === 驗證班表按鈕 ===
         const verifyShiftBtn = this.container.querySelector('.verify-shift-btn');
         if (verifyShiftBtn) {
             verifyShiftBtn.addEventListener('click', async () => {
@@ -485,11 +500,19 @@ class TempScheduleMode {
             });
         }
 
-        // === 新增：工作內容安排按鈕 ===
+        // === 工作內容安排按鈕 ===
         const shiftSubtypeBtn = this.container.querySelector('.shift-subtype-btn');
         if (shiftSubtypeBtn) {
             shiftSubtypeBtn.addEventListener('click', async () => {
                 await this.AddSubtypeMode();
+            });
+        }
+
+        // === 上傳/發佈班表 ===
+        const UploadBtn = this.container.querySelector('.shift-upload-btn');
+        if (UploadBtn) {
+            UploadBtn.addEventListener('click', async () => {
+                await this.uploadSchedule();
             });
         }
     }
@@ -1612,12 +1635,15 @@ class TempScheduleMode {
             
             // 檢查所有驗證項目是否都通過
             const allVerificationsPassed = this.checkAllVerificationsPassed(result);
-            
+            const SubtypeBtn = this.container.querySelector('.shift-subtype-btn');
+
             if (allVerificationsPassed) {
                 // 所有驗證都通過，更新時間軸狀態
                 this.updateTimelineStep('verify-schedule', 'completed');
                 this.updateTimelineStep('add-subtype', 'current');
                 this.showMessage('班表驗證完成！所有項目均通過！', 'success');
+                //打開工作內容安排按鈕
+                SubtypeBtn.disabled=false;
             } else {
                 // 有驗證項目未通過，不更新時間軸狀態
                 this.showMessage('班表驗證完成！但仍有項目需要修正。', 'info');
@@ -1662,7 +1688,7 @@ class TempScheduleMode {
 
         // 提取員工班別資料
         const schedule = {};
-        const rows = tbody.querySelectorAll('tr');
+        const rows = tbody.querySelectorAll('tr:not(.shift-subtype-row)');
         
         rows.forEach(row => {
             const cells = row.querySelectorAll('td');
@@ -1923,6 +1949,126 @@ class TempScheduleMode {
     }
 
     /**
+     * 提取整個 employees-table（包含子班別列）的資料
+     * 產出格式：[{ employee_name, employee_id, work_date, shift_type, shift_subtype }]
+     */
+    extractFullScheduleWithSubtype() {
+        const table = this.container.querySelector('.employees-table');
+        if (!table) return [];
+
+        const tbody = table.querySelector('tbody');
+        if (!tbody) return [];
+
+        // 建立姓名對 employee_id 的對照
+        const nameToId = new Map();
+        if (Array.isArray(this.members)) {
+            this.members.forEach(m => {
+                nameToId.set(m.snapshot_name, m.employee_id);
+            });
+        }
+
+        const results = [];
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        for (let i = 0; i < rows.length; i++) {
+            const mainRow = rows[i];
+            if (mainRow.classList.contains('shift-subtype-row')) continue;
+
+            const nameCell = mainRow.querySelector('td:first-child');
+            if (!nameCell) continue;
+            const employeeName = nameCell.textContent.trim();
+            const employeeId = nameToId.get(employeeName) || null;
+
+            // 找到對應的 subtype row（下一列且有 class）
+            let subRow = null;
+            if (i + 1 < rows.length && rows[i + 1].classList.contains('shift-subtype-row')) {
+                subRow = rows[i + 1];
+            }
+
+            const mainCells = mainRow.querySelectorAll('td');
+            const subCells = subRow ? subRow.querySelectorAll('td') : [];
+
+            // 從第二個儲存格開始（第一格是姓名）
+            for (let c = 1; c < mainCells.length; c++) {
+                const shiftCell = mainCells[c];
+                const subCell = subCells[c - 1];
+
+                const dateStr = shiftCell.dataset.date;
+                if (!dateStr) continue;
+
+                // 判斷班別類型 A/B/C/O 以樣式為準
+                let shiftType = 'O';
+                if (shiftCell.classList.contains('morning-shift')) shiftType = 'A';
+                else if (shiftCell.classList.contains('afternoon-shift')) shiftType = 'B';
+                else if (shiftCell.classList.contains('night-shift')) shiftType = 'C';
+                else if (shiftCell.classList.contains('day-off') ||
+                         shiftCell.classList.contains('leave-high') ||
+                         shiftCell.classList.contains('leave-low') ||
+                         shiftCell.classList.contains('leave-special')) shiftType = 'O';
+
+                const shiftSubtype = subCell ? (subCell.textContent || '').trim() : '';
+
+                results.push({
+                    employee_name: employeeName,
+                    employee_id: employeeId,
+                    work_date: dateStr,
+                    shift_type: shiftType,
+                    shift_subtype: shiftSubtype
+                });
+            }
+
+            // 跳過已處理的 subRow
+            if (subRow) i += 1;
+        }
+
+        return results;
+    }
+
+    /**
+     * 上傳/發佈班表到後端
+     */
+    async uploadSchedule() {
+        try {
+            const cycleId = this.cycleData?.cycle_id;
+            if (!cycleId) {
+                this.showMessage('缺少 cycle_id', 'error');
+                return;
+            }
+
+            // 取得完整表格資料
+            const payloadRows = this.extractFullScheduleWithSubtype();
+            if (!payloadRows.length) {
+                this.showMessage('沒有可上傳的班表資料', 'info');
+                return;
+            }
+
+            // 驗證 employee_id 是否齊全
+            const missingId = payloadRows.some(r => !r.employee_id);
+            if (missingId) {
+                this.showMessage('有員工缺少 employee_id 對應，請確認成員資料是否正確載入', 'error');
+                return;
+            }
+
+            // 傳送到後端
+            const resp = await fetch('/api/employee-schedules/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cycle_id: cycleId, rows: payloadRows })
+            });
+
+            if (!resp.ok) {
+                const err = await resp.json().catch(() => ({ error: `HTTP ${resp.status}` }));
+                throw new Error(err.error || `HTTP ${resp.status}`);
+            }
+
+            const result = await resp.json();
+            this.showMessage(`上傳成功！共處理 ${result.count || 0} 筆`, 'success');
+        } catch (e) {
+            console.error('上傳班表失敗:', e);
+            this.showMessage(`上傳失敗：${e.message}`, 'error');
+        }
+    }
+
+    /**
      * 更新subtype到employees-table
      * @param {Object} result - 驗證結果
      */
@@ -1951,16 +2097,15 @@ class TempScheduleMode {
             this.updateEmployeesTableForSubtypeMode();
             this.isSubtypeMode = true;
             
-            // 添加切換回正常模式的按鈕
-            //this.addNormalModeToggleButton();
             // 鎖定employees-table點擊功能
             this.removeClickEventListeners();
             // 更新時間軸狀態
-            this.updateTimelineStep('verify-schedule', 'completed');
-            // this.addTimelineStep('work-content', '工作內容安排', 'current');
+            this.updateTimelineStep('add-subtype', 'completed');
+            this.updateTimelineStep('complete', 'current');
             
-            this.showMessage('已進入工作內容安排模式', 'success');
-            
+            this.showMessage('工作內容安排完成', 'success');
+            const UploadBtn = this.container.querySelector('.shift-upload-btn');
+            UploadBtn.disabled=false;
         } catch (error) {
             console.error('進入工作內容安排模式時發生錯誤:', error);
             this.showMessage(`無法載入班別群組資料: ${error.message}`, 'error');
@@ -2016,13 +2161,17 @@ class TempScheduleMode {
         }
 
                     // 2. 為每個員工行添加子班別行
+        // 先清除既有的子班別行，確保重新建立
+        const existingSubtypeRows = tbody.querySelectorAll('tr.shift-subtype-row');
+        existingSubtypeRows.forEach(r => r.remove());
+
         const rows = tbody.querySelectorAll('tr');
         rows.forEach((row, rowIndex) => {
             // 為每個員工行創建對應的子班別行
             const subRow = document.createElement('tr');
             subRow.className = 'shift-subtype-row';
             
-            // 跳過已經存在的子班別行
+            // 如果遇到子班別行（理論上已被清除），直接跳過
             if (row.classList.contains('shift-subtype-row')) {
                 return;
             }
@@ -2467,6 +2616,195 @@ class TempScheduleMode {
             this.updateTimelineStep(id, status);
         }
     }
+    
+     /**
+     * 刪除週期功能
+     */
+     async deleteCycle() {
+       
+        const cycleId = this.cycleData.cycle_id;
+        
+        // 1. 顯示 Bootstrap Modal 確認視窗
+        const confirmed = await this.showDeleteConfirmationModal(cycleId);
+        
+        if (!confirmed) {
+            return; // 用戶取消刪除
+        }
+        
+        // 2. 顯示載入狀態
+        this.showLoadingOverlay('正在刪除週期...');
+        
+        try {
+            console.log(`開始刪除週期 #${cycleId}...`);
+            
+            // 3. 呼叫後端 API 刪除週期
+            const response = await fetch(`/api/schedule-cycles/${cycleId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || '刪除週期失敗');
+            }
+            
+            const result = await response.json();
+            console.log('刪除週期成功:', result);
+            
+            // 4. 隱藏載入狀態
+            this.hideLoadingOverlay();
+            
+            // 5. 顯示成功 toast 提示
+            this.showDeleteSuccessToast();
+            
+            // 6. 延遲一下再返回月曆模式，讓用戶看到成功訊息
+            setTimeout(() => {
+                this.returnToCalendarMode();
+            }, 100);
+            
+        } catch (error) {
+            console.error('刪除週期時發生錯誤:', error);
+            this.hideLoadingOverlay();
+            this.showMessage(`刪除週期失敗: ${error.message}`, 'error');
+        }
+    }
+
+    /**
+     * 顯示刪除確認 Modal
+     * @param {number} cycleId - 週期 ID
+     * @returns {Promise<boolean>} 用戶是否確認刪除
+     */
+    showDeleteConfirmationModal(cycleId) {
+        return new Promise((resolve) => {
+            // 創建 Modal HTML
+            const modalHtml = `
+                <div class="modal fade" id="deleteCycleModal" tabindex="-1" aria-labelledby="deleteCycleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="deleteCycleModalLabel">確認刪除週期</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>您確定要刪除週期 #${cycleId} 嗎？</p>
+                                <p class="text-danger">
+                                    <strong>警告：</strong>此操作將永久刪除此週期的所有資料，包括：
+                                </p>
+                                <ul class="text-danger">
+                                    <li>週期基本資訊</li>
+                                    <li>所有休假安排</li>
+                                    <li>員工班別需求</li>
+                                </ul>
+                                <p class="text-danger"><strong>此操作無法復原！</strong></p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">確定刪除</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 添加到頁面
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            const modal = document.getElementById('deleteCycleModal');
+            const confirmBtn = document.getElementById('confirmDeleteBtn');
+            
+            // 創建 Bootstrap Modal 實例
+            const bsModal = new bootstrap.Modal(modal);
+            
+            // 綁定確認按鈕事件
+            confirmBtn.addEventListener('click', () => {
+                bsModal.hide();
+                resolve(true);
+            });
+            
+            // 綁定 Modal 關閉事件
+            modal.addEventListener('hidden.bs.modal', () => {
+                bsModal.hide();
+                resolve(false);
+            });
+            
+            // 顯示 Modal
+            bsModal.show();
+        });
+    }
+
+    /**
+     * 顯示刪除成功 toast 提示
+     */
+    showDeleteSuccessToast() {
+        const toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            // 如果沒有 toast 容器，創建一個
+            const container = document.createElement('div');
+            container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            container.style.zIndex = '1055';
+            document.body.appendChild(container);
+        }
+        
+        const container = document.querySelector('.toast-container');
+        
+        const toastHtml = `
+            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header bg-success text-white">
+                    <i class="bx bx-check-circle me-2"></i>
+                    <strong class="me-auto">刪除成功</strong>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    週期 #${this.cycleData.cycle_id} 已成功刪除！
+                </div>
+            </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', toastHtml);
+        
+        const toastElement = container.lastElementChild;
+        const toast = new bootstrap.Toast(toastElement, {
+            autohide: true,
+            delay: 3000
+        });
+        
+        toast.show();
+        
+        // 自動移除 toast 元素
+        toastElement.addEventListener('hidden.bs.toast', () => {
+            toastElement.remove();
+        });
+    }
+
+    /**
+     * 返回月曆模式
+     */
+    returnToCalendarMode() {
+        // 先重新載入 draft 班表
+        if (window.loadDraftCycles) {
+            window.loadDraftCycles();
+        }
+        
+        // 檢查是否有 modeSwitcher 實例
+        if (window.modeSwitcher) {
+            // 先切換到月曆模式
+            window.modeSwitcher.switchToMode('calendar');
+            
+            // 確保月曆被正確初始化
+            setTimeout(() => {
+                if (window.initCalendar) {
+                    window.initCalendar();
+                }
+            }, 450); // 等待 hideCurrentMode 的動畫完成 (400ms) + 一些緩衝時間
+        } else {
+            // 備用方案：直接重新載入頁面
+            console.warn('找不到 modeSwitcher 實例，重新載入頁面');
+            window.location.reload();
+        }
+    }
+
 }
 
 // 建立全域實例，方便從其他 script 檔案呼叫

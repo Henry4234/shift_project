@@ -241,7 +241,4 @@ class ModeSwitcher {
     }
 }
 
-// 當 DOM 載入完成後初始化模式切換器
-// document.addEventListener('DOMContentLoaded', () => {
-//     new ModeSwitcher();
-// }); 
+// 建立全域實例，方便從其他 script 檔案呼叫
