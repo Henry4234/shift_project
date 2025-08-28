@@ -2458,10 +2458,25 @@ body.dark .message-close:hover {
 
 /* 群組內容樣式 */
 .group-content {
-    padding: 20px;
-    background: var(--white-color);
-    transition: all 0.3s ease;
+    max-height: 0;
+    opacity: 0;
     overflow: hidden;
+    transition: all 0.3s ease-out;
+    margin: 0;
+    visibility: hidden;
+    position: relative;
+    z-index: 1;
+    background: var(--white-color);
+}
+
+/* 展開狀態 */
+.group-content.show {
+    max-height: 800px; /* 根據內容調整適當的高度 */
+    opacity: 1;
+    margin-top: 0;
+    margin-bottom: 0;
+    visibility: visible;
+    padding: 20px;
 }
 
 /* 表格滾動容器 */
@@ -2480,40 +2495,7 @@ body.dark .message-close:hover {
     min-width: 700px; /* 確保表格有最小寬度 */
 }
 
-/* 展開/收合動畫 */
-.group-content.expanding {
-    animation: expandContent 0.3s ease-out;
-}
 
-.group-content.collapsing {
-    animation: collapseContent 0.3s ease-in;
-}
-
-@keyframes expandContent {
-    from {
-        max-height: 0;
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        max-height: 500px;
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes collapseContent {
-    from {
-        max-height: 500px;
-        opacity: 1;
-        transform: translateY(0);
-    }
-    to {
-        max-height: 0;
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-}
 
 .group-details-table th,
 .group-details-table td {

@@ -583,7 +583,7 @@ class ShiftTypeConfigManager {
                         </button>
                     </div>
                 </div>
-                <div class="group-content" style="display: none;">
+                <div class="group-content">
                     <div class="group-details-table-container">
                         <table class="group-details-table">
                             <thead>
@@ -643,28 +643,16 @@ class ShiftTypeConfigManager {
         const content = groupItem.querySelector('.group-content');
         const icon = groupItem.querySelector('.group-expand-icon');
         
-        if (content.style.display === 'none') {
+        if (!content.classList.contains('show')) {
             // 展開
-            content.style.display = 'block';
-            content.classList.add('expanding');
+            content.classList.add('show');
             icon.classList.remove('bx-chevron-right');
             icon.classList.add('bx-chevron-down');
-            
-            // 動畫完成後移除 expanding 類別
-            setTimeout(() => {
-                content.classList.remove('expanding');
-            }, 300);
         } else {
             // 收合
-            content.classList.add('collapsing');
+            content.classList.remove('show');
             icon.classList.remove('bx-chevron-down');
             icon.classList.add('bx-chevron-right');
-            
-            // 動畫完成後隱藏內容
-            setTimeout(() => {
-                content.style.display = 'none';
-                content.classList.remove('collapsing');
-            }, 300);
         }
     }
 
