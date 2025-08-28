@@ -8,6 +8,7 @@ from test_plup import run_auto_scheduling
 from supabase import create_client
 import logging
 from dotenv import load_dotenv
+from datetime import datetime
 
 # 載入環境變數
 load_dotenv()
@@ -275,6 +276,67 @@ class APIServer():
                 self.logger.error(f'取得員工班表時發生錯誤：{str(err)}')
                 return jsonify({'error': '無法載入員工班表資料'}), 500
 
+        # 新增：批次上傳/發佈班表（含子班別）
+        @self.app.route('/api/employee-schedules/upload', methods=['POST'])
+        def upload_employee_schedules():
+            """
+            批次上傳/發佈班表資料到 employee_schedules
+            請求格式：{
+              "cycle_id": 1,
+              "rows": [
+                 {"employee_id": 1, "work_date": "2025-01-01", "shift_type": "A", "shift_subtype": "3"}, ...
+              ]
+            }
+            - upsert 覆寫相同 (employee_id, work_date)
+            - shift_type 僅允許 A/B/C/O
+            """
+            try:
+                data = request.get_json()
+                cycle_id = data.get('cycle_id')
+                rows = data.get('rows', [])
+
+                if not cycle_id:
+                    return jsonify({'error': '缺少 cycle_id 參數'}), 400
+                if not rows:
+                    return jsonify({'status': 'success', 'count': 0})
+
+                valid_shift_types = {'A', 'B', 'C', 'O'}
+                prepared = []
+                for r in rows:
+                    employee_id = r.get('employee_id')
+                    work_date = r.get('work_date')
+                    shift_type = r.get('shift_type')
+                    shift_subtype = r.get('shift_subtype', '')
+
+                    if not all([employee_id, work_date, shift_type]):
+                        continue
+                    if shift_type not in valid_shift_types:
+                        continue
+
+                    prepared.append({
+                        'employee_id': int(employee_id),
+                        'work_date': work_date,
+                        'shift_type': shift_type,
+                        'shift_subtype': shift_subtype or '',
+                        'updated_at': datetime.now().isoformat()
+                    })
+
+                # 使用單次 upsert 批次處理，on_conflict 以 (employee_id, work_date) 覆寫
+                try:
+                    upsert_resp = self.supabase_client.table('employee_schedules') \
+                        .upsert(prepared, on_conflict='employee_id,work_date') \
+                        .execute()
+                except Exception as e:
+                    # 任何資料錯誤（例如違反檢查或重複鍵）直接回傳錯誤
+                    self.logger.error(f'批次上傳錯誤：{str(e)}')
+                    return jsonify({'error': f'批次上傳失敗: {str(e)}'}), 500
+
+                count = len(upsert_resp.data) if hasattr(upsert_resp, 'data') and upsert_resp.data else len(prepared)
+                return jsonify({'status': 'success', 'count': count})
+            except Exception as err:
+                self.logger.error(f'上傳班表時發生錯誤：{str(err)}')
+                return jsonify({'error': '上傳班表失敗'}), 500
+
         @self.app.route('/api/run-schedule', methods=['POST'])
         def run_schedule():
             """執行排班模型"""
@@ -348,6 +410,55 @@ class APIServer():
             except Exception as err:
                 self.logger.error(f'建立排班週期時發生錯誤：{str(err)}')
                 return jsonify({'error': '無法建立排班週期'}), 500
+
+        # 刪除排班週期
+        @self.app.route('/api/schedule-cycles/<int:cycle_id>', methods=['DELETE'])
+        def delete_schedule_cycle(cycle_id):
+            """
+            刪除指定的排班週期及其相關資料
+            - 路徑參數: cycle_id (int)
+            - 回傳: {"status": "success", "message": "週期已刪除"}
+            """
+            try:
+                self.logger.info(f'開始刪除週期 #{cycle_id}...')
+                
+                # 1. 先檢查週期是否存在
+                cycle_response = self.supabase_client.table('schedule_cycles') \
+                    .select('cycle_id') \
+                    .eq('cycle_id', cycle_id) \
+                    .execute()
+                
+                if not cycle_response.data:
+                    return jsonify({'error': '找不到指定的週期'}), 404
+                
+                # 2. 刪除相關的休假資料
+                self.supabase_client.table('schedule_cycle_temp_offdays') \
+                    .delete() \
+                    .eq('cycle_id', cycle_id) \
+                    .execute()
+                
+                # 3. 刪除週期成員資料
+                self.supabase_client.table('schedule_cycle_members') \
+                    .delete() \
+                    .eq('cycle_id', cycle_id) \
+                    .execute()
+                
+                # 4. 刪除週期本身
+                self.supabase_client.table('schedule_cycles') \
+                    .delete() \
+                    .eq('cycle_id', cycle_id) \
+                    .execute()
+                
+                self.logger.info(f'成功刪除週期 #{cycle_id}')
+                
+                return jsonify({
+                    'status': 'success',
+                    'message': f'週期 #{cycle_id} 已成功刪除'
+                })
+                
+            except Exception as err:
+                self.logger.error(f'刪除週期時發生錯誤：{str(err)}')
+                return jsonify({'error': '刪除週期失敗'}), 500
 
         # 新增/更新週期備註
         @self.app.route('/api/schedule-cycles-comment', methods=['POST'])
