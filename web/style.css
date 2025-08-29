@@ -476,7 +476,7 @@ body.dark {
 /* 當 sidebar 有 .close 時，調整內容區 */
 .sidebar.close ~ .content{
     margin-left: 80px;   /* 80px = sidebar 收合寬度 */
-    width: 90%;          /* 你希望的 90% */
+    width: 95%;          /* 你希望的 90% */
   }
 .sidebar.hoverable .collapse_sidebar {
   display: none;
