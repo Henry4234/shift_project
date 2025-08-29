@@ -460,6 +460,44 @@ class APIServer():
                 self.logger.error(f'刪除週期時發生錯誤：{str(err)}')
                 return jsonify({'error': '刪除週期失敗'}), 500
 
+        # 更新排班週期狀態為 finished
+        @self.app.route('/api/schedule-cycles/finish', methods=['POST'])
+        def finish_schedule_cycle():
+            """
+            將指定週期的 status 更新為 finished
+            請求格式: { "cycle_id": 1 }
+            回傳: { "status": "success" }
+            """
+            try:
+                data = request.get_json()
+                cycle_id = data.get('cycle_id') if data else None
+                if not cycle_id:
+                    return jsonify({'error': '缺少 cycle_id 參數'}), 400
+
+                # 確認週期存在
+                cycle_response = self.supabase_client.table('schedule_cycles') \
+                    .select('cycle_id') \
+                    .eq('cycle_id', int(cycle_id)) \
+                    .single() \
+                    .execute()
+
+                if not cycle_response.data:
+                    return jsonify({'error': '找不到指定的週期'}), 404
+
+                # 更新狀態
+                update_resp = self.supabase_client.table('schedule_cycles') \
+                    .update({'status': 'finished'}) \
+                    .eq('cycle_id', int(cycle_id)) \
+                    .execute()
+
+                if not update_resp.data:
+                    return jsonify({'error': '更新狀態失敗'}), 500
+
+                return jsonify({'status': 'success'})
+            except Exception as err:
+                self.logger.error(f'更新週期狀態為 finished 時發生錯誤：{str(err)}')
+                return jsonify({'error': '更新週期狀態失敗'}), 500
+
         # 新增/更新週期備註
         @self.app.route('/api/schedule-cycles-comment', methods=['POST'])
         def update_cycle_comment():

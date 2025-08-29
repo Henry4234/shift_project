@@ -2062,6 +2062,22 @@ class TempScheduleMode {
 
             const result = await resp.json();
             this.showMessage(`上傳成功！共處理 ${result.count || 0} 筆`, 'success');
+
+            // 1) 通知後端將該週期狀態更新為 finished
+            try {
+                await fetch('/api/schedule-cycles/finish', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cycle_id: cycleId })
+                });
+            } catch (e) {
+                console.warn('更新週期狀態為 finished 失敗：', e);
+            }
+
+            // 2) 重新載入 draft 班表
+            if (window.loadDraftCycles) {
+                window.loadDraftCycles();
+            }
         } catch (e) {
             console.error('上傳班表失敗:', e);
             this.showMessage(`上傳失敗：${e.message}`, 'error');
@@ -2657,7 +2673,7 @@ class TempScheduleMode {
             this.hideLoadingOverlay();
             
             // 5. 顯示成功 toast 提示
-            this.showDeleteSuccessToast();
+            this.showMessage(`刪除週期 #${cycleId}成功!`);
             
             // 6. 延遲一下再返回月曆模式，讓用戶看到成功訊息
             setTimeout(() => {
@@ -2731,50 +2747,6 @@ class TempScheduleMode {
             
             // 顯示 Modal
             bsModal.show();
-        });
-    }
-
-    /**
-     * 顯示刪除成功 toast 提示
-     */
-    showDeleteSuccessToast() {
-        const toastContainer = document.querySelector('.toast-container');
-        if (!toastContainer) {
-            // 如果沒有 toast 容器，創建一個
-            const container = document.createElement('div');
-            container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-            container.style.zIndex = '1055';
-            document.body.appendChild(container);
-        }
-        
-        const container = document.querySelector('.toast-container');
-        
-        const toastHtml = `
-            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header bg-success text-white">
-                    <i class="bx bx-check-circle me-2"></i>
-                    <strong class="me-auto">刪除成功</strong>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    週期 #${this.cycleData.cycle_id} 已成功刪除！
-                </div>
-            </div>
-        `;
-        
-        container.insertAdjacentHTML('beforeend', toastHtml);
-        
-        const toastElement = container.lastElementChild;
-        const toast = new bootstrap.Toast(toastElement, {
-            autohide: true,
-            delay: 3000
-        });
-        
-        toast.show();
-        
-        // 自動移除 toast 元素
-        toastElement.addEventListener('hidden.bs.toast', () => {
-            toastElement.remove();
         });
     }
 
