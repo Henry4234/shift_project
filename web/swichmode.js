@@ -122,7 +122,12 @@ class ModeSwitcher {
         
         // 重新初始化月曆（如果需要的話）
         this.reinitializeCalendar();
-        
+
+        // 重新載入員工班表事件
+        if (window.loademployeeschedule) {
+            window.loademployeeschedule();
+        }
+
         // 添加淡入動畫
         setTimeout(() => {
             this.contentNav.classList.add('fadein');

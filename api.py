@@ -240,37 +240,60 @@ class APIServer():
 
         @self.app.route('/api/employee-schedules', methods=['GET'])
         def get_employee_schedules():
-            """獲取員工班表"""
+            """獲取員工班表
+            支援兩種模式：
+            1) 帶 year/month：回傳該月份資料
+            2) 不帶參數：回傳全部無休假資料
+            """
             try:
                 year = request.args.get('year')
                 month = request.args.get('month')
 
-                # 驗證查詢參數
-                if not year or not month:
-                    return jsonify({'error': '缺少年份或月份參數'}), 400
+                # 若同時提供 year/month，則限定月份區間
+                if year and month:
+                    try:
+                        year_num = int(year)
+                        month_num = int(month)
+                    except ValueError:
+                        return jsonify({'error': '無效的年份或月份格式'}), 400
 
-                try:
-                    year_num = int(year)
-                    month_num = int(month)
-                except ValueError:
-                    return jsonify({'error': '無效的年份或月份格式'}), 400
+                    if month_num < 1 or month_num > 12:
+                        return jsonify({'error': '無效的月份格式'}), 400
 
-                if month_num < 1 or month_num > 12:
-                    return jsonify({'error': '無效的月份格式'}), 400
+                    # 計算月份的第一天和最後一天
+                    start_date = f"{year_num}-{month_num:02d}-01"
+                    import calendar
+                    last_day = calendar.monthrange(year_num, month_num)[1]
+                    end_date = f"{year_num}-{month_num:02d}-{last_day:02d}"
 
-                # 計算月份的第一天和最後一天
-                start_date = f"{year_num}-{month_num:02d}-01"
-                import calendar
-                last_day = calendar.monthrange(year_num, month_num)[1]
-                end_date = f"{year_num}-{month_num:02d}-{last_day:02d}"
+                    self.logger.info(f'開始從 Supabase 獲取 {year_num}年{month_num}月 的班表資料...')
+                    self.logger.info(f'查詢區間: {start_date} 到 {end_date}')
 
-                self.logger.info(f'開始從 Supabase 獲取 {year_num}年{month_num}月 的班表資料...')
-                self.logger.info(f'查詢區間: {start_date} 到 {end_date}')
+                    response = (
+                        self.supabase_client
+                        .table('employee_schedules')
+                        .select('*')
+                        .gte('work_date', start_date)
+                        .lte('work_date', end_date)
+                        .order('work_date')
+                        .execute()
+                    )
+                    schedules = response.data
+                    self.logger.info(f'從 Supabase 獲取到的班表資料：{len(schedules) if schedules else 0} 筆')
+                    return jsonify(schedules)
 
-                response = self.supabase_client.table('employee_schedules').select('*').gte('work_date', start_date).lte('work_date', end_date).execute()
+                # 否則回傳全部
+                self.logger.info('未提供 year/month，回傳全部班表資料...')
+                response = (
+                    self.supabase_client
+                    .table('employee_schedules')
+                    .select('*')
+                    .order('work_date')
+                    .neq('shift_type', 'O')
+                    .execute()
+                )
                 schedules = response.data
-
-                self.logger.info(f'從 Supabase 獲取到的班表資料：{schedules}')
+                self.logger.info(f'從 Supabase 獲取到的班表資料：{len(schedules) if schedules else 0} 筆')
                 return jsonify(schedules)
             except Exception as err:
                 self.logger.error(f'取得員工班表時發生錯誤：{str(err)}')

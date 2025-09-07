@@ -163,6 +163,45 @@ window.loadDraftCycles = async function() {
     }
 };
 
+//載入個員工的班別
+window.loademployeeschedule = async function() {
+    const calendarContainer = document.getElementById('calendar-container');
+
+    try {
+        const resp = await fetch('/api/employee-schedules');
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data?.error || '載入失敗');
+
+        // 建立 id -> name 對照
+        const employees = Array.isArray(window.employeesResponse) ? window.employeesResponse : [];
+        const idToName = new Map(employees.map(e => [e.id, e.name]));
+
+        // 將資料轉為 FullCalendar 事件
+        const events = (Array.isArray(data) ? data : []).map(row => {
+            const employeeId = row.employee_id;
+            const name = idToName.get(employeeId) || `員工#${employeeId}`;
+            const shiftType = row.shift_type || '';
+            const shiftSubtype = row.shift_subtype ? `-${row.shift_subtype}` : '';
+            return {
+                title: `${name} ${shiftType}${shiftSubtype}`.trim(),
+                start: row.work_date,
+                allDay: true,
+                color: 'var(fc-schedule-day)',
+            };
+        });
+
+        if (window.calendar) {
+            // 新增事件來源
+            window.calendar.addEventSource(events);
+        }
+    } catch (err) {
+        console.error('載入員工班表失敗：', err);
+        if (loadingEl) {
+            loadingEl.innerHTML = '<div class="text-danger" style="padding: 8px 12px;">載入班表失敗</div>';
+        }
+        return;
+    } 
+};
 document.addEventListener('DOMContentLoaded', async () => {
     const memberListEl = document.getElementById('member-list');
     // 只顯示空內容或提示
@@ -177,4 +216,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     new ModeSwitcher(window.initCalendar);
     // 新增：載入暫存班表
     window.loadDraftCycles();
+    // 載入：員工班表事件
+    window.loademployeeschedule();
 });
