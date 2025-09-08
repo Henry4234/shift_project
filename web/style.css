@@ -28,6 +28,7 @@
   --bg-schedule-eveing:#fff3e0;
   --bg-schedule-night:#e3f2fd;
   --bg-schedule-off:#eae6e6;
+  --bg-schedule-A5:#d1cbe7;
   --bg-table-selected: #e6f3ff;
   --border-selected:#007bff;
   --schedule-verify-checkbox: #e3f2fd;
@@ -64,6 +65,7 @@ body.dark {
   --bg-schedule-eveing:#b56732eb;
   --bg-schedule-night:#336699;
   --bg-schedule-off: #3b3b3b;
+  --bg-schedule-A5:#8766ff;
   --bg-table-selected: #5B6271;
   --border-selected: #b0c4d6;
   --schedule-verify-checkbox: #30577d;
@@ -1697,6 +1699,13 @@ nav.content.fadeout {
 .day-off {
   background: var(--bg-schedule-off) !important;
   color: var(--fc-schedule-off);
+  font-weight: 500;
+}
+
+/* 特殊條件樣式：A5 */
+.monday-special-condition {
+  background-color: var(--bg-schedule-A5) !important;
+  color: var(--black-color) !important;
   font-weight: 500;
 }
 

@@ -169,7 +169,7 @@ class EmployeesMode {
                 // 檢查是否為週末
                 const date = new Date(year, month, day);
                 const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-                
+                const isMonday = date.getDay() === 1;
                 // 第一列：shift_type 儲存格
                 const mainCell = document.createElement('td');
                 mainCell.className = 'shift-cell shift-main-cell';
@@ -188,7 +188,14 @@ class EmployeesMode {
                 if (isWeekend) {
                     mainCell.classList.add('weekend');
                 }
+                else if (isMonday) {
+                    mainCell.classList.add('monday');
+                }
                 
+                // 檢查特殊條件：禮拜一且 shift_type 為 A 且 shift_subtype 為 5
+                if (isMonday && scheduleData && scheduleData.shift_type === 'A' && scheduleData.shift_subtype === '5') {
+                    mainCell.classList.add('monday-special-condition');
+                }
                 mainRow.appendChild(mainCell);
                 
                 // 第二列：shift_subtype 儲存格
@@ -210,7 +217,14 @@ class EmployeesMode {
                 if (isWeekend) {
                     subCell.classList.add('weekend');
                 }
+                else if (isMonday) {
+                    subCell.classList.add('monday');
+                }
                 
+                // 檢查特殊條件：禮拜一且 shift_type 為 A 且 shift_subtype 為 5
+                if (isMonday && scheduleData && scheduleData.shift_type === 'A' && scheduleData.shift_subtype === '5') {
+                    subCell.classList.add('monday-special-condition');
+                }
                 subRow.appendChild(subCell);
             }
             
