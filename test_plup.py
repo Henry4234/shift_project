@@ -91,6 +91,13 @@ class OffdayPlanner:
             for shiftsitem in shifts_amount:
                 counter+=shiftsitem['amount']
             self.shift_group_days[weekday_num] = counter
+        
+        # 建立國定假日字典，提高查找效率
+        # 格式: {日期字串: True}
+        self.holiday_dict = {
+            holiday['date'].strftime('%Y-%m-%d'): True 
+            for holiday in self.is_holidays
+        }
         #每個員工的上班總天數
         #格式:{str(員工):int(天數)}
         self.total_days_req = {
@@ -132,17 +139,13 @@ class OffdayPlanner:
         for d, date_str in enumerate(self.dates):
             dt = datetime.strptime(date_str, '%Y-%m-%d')
             
-            # 檢查是否為國定假日
-            is_holiday = False
-            for holiday in self.is_holidays:
-                if holiday['date'].date() == dt.date():
-                    is_holiday = True
-                    break
+            # 使用字典查找檢查是否為國定假日
+            is_holiday = date_str in self.holiday_dict
             
             if is_holiday:
                 # 如果是國定假日且為週末(週六或週日)，則跳過此限制
                 if dt.weekday() in [5, 6]:  # 週六=5, 週日=6
-                    continue
+                    required = self.shift_group_days[dt.weekday()] 
                 # 如果是國定假日且為週一到週五，則使用週六的班表需求
                 else:
                     required = self.shift_group_days[5]  # 使用週六的上班人員需求
@@ -236,7 +239,6 @@ class OffdayPlanner:
         # CLI 輸出
         header = ['員工'] + result['dates']
         print(','.join(header))
-        # print(self.is_holidays)
         for row in result['raw_table']:
             print(','.join([str(x) for x in row]))
 
@@ -269,6 +271,13 @@ class ShiftAssignmentSolver:
         self.shift_group_convert = {"day":"A","evening":"B","night":"C"}
         self.dates = dates if dates is not None else [str(i) for i in range(self.D)]
         self.is_holidays = is_holidays if is_holidays is not None else []
+        
+        # 建立國定假日字典，提高查找效率
+        # 格式: {日期字串: True}
+        self.holiday_dict = {
+            holiday['date'].strftime('%Y-%m-%d'): True 
+            for holiday in self.is_holidays
+        }
         
         # print(self.employees)
         # print(self.D)
@@ -306,18 +315,14 @@ class ShiftAssignmentSolver:
             dt = datetime.strptime(date_str, '%Y-%m-%d')
             weekday = dt.weekday()  # Monday = 0, Sunday = 6
             
-            # 檢查是否為國定假日
-            is_holiday = False
-            for holiday in self.is_holidays:
-                if holiday['date'].date() == dt.date():
-                    is_holiday = True
-                    break
+            # 使用字典查找檢查是否為國定假日
+            is_holiday = date_str in self.holiday_dict
             
             # 根據國定假日狀態和星期幾設定每日班別需求
             if is_holiday:
                 # 如果是國定假日且為週末(週六或週日)，則跳過此限制
                 if weekday in [5, 6]:  # 週六=5, 週日=6
-                    continue
+                    daily_req = self.shift_group[weekday]
                 # 如果是國定假日且為週一到週五，則使用週六的班表需求
                 else:
                     daily_req = self.shift_group[5]  # 使用週六的班別需求
@@ -480,7 +485,7 @@ def run_auto_scheduling(cycle_id):
                 shift_result = shift_solver.get_result(solver, status)
                 
                 # 驗證班別分配結果
-                verification_passed = verify_shift_assignment(shift_result, planner.dates)
+                verification_passed = verify_shift_assignment(shift_result, planner.dates, cycle_id)
                 
                 if verification_passed:
                     # 驗證通過，回傳成功結果

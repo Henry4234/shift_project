@@ -18,7 +18,7 @@ from supabase_client import(
     fetch_is_holiday
 )
 class ShiftVerifier:
-    def __init__(self, shift_result: Dict[str, List[str]], dates: List[str]):
+    def __init__(self, shift_result: Dict[str, List[str]], dates: List[str], cycle_id: int):
         """
         初始化驗證器
         
@@ -29,20 +29,30 @@ class ShiftVerifier:
         """
         self.shift_result = shift_result
         self.dates = dates
-        # self.cycle_id= cycle_id
+        self.cycle_id = cycle_id
         self.employees = list(shift_result.keys())
         self.D = len(dates)
         
-        # 每日班別需求定義
-        # self.daily_requirements=fetch_shift_group(self.cycle_id)
-        self.daily_requirements = {
-            0: {'A': 3, 'B': 2, 'C': 1},  # 週一
-            1: {'A': 3, 'B': 2, 'C': 1},  # 週二
-            2: {'A': 3, 'B': 2, 'C': 1},  # 週三
-            3: {'A': 3, 'B': 2, 'C': 1},  # 週四
-            4: {'A': 3, 'B': 2, 'C': 1},  # 週五
-            5: {'A': 2, 'B': 1, 'C': 1},  # 週六
-            6: {'A': 1, 'B': 1, 'C': 1}   # 週日
+        # 從資料庫讀取班別需求
+        self.shift_group_raw = fetch_shift_group(self.cycle_id)
+        if not self.shift_group_raw:
+            raise ValueError(f"無法取得 cycle_id={cycle_id} 的班別群組資料")
+        
+        # 轉換班別需求格式
+        self.daily_requirements = self._convert_shift_group_requirements()
+        # 取得國定假日資料
+        if dates:
+            start_date = min(dates)
+            end_date = max(dates)
+            self.is_holidays = fetch_is_holiday(start_date, end_date)
+        else:
+            self.is_holidays = []
+        
+        # 建立國定假日字典，提高查找效率
+        # 格式: {日期字串: True}
+        self.holiday_dict = {
+            holiday['date'].strftime('%Y-%m-%d'): True 
+            for holiday in self.is_holidays
         }
         
         self.verification_results = {
@@ -50,6 +60,30 @@ class ShiftVerifier:
             'continuous_work': {'passed': False, 'details': []},
             'shift_connection': {'passed': False, 'details': []}
         }
+    
+    def _convert_shift_group_requirements(self) -> Dict[int, Dict[str, int]]:
+        """
+        將 shift_group_raw 轉換為每日班別需求格式
+        
+        Returns:
+            Dict[int, Dict[str, int]]: 格式為 {weekday: {'A': count, 'B': count, 'C': count}}
+        """
+        from collections import defaultdict
+        
+        # 班別轉換對照表
+        shift_group_convert = {"day": "A", "evening": "B", "night": "C"}
+        
+        daily_requirements = {}
+        for weekday, shifts in self.shift_group_raw.items():
+            counter = defaultdict(int)
+            for shift_item in shifts:
+                shift_group = shift_item["shift_group"]
+                if shift_group in shift_group_convert:
+                    shift_type = shift_group_convert[shift_group]
+                    counter[shift_type] += shift_item["amount"]
+            daily_requirements[weekday] = dict(counter)
+        
+        return daily_requirements
 
     def verify_daily_staffing(self) -> bool:
         """
@@ -66,7 +100,23 @@ class ShiftVerifier:
             # 取得該日期的星期幾
             dt = datetime.strptime(date_str, '%Y-%m-%d')
             weekday = dt.weekday()
-            required = self.daily_requirements[weekday]
+            
+            # 使用字典查找檢查是否為國定假日
+            is_holiday = date_str in self.holiday_dict
+            
+            # 根據國定假日狀態和星期幾設定每日班別需求
+            if is_holiday:
+                # 如果是國定假日且為週末(週六或週日)，則跳過驗證
+                if weekday in [5, 6]:  # 週六=5, 週日=6
+                    # details.append(f"{date_str} ({self._get_weekday_name(weekday)}): 國定假日週末，跳過驗證")
+                    required = self.daily_requirements[weekday]
+                # 如果是國定假日且為週一到週五，則使用週六的班表需求
+                else:
+                    required = self.daily_requirements[5]  # 使用週六的班別需求
+                    # details.append(f"{date_str} ({self._get_weekday_name(weekday)}): 國定假日平日，使用週六班表")
+            else:
+                # 非國定假日，使用原本的週間班表需求
+                required = self.daily_requirements[weekday]
             
             # 統計該日各班別實際人數
             actual = {'A': 0, 'B': 0, 'C': 0}
@@ -248,18 +298,19 @@ class ShiftVerifier:
         return weekday_names[weekday]
 
 
-def verify_shift_assignment(shift_result: Dict[str, List[str]], dates: List[str]) -> bool:
+def verify_shift_assignment(shift_result: Dict[str, List[str]], dates: List[str], cycle_id: int) -> bool:
     """
     驗證班別分配結果的便捷函數
     
     Args:
         shift_result: 班別分配結果
         dates: 日期列表
+        cycle_id: 週期ID
         
     Returns:
         bool: 是否通過所有驗證
     """
-    verifier = ShiftVerifier(shift_result, dates)
+    verifier = ShiftVerifier(shift_result, dates, cycle_id)
     return verifier.verify_all()
 
 
@@ -273,6 +324,8 @@ if __name__ == '__main__':
     test_dates = ['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04',
                   '2024-01-05', '2024-01-06', '2024-01-07', '2024-01-08']
     
-    verifier = ShiftVerifier(test_shift_result, test_dates)
+    # 注意：測試時需要提供有效的 cycle_id
+    test_cycle_id = 1  # 請根據實際情況調整
+    verifier = ShiftVerifier(test_shift_result, test_dates, test_cycle_id)
     result = verifier.verify_all()
     print(f"\n測試結果: {'通過' if result else '未通過'}") 
