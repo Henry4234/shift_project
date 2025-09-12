@@ -148,13 +148,13 @@ def fetch_shift_group(cycle_id: int):
         print(f"Error fetching shift_group: {e}")
         return None 
     
-def fetch_is_holiday(start_date: str, end_date: str):
+def fetch_is_holiday(start_date, end_date):
     """
     根據開始日期和結束日期抓取國定假日資料
     
     Args:
-        start_date (str): 開始日期，格式為 'YYYY-MM-DD'
-        end_date (str): 結束日期，格式為 'YYYY-MM-DD'
+        start_date: 開始日期，可以是 datetime 物件或字串格式 'YYYY-MM-DD'
+        end_date: 結束日期，可以是 datetime 物件或字串格式 'YYYY-MM-DD'
     
     Returns:
         list: 包含國定假日資訊的列表，格式為 [{"date": "YYYYMMDD", "week": "X", "isHoliday": true}]
@@ -162,9 +162,20 @@ def fetch_is_holiday(start_date: str, end_date: str):
     try:
         from datetime import datetime, timedelta
         
-        # 將字串日期轉換為 datetime 物件
-        start_dt = datetime.strptime(start_date, '%Y-%m-%d')
-        end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+        # 處理不同格式的日期輸入
+        if isinstance(start_date, datetime):
+            start_dt = start_date
+        elif isinstance(start_date, str):
+            start_dt = datetime.strptime(start_date, '%Y-%m-%d')
+        else:
+            raise ValueError(f"不支援的 start_date 格式: {type(start_date)}")
+            
+        if isinstance(end_date, datetime):
+            end_dt = end_date
+        elif isinstance(end_date, str):
+            end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+        else:
+            raise ValueError(f"不支援的 end_date 格式: {type(end_date)}")
         
         # 提取需要查詢的年份範圍
         start_year = start_dt.year
@@ -196,7 +207,7 @@ def fetch_is_holiday(start_date: str, end_date: str):
                     if start_dt <= day_dt <= end_dt and day_data.get('isHoliday', False):
                         # 格式化回傳資料，只包含需要的欄位
                         holiday_info = {
-                            "date": day_date_str,
+                            "date": day_dt,
                             "week": day_data['week'],
                             "isHoliday": day_data['isHoliday']
                         }

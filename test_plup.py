@@ -131,8 +131,25 @@ class OffdayPlanner:
         # 2. 硬限制:每日需求(每日上班人數)
         for d, date_str in enumerate(self.dates):
             dt = datetime.strptime(date_str, '%Y-%m-%d')
-            # required = 6 if dt.weekday() <= 4 else (4 if dt.weekday() == 5 else 3)
-            required = self.shift_group_days[dt.weekday()]
+            
+            # 檢查是否為國定假日
+            is_holiday = False
+            for holiday in self.is_holidays:
+                if holiday['date'].date() == dt.date():
+                    is_holiday = True
+                    break
+            
+            if is_holiday:
+                # 如果是國定假日且為週末(週六或週日)，則跳過此限制
+                if dt.weekday() in [5, 6]:  # 週六=5, 週日=6
+                    continue
+                # 如果是國定假日且為週一到週五，則使用週六的班表需求
+                else:
+                    required = self.shift_group_days[5]  # 使用週六的上班人員需求
+            else:
+                # 非國定假日，使用原本的週間班表需求
+                required = self.shift_group_days[dt.weekday()]
+            
             self.model.Add(sum(self.x[e, d] for e in range(self.E)) >= required)
         # 3. 硬限制:員工每月上班天數加總
         for name in self.emp_names:
@@ -219,7 +236,7 @@ class OffdayPlanner:
         # CLI 輸出
         header = ['員工'] + result['dates']
         print(','.join(header))
-        print(self.is_holidays)
+        # print(self.is_holidays)
         for row in result['raw_table']:
             print(','.join([str(x) for x in row]))
 
@@ -233,13 +250,14 @@ class OffdayPlanner:
 # ===================== 第二階段：班別分配 =====================
 
 class ShiftAssignmentSolver:
-    def __init__(self, first_stage_result, shift_requirements, offdays_raw, shift_group, dates=None):
+    def __init__(self, first_stage_result, shift_requirements, offdays_raw, shift_group, dates=None, is_holidays=None):
         """
         first_stage_result: dict, 來自第一階段的 result['schedule']，格式 {員工: [0/1, ...]}
         shift_requirements: dict, 來自第一階段的shift_req_data
         offdays_raw: dict, 來自第一階段的offdays_raw
         dates: list, 日期字串清單（可選，若有則用於藍O判斷）
         shift_group:dict, 來自第一階段的shift_group_raw
+        is_holidays: list, 國定假日資料列表
         """
         self.model = cp_model.CpModel()
         self.employees = list(first_stage_result.keys())
@@ -250,6 +268,7 @@ class ShiftAssignmentSolver:
         self.shift_group_raw = shift_group
         self.shift_group_convert = {"day":"A","evening":"B","night":"C"}
         self.dates = dates if dates is not None else [str(i) for i in range(self.D)]
+        self.is_holidays = is_holidays if is_holidays is not None else []
         
         # print(self.employees)
         # print(self.D)
@@ -287,8 +306,24 @@ class ShiftAssignmentSolver:
             dt = datetime.strptime(date_str, '%Y-%m-%d')
             weekday = dt.weekday()  # Monday = 0, Sunday = 6
             
-            # 根據星期幾設定每日班別需求
-            daily_req = self.shift_group[weekday]
+            # 檢查是否為國定假日
+            is_holiday = False
+            for holiday in self.is_holidays:
+                if holiday['date'].date() == dt.date():
+                    is_holiday = True
+                    break
+            
+            # 根據國定假日狀態和星期幾設定每日班別需求
+            if is_holiday:
+                # 如果是國定假日且為週末(週六或週日)，則跳過此限制
+                if weekday in [5, 6]:  # 週六=5, 週日=6
+                    continue
+                # 如果是國定假日且為週一到週五，則使用週六的班表需求
+                else:
+                    daily_req = self.shift_group[5]  # 使用週六的班別需求
+            else:
+                # 非國定假日，使用原本的週間班表需求
+                daily_req = self.shift_group[weekday]
             # if weekday <= 4:  # 週一到週五
             #     daily_req = {'A': 3, 'B': 2, 'C': 1}
             # elif weekday == 5:  # 週六
@@ -433,7 +468,8 @@ def run_auto_scheduling(cycle_id):
                 shift_requirements, 
                 offdays_raw,
                 shift_group, 
-                dates=planner.dates
+                dates=planner.dates,
+                is_holidays=planner.is_holidays
             )
             shift_solver.add_constraints()
             shift_solver.add_soft_constraints()
@@ -549,7 +585,8 @@ def debug_auto_scheduling(cycle_id):
                 shift_requirements, 
                 offdays_raw, 
                 shift_group,
-                dates=planner.dates
+                dates=planner.dates,
+                is_holidays=planner.is_holidays
             )
             shift_solver.add_constraints()
             shift_solver.add_soft_constraints()
@@ -564,7 +601,7 @@ def debug_auto_scheduling(cycle_id):
                     print(f"  {name}: {','.join(row)}")
                 
                 print("\n開始驗證班別分配結果...")
-                verification_passed = verify_shift_assignment(shift_result, planner.dates)
+                verification_passed = verify_shift_assignment(shift_result, planner.dates,cycle_id)
                 print(f"驗證結果: {'通過' if verification_passed else '未通過'}")
                 
                 if verification_passed:

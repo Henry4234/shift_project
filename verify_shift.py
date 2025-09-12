@@ -13,7 +13,10 @@ verify_shift.py
 
 from datetime import datetime
 from typing import Dict, List, Tuple, Optional
-
+from supabase_client import(
+    fetch_shift_group,
+    fetch_is_holiday
+)
 class ShiftVerifier:
     def __init__(self, shift_result: Dict[str, List[str]], dates: List[str]):
         """
@@ -22,13 +25,16 @@ class ShiftVerifier:
         Args:
             shift_result: 班別分配結果，格式 {員工名: [班別列表]}
             dates: 日期列表，格式 ['YYYY-MM-DD', ...]
+            cycle_id: int, 週期id
         """
         self.shift_result = shift_result
         self.dates = dates
+        # self.cycle_id= cycle_id
         self.employees = list(shift_result.keys())
         self.D = len(dates)
         
         # 每日班別需求定義
+        # self.daily_requirements=fetch_shift_group(self.cycle_id)
         self.daily_requirements = {
             0: {'A': 3, 'B': 2, 'C': 1},  # 週一
             1: {'A': 3, 'B': 2, 'C': 1},  # 週二
