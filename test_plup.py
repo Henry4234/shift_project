@@ -44,7 +44,8 @@ from supabase_client import (
     fetch_employee_preferences,
     fetch_temp_offdays,
     fetch_schedule_cycle,
-    fetch_shift_group
+    fetch_shift_group,
+    fetch_is_holiday
 )
 from verify_shift import verify_shift_assignment
 from collections import defaultdict
@@ -73,11 +74,13 @@ class OffdayPlanner:
         self.employees_data = fetch_employees()
         self.shift_req_data = fetch_shift_requirements(self.cycle_id)
         self.offdays_raw = fetch_temp_offdays(self.cycle_id)
+        self.is_holidays = fetch_is_holiday(self.start_date,self.end_date)
         self.prefs_raw = fetch_employee_preferences()
         self.shift_group_raw = fetch_shift_group(self.cycle_id)
         self.emp_names = [e['name'] for e in self.employees_data]
         self.E = len(self.emp_names)
         self.emp_idx = {name: i for i, name in enumerate(self.emp_names)}
+
 
         # 需求、休假、偏好
         #星期幾要上幾天的dict
@@ -216,6 +219,7 @@ class OffdayPlanner:
         # CLI 輸出
         header = ['員工'] + result['dates']
         print(','.join(header))
+        print(self.is_holidays)
         for row in result['raw_table']:
             print(','.join([str(x) for x in row]))
 

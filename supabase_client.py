@@ -1,5 +1,5 @@
 from supabase import create_client
-import os
+import os,requests,json
 from dotenv import load_dotenv
 from datetime import datetime
 
@@ -147,3 +147,79 @@ def fetch_shift_group(cycle_id: int):
     except Exception as e:
         print(f"Error fetching shift_group: {e}")
         return None 
+    
+def fetch_is_holiday(start_date: str, end_date: str):
+    """
+    根據開始日期和結束日期抓取國定假日資料
+    
+    Args:
+        start_date (str): 開始日期，格式為 'YYYY-MM-DD'
+        end_date (str): 結束日期，格式為 'YYYY-MM-DD'
+    
+    Returns:
+        list: 包含國定假日資訊的列表，格式為 [{"date": "YYYYMMDD", "week": "X", "isHoliday": true}]
+    """
+    try:
+        from datetime import datetime, timedelta
+        
+        # 將字串日期轉換為 datetime 物件
+        start_dt = datetime.strptime(start_date, '%Y-%m-%d')
+        end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+        
+        # 提取需要查詢的年份範圍
+        start_year = start_dt.year
+        end_year = end_dt.year
+        
+        # 儲存所有國定假日的列表
+        all_holidays = []
+        
+        # 遍歷每個年份，抓取該年的國定假日資料
+        for year in range(start_year, end_year + 1):
+            try:
+                # 構建 API URL
+                api_url = f"https://cdn.jsdelivr.net/gh/ruyut/TaiwanCalendar/data/{year}.json"
+                
+                # 發送 GET 請求
+                response = requests.get(api_url, timeout=10)
+                response.raise_for_status()  # 檢查 HTTP 錯誤
+                
+                # 解析 JSON 資料
+                year_data = response.json()
+                
+                # 過濾出指定日期範圍內的國定假日
+                for day_data in year_data:
+                    # 將日期字串轉換為 datetime 物件進行比較
+                    day_date_str = day_data['date']
+                    day_dt = datetime.strptime(day_date_str, '%Y%m%d')
+                    
+                    # 檢查是否在指定日期範圍內且為國定假日
+                    if start_dt <= day_dt <= end_dt and day_data.get('isHoliday', False):
+                        # 格式化回傳資料，只包含需要的欄位
+                        holiday_info = {
+                            "date": day_date_str,
+                            "week": day_data['week'],
+                            "isHoliday": day_data['isHoliday']
+                        }
+                        all_holidays.append(holiday_info)
+                        
+            except requests.exceptions.RequestException as req_e:
+                print(f"Error fetching holiday data for year {year}: {req_e}")
+                continue
+            except json.JSONDecodeError as json_e:
+                print(f"Error parsing JSON data for year {year}: {json_e}")
+                continue
+            except Exception as year_e:
+                print(f"Unexpected error processing year {year}: {year_e}")
+                continue
+        
+        # 按日期排序
+        all_holidays.sort(key=lambda x: x['date'])
+        
+        return all_holidays
+        
+    except ValueError as ve:
+        print(f"Error parsing date format: {ve}")
+        return []
+    except Exception as e:
+        print(f"Error fetching holiday data: {e}")
+        return [] 
