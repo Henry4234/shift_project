@@ -1446,6 +1446,13 @@ body.dark {
 .employees-table td.weekend {
   background: #fce4ec;
 }
+/* 國定假日樣式 */
+.employees-table th.holiday {
+  background: #ffdcaf;
+}
+.employees-table td.holiday {
+  background: #ffdcaf;
+}
 /* sticky 員工姓名欄位 */
 .employees-table .sticky-col {
   position: sticky;

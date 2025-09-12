@@ -414,7 +414,7 @@ class ShiftAssignmentSolver:
             self.model.Minimize(sum(self.daily_penalties))
     def solve(self):
         solver = cp_model.CpSolver()
-        solver.parameters.max_time_in_seconds = 300
+        solver.parameters.max_time_in_seconds = 30.0
         status = solver.Solve(self.model)
         return solver, status
 
@@ -460,7 +460,7 @@ def run_auto_scheduling(cycle_id):
             }
 
         # 第二階段：班別分配與驗證
-        max_retries = 5  # 最大重試次數
+        max_retries = 10  # 最大重試次數
         current_retry = 0
         shift_requirements = planner.shift_req_data
         offdays_raw = planner.offdays_raw
@@ -576,7 +576,7 @@ def debug_auto_scheduling(cycle_id):
 
         # 第二階段：班別分配與驗證
         print("\n=== 第二階段：班別分配與驗證 ===")
-        max_retries = 5
+        max_retries = 10
         current_retry = 0
         shift_requirements = planner.shift_req_data
         offdays_raw = planner.offdays_raw

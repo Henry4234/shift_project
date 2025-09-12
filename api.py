@@ -1,14 +1,12 @@
 from flask import Flask, jsonify, request, abort
 from flask_cors import CORS
-import subprocess
-import json
-import os
-from cpmodel_2025 import main as run_schedule_model
+import os, json, subprocess,requests
 from test_plup import run_auto_scheduling
 from supabase import create_client
 import logging
 from dotenv import load_dotenv
 from datetime import datetime
+from supabase_client import fetch_is_holiday
 
 # 載入環境變數
 load_dotenv()
@@ -406,6 +404,46 @@ class APIServer():
             except Exception as err:
                 self.logger.error(f'查詢排班週期時發生錯誤：{str(err)}')
                 return jsonify({'error': '無法查詢排班週期'}), 500
+        #查詢國定假日
+        @self.app.route('/api/get_holidays', methods=['GET'])
+        def get_holidays():
+            """根據開始日期(start_date)和結束日期(end_date)回傳國定假日清單"""
+            try:
+                # 以 query string 接收參數
+                start_date = request.args.get('start_date')
+                end_date = request.args.get('end_date')
+
+                if not start_date:
+                    return jsonify({'error': '缺少開始日期'}), 400
+                if not end_date:
+                    return jsonify({'error': '缺少結束日期'}), 400
+
+                self.logger.info(f'查詢國定假日區間: {start_date} ~ {end_date}')
+
+                holidays = fetch_is_holiday(start_date, end_date) or []
+
+                # 序列化日期
+                result = []
+                for h in holidays:
+                    try:
+                        date_value = h.get('date')
+                        if isinstance(date_value, datetime):
+                            date_str = date_value.strftime('%Y-%m-%d')
+                        else:
+                            # 支援字串或其他可被 str() 的型別
+                            date_str = str(date_value)
+                        result.append({
+                            'date': date_str,
+                            'week': h.get('week'),
+                            'isHoliday': bool(h.get('isHoliday', False))
+                        })
+                    except Exception:
+                        continue
+
+                return jsonify(result)
+            except Exception as err:
+                self.logger.error(f'查詢國定假日時發生錯誤：{str(err)}')
+                return jsonify({'error': '無法查詢國定假日'}), 500
         # 建立新的排班週期
         @self.app.route('/api/schedule-cycles', methods=['POST'])
         def create_schedule_cycle():
@@ -947,7 +985,7 @@ class APIServer():
                 
                 # 呼叫驗證模組
                 from verify_shift_2 import verify_schedule_data
-                verification_result = verify_schedule_data(schedule_data)
+                verification_result = verify_schedule_data(cycle_id,schedule_data)
                 
                 self.logger.info(f'驗證結果: {verification_result}')
                 

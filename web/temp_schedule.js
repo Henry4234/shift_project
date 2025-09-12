@@ -4,6 +4,8 @@ class TempScheduleMode {
     constructor() {
         this.container = document.querySelector('nav.content');
         this.cycleData = null;
+        // 國定假日日期集合（YYYY-MM-DD）
+        this.holidayDates = new Set();
         this.shiftTypeMap = {
             'A': { text: 'A', class: 'morning-shift' },
             'B': { text: 'B', class: 'afternoon-shift' },
@@ -162,6 +164,8 @@ class TempScheduleMode {
         
         // 1.5 載入備註
         await this.loadComment();
+        // 1.6 載入國定假日
+        await this.loadHolidays();
         // 2. 先獲取此週期的成員
         const members = await this.fetchCycleMembers();
         // 緩存成員資料以供後續上傳時使用 employee_id 對應
@@ -272,7 +276,13 @@ class TempScheduleMode {
             const dayOfWeek = ['日', '一', '二', '三', '四', '五', '六'][date.getDay()];
             const th = document.createElement('th');
             th.innerHTML = `<span>${month}/${day}</span><span class='dayofweek'>(${dayOfWeek})</span>`;
-            th.className = date.getDay() === 0 || date.getDay() === 6 ? 'weekend' : '';
+            const dateStr = date.toISOString().split('T')[0];
+            if (date.getDay() === 0 || date.getDay() === 6) {
+                th.classList.add('weekend');
+            }
+            if (date.getDay() !== 0 && date.getDay() !== 6 && this.holidayDates.has(dateStr)) {
+                th.classList.add('holiday');
+            }
             thead.appendChild(th);
         });
 
@@ -302,6 +312,10 @@ class TempScheduleMode {
                 cell.dataset.employeeName = name;
                 cell.dataset.date = dateStr;
                 cell.dataset.dateIndex = dateIndex;
+                // 如果是國定假日，加上 holiday 樣式
+                if (date.getDay() !== 0 && date.getDay() !== 6 && this.holidayDates.has(dateStr)) {
+                    cell.classList.add('holiday');
+                }
                 
                 row.appendChild(cell);
             });
@@ -2774,6 +2788,36 @@ class TempScheduleMode {
             // 備用方案：直接重新載入頁面
             console.warn('找不到 modeSwitcher 實例，重新載入頁面');
             window.location.reload();
+        }
+    }
+
+    /**
+     * 從後端取得國定假日並快取於 this.holidayDates
+     */
+    async loadHolidays() {
+        try {
+            const start = this.cycleData?.start_date;
+            const end = this.cycleData?.end_date;
+            if (!start || !end) {
+                this.holidayDates = new Set();
+                return;
+            }
+            const resp = await fetch(`/api/get_holidays?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`);
+            if (!resp.ok) {
+                this.holidayDates = new Set();
+                return;
+            }
+            const data = await resp.json();
+            const set = new Set();
+            data.forEach(item => {
+                if (item && item.isHoliday && item.date) {
+                    set.add(item.date);
+                }
+            });
+            this.holidayDates = set;
+        } catch (e) {
+            console.warn('載入國定假日失敗:', e);
+            this.holidayDates = new Set();
         }
     }
 
